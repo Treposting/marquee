@@ -4,6 +4,9 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+### Fixed
+- **Copy and paste sounds didn't play** for some people while the screenshot shutter did ([#8](https://github.com/Treposting/marquee/issues/8)). They now play as system sound effects, the same way as the shutter: through the device set in System Settings → Sound → "Play sound effects through", at the alert volume.
+
 ## 0.5.15 — 2026-10-18
 
 ### Added
