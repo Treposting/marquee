@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// Text shown on top of a recording.
@@ -26,12 +27,39 @@ struct TextOverlay: Identifiable, Equatable {
     /// When it shows, in seconds of the original recording; nil means the whole video.
     var start: Double?
     var end: Double?
+    /// Where its middle sits after dragging, as a fraction of the video (0…1, from the top
+    /// left), so it lands in the same spot at any export size. Nil uses `position`.
+    var center: CGPoint?
+    /// Hidden layers stay in the editor but aren't exported.
+    var hidden = false
 
     var isWholeVideo: Bool { start == nil || end == nil }
 
     func isVisible(at time: Double) -> Bool {
+        guard !hidden else { return false }
         guard let start, let end else { return true }
         return time >= start && time < end
+    }
+
+    /// Bottom-left corner of a `box`-sized overlay inside a video of `size` (origin bottom
+    /// left, as layers use), kept fully inside the video.
+    func origin(for box: CGSize, in size: CGSize) -> CGPoint {
+        let margin = size.height * 0.07
+        var x = (size.width - box.width) / 2
+        var y: CGFloat
+        if let center {
+            x = center.x * size.width - box.width / 2
+            y = (1 - center.y) * size.height - box.height / 2
+        } else {
+            switch position {
+            case .top: y = size.height - margin - box.height
+            case .middle: y = (size.height - box.height) / 2
+            case .bottom: y = margin
+            }
+        }
+        x = min(max(0, x), max(0, size.width - box.width))
+        y = min(max(0, y), max(0, size.height - box.height))
+        return CGPoint(x: x, y: y)
     }
 }
 

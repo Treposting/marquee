@@ -1,6 +1,6 @@
 # Tasks
 
-Status as of v0.5.16 (2026-10-18). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
+Status as of v0.5.17 (2026-10-18). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Done
 
@@ -53,6 +53,7 @@ Status as of v0.5.16 (2026-10-18). Project context and conventions are in [CLAUD
 
 Each release adds a "What's new" entry to README.md, a dated CHANGELOG section, and a line here.
 
+- **0.5.17:** video editor text drag-anywhere overlays; layers panel (show/hide, reorder, delete) and timeline lanes
 - **0.5.16:** video cut sections and text overlays; mute mic / hide camera mid-recording; voice folder; redact styles and Select tool; hourly update checks with red dot and notification; centered windows; icon Stop; fixes #7 (camera bubble) and #8 (copy/paste sound)
 - **0.5.15:** video editor (trim, mute, export MP4/GIF); recording resolution; Quick Access hover corners; annotate redesign; About info and Buy Me a Coffee
 - **0.5.14:** ignore password managers, Keychain and chosen apps in clipboard history
@@ -79,7 +80,7 @@ Built and passing CI, but not yet tried by hand:
 - [ ] Scrolling capture: manual scroll and Auto-scroll on a long web page, a page with a sticky header, and a chat
 - [ ] Measure guides (H/V, drag, arrows, Tab, ⌫) and measuring on two displays at once
 - [ ] Color picker from the menu bar, a shortcut, Home and All-in-One: clicks and Esc work
-- [ ] Video editor: trim, cut sections (I/O, Remove Section), text overlays, mute, copy, export MP4/GIF; recording at 1080p/720p
+- [ ] Video editor: trim, cut sections (I/O, Remove Section), text overlays (drag to place, layers panel show/hide/reorder, export position), mute, copy, export MP4/GIF; recording at 1080p/720p
 - [ ] Annotate: redact styles, moving/resizing redactions, Select tool, small images show every control
 - [ ] Updates: red dot, menu item and notification when a release appears (hourly check); windows open centered
 - [ ] Quick Access hover corners and the new annotate toolbar (color dots show their colors on glass)

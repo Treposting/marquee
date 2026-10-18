@@ -4,6 +4,11 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+## 0.5.17 — 2026-10-18
+
+### Added
+- **Video editor: drag text anywhere, and layers.** Text sits on the video as an overlay: drag it to place it and double-click it to edit it; it exports in the same spot at any size. A Layers panel lists each text above the video: show or hide it (hidden text isn't exported), drag to change which is in front, and delete it with ✕ or ⌫. Each text also gets a lane under the timeline showing when it's on screen.
+
 ## 0.5.16 — 2026-10-18
 
 ### Added

@@ -37,6 +37,9 @@ A free, open-source menu-bar app for macOS that takes screenshots and screen rec
 
 ## What's new
 
+**0.5.17**
+- **Drag text anywhere in the video editor**, with a layers panel to show, hide, reorder and delete text.
+
 **0.5.16**
 - **More video editing.** Cut sections out of the middle and put text on the video (caption, bold or highlight).
 - **Mute the mic or hide the camera while recording**, and separate voice files saved in a folder with their video.
@@ -165,7 +168,7 @@ Press <kbd>⌥</kbd><kbd>⇧</kbd><kbd>⌘</kbd><kbd>A</kbd> and the toolbar app
 - **Mute while recording.** The microphone and camera buttons on the recording toolbar mute the mic (silence is recorded, so the sound stays in sync) or hide the camera bubble, and bring them back.
 - **Camera bubble.** Show yourself in the recording with any connected camera (built-in, USB, capture card, virtual camera, iPhone or Desk View): pick a camera, a shape (circle, rounded, square, portrait), a size, a corner and a border, including yellow, blue, pink and rainbow glows, from the **Camera** menu on the recording toolbar or in Settings → Recording. Drag the bubble anywhere, even while recording.
 - **While recording:** a timer, the mic meter, Stop and Discard on the toolbar. The menu bar shows a blinking red dot with the elapsed time (`12s`, then `4:05`, then `1:04:05`); click it to stop. The cursor is optional.
-- **Edit recordings.** Trim the start and end, cut sections out of the middle, add text on top, remove the sound, and export as MP4 (original, 1080p or 720p) or GIF, from the scissors on the thumbnail or Library → Edit….
+- **Edit recordings.** Trim the start and end, cut sections out of the middle, add text on top (drag it anywhere, with a layers panel to show, hide and reorder it), remove the sound, and export as MP4 (original, 1080p or 720p) or GIF, from the scissors on the thumbnail or Library → Edit….
 - **Resolution.** Record at your display's full Retina sharpness, or at 1080p or 720p for smaller files (Settings → Recording).
 - **Save as GIF** from the overlay with one click.
 

@@ -63,4 +63,23 @@ final class VideoEditTests: XCTestCase {
         XCTAssertTrue(timed.isVisible(at: 2))
         XCTAssertFalse(timed.isVisible(at: 5))
     }
+
+    func testTextOriginFromPresetAndDrag() {
+        let video = CGSize(width: 1000, height: 500)
+        let box = CGSize(width: 200, height: 50)
+        var overlay = TextOverlay(text: "Hi", position: .bottom)
+        XCTAssertEqual(overlay.origin(for: box, in: video), CGPoint(x: 400, y: 35))
+        overlay.position = .top
+        XCTAssertEqual(overlay.origin(for: box, in: video), CGPoint(x: 400, y: 415))
+        overlay.center = CGPoint(x: 0.25, y: 0.25) // dragged up and left
+        XCTAssertEqual(overlay.origin(for: box, in: video), CGPoint(x: 150, y: 350))
+        overlay.center = CGPoint(x: 0.99, y: 0.99) // past the corner stays inside
+        XCTAssertEqual(overlay.origin(for: box, in: video), CGPoint(x: 800, y: 0))
+    }
+
+    func testHiddenTextIsNotShown() {
+        var overlay = TextOverlay(text: "Hi")
+        overlay.hidden = true
+        XCTAssertFalse(overlay.isVisible(at: 1))
+    }
 }

@@ -96,7 +96,8 @@ enum VideoExport {
         let videoLayer = CALayer()
         videoLayer.frame = parent.frame
         parent.addSublayer(videoLayer)
-        for text in edit.texts {
+        // Later layers sit on top; hidden ones are left out.
+        for text in edit.texts where !text.hidden {
             guard let layer = textLayer(for: text, in: size) else { continue }
             if let start = text.start, let end = text.end {
                 // Shown only between its start and end, counted in the edited video's time.
@@ -136,13 +137,7 @@ enum VideoExport {
         let padX = look.background == nil ? 0 : fontSize * 0.6
         let padY = look.background == nil ? 0 : fontSize * 0.3
         let box = CGSize(width: ceil(bounds.width) + padX * 2, height: ceil(bounds.height) + padY * 2)
-        let margin = size.height * 0.07
-        let y: CGFloat
-        switch overlay.position {
-        case .top: y = size.height - margin - box.height
-        case .middle: y = (size.height - box.height) / 2
-        case .bottom: y = margin
-        }
+        let origin = overlay.origin(for: box, in: size)
 
         // CATextLayer doesn't draw during an offline export, so the box and text are drawn
         // into an image that becomes the layer's contents.
@@ -167,7 +162,7 @@ enum VideoExport {
         var proposed = CGRect(origin: .zero, size: canvas)
         guard let cgImage = image.cgImage(forProposedRect: &proposed, context: nil, hints: nil) else { return nil }
         let container = CALayer()
-        container.frame = CGRect(x: ((size.width - canvas.width) / 2).rounded(), y: (y - shadow).rounded(),
+        container.frame = CGRect(x: (origin.x - shadow).rounded(), y: (origin.y - shadow).rounded(),
                                  width: canvas.width, height: canvas.height)
         container.contents = cgImage
         container.contentsGravity = .resize
@@ -225,9 +220,25 @@ final class VideoEditorModel: ObservableObject {
     @Published var videoSize: CGSize = .zero
     /// The text being added or edited.
     @Published var draft: TextOverlay?
+    /// The text layer picked in the layers panel or on the video.
+    @Published var selectedTextID: UUID?
 
     var duration: Double { edit.duration }
     var hasMarks: Bool { markIn != nil && markOut != nil }
+
+    /// Moves a text (a saved layer or the one being written) after it's dragged on the video.
+    func setCenter(_ center: CGPoint, for id: UUID) {
+        if draft?.id == id {
+            draft?.center = center
+        } else if let index = edit.texts.firstIndex(where: { $0.id == id }) {
+            edit.texts[index].center = center
+        }
+    }
+
+    func deleteText(_ id: UUID) {
+        edit.texts.removeAll { $0.id == id }
+        if selectedTextID == id { selectedTextID = nil }
+    }
 }
 
 /// Plays a recording and edits it: trim the ends (QuickTime's trim bar), cut sections out of
@@ -285,14 +296,14 @@ final class VideoEditorController: NSObject, NSWindowDelegate {
 
     private func present() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 1000, height: 720),
+            contentRect: NSRect(x: 0, y: 0, width: 1140, height: 760),
             styleMask: [.titled, .closable, .resizable, .miniaturizable, .fullSizeContentView],
             backing: .buffered, defer: false
         )
         window.title = "Edit Recording"
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
-        window.minSize = NSSize(width: 860, height: 560)
+        window.minSize = NSSize(width: 1000, height: 600)
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.contentView = NSHostingView(rootView: VideoEditorView(
@@ -434,27 +445,31 @@ private struct VideoEditorView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            ZStack {
-                PlayerHost(playerView: playerView)
-                TextPreview(model: model)
-                    .allowsHitTesting(false)
+            HStack(alignment: .top, spacing: 12) {
+                VStack(spacing: 10) {
+                    ZStack {
+                        PlayerHost(playerView: playerView)
+                        TextPreview(model: model)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                    Timeline(model: model, seek: actions.seek)
+
+                    if !model.edit.removed.isEmpty {
+                        CutChips(model: model)
+                    }
+                }
+                LayersPanel(model: model)
+                    .frame(width: 230)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.top, 36)
-
-            Timeline(model: model, seek: actions.seek)
-                .frame(height: 34)
-
-            if !model.edit.removed.isEmpty || !model.edit.texts.isEmpty {
-                EditChips(model: model)
-            }
 
             toolbar
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 16)
         .background(Color(nsColor: .underPageBackgroundColor))
-        .frame(minWidth: 860, minHeight: 560)
+        .frame(minWidth: 1000, minHeight: 600)
     }
 
     private var toolbar: some View {
@@ -474,11 +489,13 @@ private struct VideoEditorView: View {
                         .glassButtonStyle(prominent: model.markOut != nil)
                         .keyboardShortcut("o", modifiers: [])
                         .help("Mark where a section ends, at the playhead (O)")
-                    Button(action: actions.removeSection) { Label("Remove Section", systemImage: "scissors") }
+                    Button {
+                        if model.hasMarks { actions.removeSection() } else if let id = model.selectedTextID { model.deleteText(id) }
+                    } label: { Label("Remove Section", systemImage: "scissors") }
                         .glassButtonStyle()
-                        .disabled(!model.hasMarks)
+                        .disabled(!model.hasMarks && model.selectedTextID == nil)
                         .keyboardShortcut(.delete, modifiers: [])
-                        .help("Cut out the part between the marks (⌫)")
+                        .help("Cut out the part between the marks (⌫). With no marks, ⌫ deletes the selected text layer.")
                     Button { model.draft = TextOverlay(text: "") } label: { Label("Add Text", systemImage: "textformat") }
                         .glassButtonStyle()
                         .help("Put text on the video")
@@ -542,87 +559,216 @@ private struct VideoEditorView: View {
 }
 
 /// A strip for the whole recording: trimmed-off ends dimmed, cut sections in red, the marks
-/// in yellow and the playhead. Click or drag to move the playhead.
+/// in yellow and the playhead. Click or drag to move the playhead. Under it, one lane per text
+/// layer shows when that text is on screen.
 private struct Timeline: View {
     @ObservedObject var model: VideoEditorModel
     let seek: @MainActor (Double) -> Void
 
     var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let total = max(model.duration, 0.001)
-            let x = { (t: Double) in CGFloat(t / total) * width }
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.08))
-                if let trim = model.edit.trim {
-                    Rectangle().fill(Color.primary.opacity(0.18)).frame(width: x(trim.lowerBound))
-                    Rectangle().fill(Color.primary.opacity(0.18))
-                        .frame(width: max(0, width - x(trim.upperBound)))
-                        .offset(x: x(trim.upperBound))
+        VStack(spacing: 4) {
+            GeometryReader { geo in
+                let width = geo.size.width
+                let total = max(model.duration, 0.001)
+                let x = { (t: Double) in CGFloat(t / total) * width }
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.08))
+                    if let trim = model.edit.trim {
+                        Rectangle().fill(Color.primary.opacity(0.18)).frame(width: x(trim.lowerBound))
+                        Rectangle().fill(Color.primary.opacity(0.18))
+                            .frame(width: max(0, width - x(trim.upperBound)))
+                            .offset(x: x(trim.upperBound))
+                    }
+                    ForEach(Array(model.edit.removed.enumerated()), id: \.offset) { _, cut in
+                        Rectangle()
+                            .fill(Color.red.opacity(0.45))
+                            .overlay(Rectangle().strokeBorder(Color.red.opacity(0.8), lineWidth: 1))
+                            .frame(width: max(2, x(cut.upperBound) - x(cut.lowerBound)))
+                            .offset(x: x(cut.lowerBound))
+                    }
+                    if let a = model.markIn, let b = model.markOut {
+                        Rectangle().fill(Color.yellow.opacity(0.3))
+                            .frame(width: abs(x(b) - x(a)))
+                            .offset(x: min(x(a), x(b)))
+                    }
+                    ForEach([model.markIn, model.markOut].compactMap { $0 }, id: \.self) { mark in
+                        Rectangle().fill(Color.yellow).frame(width: 2).offset(x: x(mark) - 1)
+                    }
+                    Rectangle().fill(Color.accentColor).frame(width: 2)
+                        .offset(x: x(model.currentTime) - 1)
+                        .shadow(color: .black.opacity(0.3), radius: 1)
                 }
-                ForEach(Array(model.edit.removed.enumerated()), id: \.offset) { _, cut in
-                    Rectangle()
-                        .fill(Color.red.opacity(0.45))
-                        .overlay(Rectangle().strokeBorder(Color.red.opacity(0.8), lineWidth: 1))
-                        .frame(width: max(2, x(cut.upperBound) - x(cut.lowerBound)))
-                        .offset(x: x(cut.lowerBound))
-                }
-                if let a = model.markIn, let b = model.markOut {
-                    Rectangle().fill(Color.yellow.opacity(0.3))
-                        .frame(width: abs(x(b) - x(a)))
-                        .offset(x: min(x(a), x(b)))
-                }
-                ForEach([model.markIn, model.markOut].compactMap { $0 }, id: \.self) { mark in
-                    Rectangle().fill(Color.yellow).frame(width: 2).offset(x: x(mark) - 1)
-                }
-                Rectangle().fill(Color.accentColor).frame(width: 2)
-                    .offset(x: x(model.currentTime) - 1)
-                    .shadow(color: .black.opacity(0.3), radius: 1)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .contentShape(Rectangle())
+                .gesture(DragGesture(minimumDistance: 0).onChanged { value in
+                    seek(Double(max(0, min(value.location.x, width)) / width) * total)
+                })
             }
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0).onChanged { value in
-                seek(Double(max(0, min(value.location.x, width)) / width) * total)
-            })
+            .frame(height: 34)
+            .accessibilityElement()
+            .accessibilityLabel("Timeline")
+            .accessibilityValue("\(VideoExport.format(model.currentTime)) of \(VideoExport.format(model.duration))")
+
+            // Lanes, in the same order as the layers panel (top layer first).
+            ForEach(model.edit.texts.reversed()) { overlay in
+                GeometryReader { geo in
+                    let total = max(model.duration, 0.001)
+                    let start = overlay.start ?? 0
+                    let end = overlay.end ?? model.duration
+                    let x0 = CGFloat(start / total) * geo.size.width
+                    let x1 = CGFloat(end / total) * geo.size.width
+                    let selected = model.selectedTextID == overlay.id
+                    Capsule()
+                        .fill(Color.accentColor.opacity(overlay.hidden ? 0.15 : (selected ? 0.85 : 0.45)))
+                        .frame(width: max(4, x1 - x0), height: 6)
+                        .offset(x: x0, y: 1)
+                        .onTapGesture { model.selectedTextID = overlay.id }
+                }
+                .frame(height: 8)
+                .help("“\(overlay.text)”")
+            }
         }
-        .accessibilityElement()
-        .accessibilityLabel("Timeline")
-        .accessibilityValue("\(VideoExport.format(model.currentTime)) of \(VideoExport.format(model.duration))")
     }
 }
 
-/// Cut sections and text overlays as chips: click text to edit it, ✕ to remove either.
-private struct EditChips: View {
+/// Cut sections as chips; ✕ puts a section back.
+private struct CutChips: View {
     @ObservedObject var model: VideoEditorModel
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(Array(model.edit.removed.enumerated()), id: \.offset) { _, cut in
-                    chip(icon: "scissors", text: "Cut \(VideoExport.format(cut.lowerBound))–\(VideoExport.format(cut.upperBound))",
-                         tint: .red, open: nil) { model.edit.restore(cut) }
-                }
-                ForEach(model.edit.texts) { overlay in
-                    chip(icon: "textformat", text: "“\(overlay.text)”", tint: .accentColor,
-                         open: { model.draft = overlay }) { model.edit.texts.removeAll { $0.id == overlay.id } }
+                    HStack(spacing: 6) {
+                        Image(systemName: "scissors").font(.system(size: 10, weight: .semibold)).foregroundStyle(.red)
+                        Text("Cut \(VideoExport.format(cut.lowerBound))–\(VideoExport.format(cut.upperBound))")
+                            .font(.system(size: 11.5, weight: .medium))
+                        Button { model.edit.restore(cut) } label: {
+                            Image(systemName: "xmark").font(.system(size: 9, weight: .bold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                        .help("Put this section back")
+                        .accessibilityLabel("Put back the cut at \(VideoExport.format(cut.lowerBound))")
+                    }
+                    .padding(.horizontal, 10)
+                    .frame(height: 26)
+                    .background(Color.red.opacity(0.12), in: Capsule())
                 }
             }
         }
     }
+}
 
-    private func chip(icon: String, text: String, tint: Color, open: (() -> Void)?, remove: @escaping () -> Void) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 10, weight: .semibold)).foregroundStyle(tint)
-            Text(text).font(.system(size: 11.5, weight: .medium)).lineLimit(1).frame(maxWidth: 200)
-                .onTapGesture { open?() }
-            Button(action: remove) { Image(systemName: "xmark").font(.system(size: 9, weight: .bold)) }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .accessibilityLabel("Remove \(text)")
+/// The layers on the video, top first: each text with show/hide, its timing and delete; drag
+/// rows to change which text is in front. The recording itself is the bottom layer.
+private struct LayersPanel: View {
+    @ObservedObject var model: VideoEditorModel
+
+    private var topFirst: [TextOverlay] { model.edit.texts.reversed() }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Layers").font(.system(size: 13, weight: .semibold))
+                Spacer()
+                Button { model.draft = TextOverlay(text: "") } label: { Image(systemName: "plus") }
+                    .buttonStyle(.borderless)
+                    .help("Add text")
+                    .accessibilityLabel("Add text")
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
+
+            if model.edit.texts.isEmpty {
+                Text("Text you add shows up here. Drag it on the video to place it.")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+            }
+
+            List(selection: $model.selectedTextID) {
+                ForEach(topFirst) { overlay in
+                    row(overlay).tag(overlay.id)
+                }
+                .onMove { from, to in move(from: from, to: to) }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+
+            Divider().padding(.horizontal, 12)
+            HStack(spacing: 8) {
+                Image(systemName: "film").foregroundStyle(.secondary).frame(width: 18)
+                Text("Video").font(.system(size: 12, weight: .medium))
+                Spacer()
+                Image(systemName: "lock.fill").font(.system(size: 9)).foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 12)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Video, bottom layer")
         }
-        .padding(.horizontal, 10)
-        .frame(height: 26)
-        .background(tint.opacity(0.12), in: Capsule())
+        .frame(maxHeight: .infinity)
+        .background(Color.primary.opacity(0.04), in: Page.card)
+        .overlay(Page.card.strokeBorder(Color.primary.opacity(0.08)))
+    }
+
+    private func row(_ overlay: TextOverlay) -> some View {
+        HStack(spacing: 8) {
+            Button {
+                if let i = model.edit.texts.firstIndex(where: { $0.id == overlay.id }) { model.edit.texts[i].hidden.toggle() }
+            } label: {
+                Image(systemName: overlay.hidden ? "eye.slash" : "eye")
+                    .foregroundStyle(overlay.hidden ? .tertiary : .secondary)
+                    .frame(width: 18)
+            }
+            .buttonStyle(.plain)
+            .help(overlay.hidden ? "Show (it will be exported)" : "Hide (it won't be exported)")
+            .accessibilityLabel(overlay.hidden ? "Show layer" : "Hide layer")
+            VStack(alignment: .leading, spacing: 1) {
+                Text(overlay.text.isEmpty ? "Text" : overlay.text)
+                    .font(.system(size: 12, weight: .medium))
+                    .lineLimit(1)
+                    .opacity(overlay.hidden ? 0.5 : 1)
+                Text(timing(overlay))
+                    .font(.system(size: 10).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 4)
+            Button { model.deleteText(overlay.id) } label: {
+                Image(systemName: "xmark").font(.system(size: 9, weight: .bold))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .help("Delete this layer")
+            .accessibilityLabel("Delete \(overlay.text)")
+        }
+        .padding(.vertical, 3)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) { model.draft = overlay }
+        .contextMenu {
+            Button("Edit…") { model.draft = overlay }
+            Button(overlay.hidden ? "Show" : "Hide") {
+                if let i = model.edit.texts.firstIndex(where: { $0.id == overlay.id }) { model.edit.texts[i].hidden.toggle() }
+            }
+            Button("Reset Position") {
+                if let i = model.edit.texts.firstIndex(where: { $0.id == overlay.id }) { model.edit.texts[i].center = nil }
+            }
+            Divider()
+            Button("Delete", role: .destructive) { model.deleteText(overlay.id) }
+        }
+    }
+
+    private func timing(_ overlay: TextOverlay) -> String {
+        guard let start = overlay.start, let end = overlay.end else { return "Whole video" }
+        return "\(VideoExport.format(start))–\(VideoExport.format(end))"
+    }
+
+    /// The panel lists the top layer first; texts are stored bottom first.
+    private func move(from source: IndexSet, to destination: Int) {
+        var list = topFirst
+        list.move(fromOffsets: source, toOffset: destination)
+        model.edit.texts = list.reversed()
     }
 }
 
@@ -654,7 +800,13 @@ private struct TextEditorPopover: View {
                     .textFieldStyle(.roundedBorder)
                     .focused($focused)
                     .frame(width: 300)
-                Picker("Position", selection: Binding(get: { draft.position }, set: { model.draft?.position = $0 })) {
+                Text("Tip: drag the text on the video to put it anywhere.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                Picker("Position", selection: Binding(get: { draft.position }, set: {
+                    model.draft?.position = $0
+                    model.draft?.center = nil
+                })) {
                     ForEach(TextOverlay.Position.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
@@ -708,13 +860,25 @@ private struct TextEditorPopover: View {
         } else {
             model.edit.texts.append(overlay)
         }
+        model.selectedTextID = overlay.id
         model.draft = nil
     }
 }
 
-/// Shows the text overlays on the player, where and when they'll be in the export.
+/// Shows the text overlays on the player, where and when they'll be in the export. Drag a
+/// text to place it anywhere; double-click it to edit it.
 private struct TextPreview: View {
     @ObservedObject var model: VideoEditorModel
+    @State private var frames: [UUID: CGRect] = [:]
+    @State private var dragStart: [UUID: CGPoint] = [:]
+    @State private var hovering: UUID?
+
+    private struct FrameKey: PreferenceKey {
+        static var defaultValue: [UUID: CGRect] = [:]
+        static func reduce(value: inout [UUID: CGRect], nextValue: () -> [UUID: CGRect]) {
+            value.merge(nextValue()) { $1 }
+        }
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -724,25 +888,72 @@ private struct TextPreview: View {
                 ? min(geo.size.width / video.width, geo.size.height / video.height) : 0
             let frame = CGSize(width: video.width * scale, height: video.height * scale)
             ZStack {
-                ForEach(model.edit.texts.filter { $0.isVisible(at: model.currentTime) } + (model.draft.map { [$0] } ?? [])) { overlay in
-                    let look = TextLook(overlay.style)
-                    let size = frame.height * look.scale
-                    Text(overlay.text)
-                        .font(.system(size: max(size, 6), weight: Font.Weight(look.weight)))
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(Color(nsColor: look.foreground))
-                        .padding(.horizontal, look.background == nil ? 0 : size * 0.6)
-                        .padding(.vertical, look.background == nil ? 0 : size * 0.3)
-                        .background(look.background.map { Color(nsColor: $0) } ?? .clear,
-                                    in: RoundedRectangle(cornerRadius: size * 0.35, style: .continuous))
-                        .shadow(color: look.background == nil ? .black.opacity(0.7) : .clear, radius: size * 0.12)
-                        .frame(maxWidth: frame.width * 0.86)
-                        .padding(.vertical, frame.height * 0.07)
-                        .frame(width: frame.width, height: frame.height, alignment: overlay.position.alignment)
+                ForEach(shown) { overlay in
+                    placed(label(overlay, in: frame), overlay: overlay, in: frame)
                 }
             }
             .frame(width: frame.width, height: frame.height)
+            .coordinateSpace(name: "video")
+            .onPreferenceChange(FrameKey.self) { frames = $0 }
             .position(x: geo.size.width / 2, y: geo.size.height / 2)
+        }
+    }
+
+    private var shown: [TextOverlay] {
+        var list = model.edit.texts.filter { $0.isVisible(at: model.currentTime) && $0.id != model.draft?.id }
+        if let draft = model.draft { list.append(draft) }
+        return list
+    }
+
+    private func label(_ overlay: TextOverlay, in frame: CGSize) -> some View {
+        let look = TextLook(overlay.style)
+        let size = max(frame.height * look.scale, 6)
+        let active = hovering == overlay.id || model.selectedTextID == overlay.id || dragStart[overlay.id] != nil
+        return Text(overlay.text.isEmpty ? " " : overlay.text)
+            .font(.system(size: size, weight: Font.Weight(look.weight)))
+            .multilineTextAlignment(.center)
+            .foregroundStyle(Color(nsColor: look.foreground))
+            .padding(.horizontal, look.background == nil ? 0 : size * 0.6)
+            .padding(.vertical, look.background == nil ? 0 : size * 0.3)
+            .background(look.background.map { Color(nsColor: $0) } ?? .clear,
+                        in: RoundedRectangle(cornerRadius: size * 0.35, style: .continuous))
+            .shadow(color: look.background == nil ? .black.opacity(0.7) : .clear, radius: size * 0.12)
+            .frame(maxWidth: frame.width * 0.86)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(4)
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                .opacity(active ? 1 : 0))
+            .background(GeometryReader { g in
+                Color.clear.preference(key: FrameKey.self, value: [overlay.id: g.frame(in: .named("video"))])
+            })
+            .contentShape(Rectangle())
+            .onHover { hovering = $0 ? overlay.id : (hovering == overlay.id ? nil : hovering) }
+            .onTapGesture(count: 2) { model.draft = overlay }
+            .gesture(DragGesture(minimumDistance: 2)
+                .onChanged { value in
+                    guard frame.width > 0, frame.height > 0 else { return }
+                    model.selectedTextID = overlay.id
+                    let start = dragStart[overlay.id]
+                        ?? frames[overlay.id].map { CGPoint(x: $0.midX, y: $0.midY) }
+                        ?? CGPoint(x: frame.width / 2, y: frame.height / 2)
+                    if dragStart[overlay.id] == nil { dragStart[overlay.id] = start }
+                    let x = min(max(0.03, (start.x + value.translation.width) / frame.width), 0.97)
+                    let y = min(max(0.03, (start.y + value.translation.height) / frame.height), 0.97)
+                    model.setCenter(CGPoint(x: x, y: y), for: overlay.id)
+                }
+                .onEnded { _ in dragStart[overlay.id] = nil })
+            .help("Drag to move · double-click to edit")
+            .accessibilityLabel("Text \(overlay.text)")
+    }
+
+    @ViewBuilder
+    private func placed(_ label: some View, overlay: TextOverlay, in frame: CGSize) -> some View {
+        if let center = overlay.center {
+            label.position(x: center.x * frame.width, y: center.y * frame.height)
+        } else {
+            label
+                .padding(.vertical, frame.height * 0.07 - 4)
+                .frame(width: frame.width, height: frame.height, alignment: overlay.position.alignment)
         }
     }
 }
