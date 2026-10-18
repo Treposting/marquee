@@ -124,6 +124,9 @@ struct HomeView: View {
                 }
 
                 recent
+
+                AboutFooter()
+                    .padding(.top, 4)
             }
             .padding(.horizontal, Page.gutter)
             .padding(.bottom, Page.gutter)

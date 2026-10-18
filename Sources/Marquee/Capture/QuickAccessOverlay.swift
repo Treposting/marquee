@@ -10,11 +10,19 @@ final class QuickAccessManager {
     private var panels: [(capture: Capture, panel: NSPanel)] = []
     private var editors: [AnnotationWindowController] = []
 
-    private let size = NSSize(width: 260, height: 190)
+    private static let width: CGFloat = 260
     private let margin: CGFloat = 18
     private let spacing: CGFloat = 12
 
+    /// The panel follows the capture's shape: 260 pt wide, between 130 and 230 pt tall.
+    private static func size(for capture: Capture) -> NSSize {
+        let image = capture.image.size
+        let aspect = image.height > 0 ? image.width / image.height : 16.0 / 10
+        return NSSize(width: width, height: min(230, max(130, width / aspect)))
+    }
+
     func show(_ capture: Capture) {
+        let size = Self.size(for: capture)
         let panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -26,7 +34,7 @@ final class QuickAccessManager {
         panel.backgroundColor = .clear
         panel.hasShadow = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        panel.contentView = NSHostingView(rootView: QuickAccessView(capture: capture) { [weak self] action in
+        panel.contentView = NSHostingView(rootView: QuickAccessView(capture: capture, size: size) { [weak self] action in
             self?.perform(action, on: capture)
         })
 
@@ -57,12 +65,12 @@ final class QuickAccessManager {
         let screen = NSScreen.screens.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) }
             ?? NSScreen.main
         guard let visible = screen?.visibleFrame else { return }
-        for (i, entry) in panels.reversed().enumerated() {
-            let origin = NSPoint(
-                x: visible.minX + margin,
-                y: visible.minY + margin + CGFloat(i) * (size.height + spacing)
-            )
-            entry.panel.setFrame(NSRect(origin: origin, size: size), display: true, animate: true)
+        var y = visible.minY + margin
+        for entry in panels.reversed() {
+            let size = entry.panel.frame.size
+            entry.panel.setFrame(NSRect(origin: NSPoint(x: visible.minX + margin, y: y), size: size),
+                                 display: true, animate: true)
+            y += size.height + spacing
         }
     }
 
@@ -85,6 +93,9 @@ final class QuickAccessManager {
             dismiss(capture)
         case .open:
             NSWorkspace.shared.open(capture.url)
+        case .editVideo:
+            VideoEditorController.edit(capture.url)
+            dismiss(capture)
         case .saveGIF:
             exportGIF(capture)
         case .close:
@@ -122,72 +133,128 @@ final class QuickAccessManager {
 }
 
 enum QuickAccessAction {
-    case copy, save, annotate, pin, open, saveGIF, close
+    case copy, save, annotate, pin, open, saveGIF, editVideo, close
 }
 
+/// The capture as a thumbnail. Hovering dims it and shows the actions around it: close and
+/// pin (or GIF) in the top corners, save and annotate (or open) in the bottom corners, and
+/// Copy in the middle. Drag the thumbnail into any app.
 @MainActor
 struct QuickAccessView: View {
     @ObservedObject var capture: Capture
+    let size: NSSize
     var onAction: (QuickAccessAction) -> Void
+    @State private var hovering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            VStack(spacing: 8) {
-                Image(nsImage: capture.image)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .overlay {
+        ZStack {
+            Image(nsImage: capture.image)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fill)
+                .frame(width: size.width, height: size.height)
+                .clipped()
+                .onDrag { NSItemProvider(contentsOf: capture.url) ?? NSItemProvider() }
+                .accessibilityLabel(capture.isVideo ? "Recording" : "Screenshot")
+
+            // Dims the image so the controls read on any capture.
+            LinearGradient(colors: [.black.opacity(0.45), .black.opacity(0.25), .black.opacity(0.5)],
+                           startPoint: .top, endPoint: .bottom)
+                .opacity(hovering ? 1 : 0)
+                .allowsHitTesting(false)
+
+            if capture.isVideo && !hovering {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .hudSurface(cornerRadius: 19)
+                    .allowsHitTesting(false)
+            }
+
+            if hovering {
+                Button { onAction(.copy) } label: {
+                    Label("Copy", systemImage: "doc.on.doc")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .frame(height: 34)
+                        .hudSurface(cornerRadius: 17)
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .help("Copy to clipboard")
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+
+            VStack {
+                HStack {
+                    CornerButton(symbol: "xmark", help: "Close") { onAction(.close) }
+                        .opacity(hovering ? 1 : 0.85)
+                    Spacer()
+                    if hovering {
                         if capture.isVideo {
-                            Image(systemName: "play.circle.fill")
-                                .font(.system(size: 34))
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .black.opacity(0.45))
-                                .onTapGesture { onAction(.open) }
+                            CornerButton(symbol: "photo.stack", help: "Save as GIF") { onAction(.saveGIF) }
+                        } else {
+                            CornerButton(symbol: "pin", help: "Pin to screen") { onAction(.pin) }
                         }
                     }
-                    .onDrag {
-                        NSItemProvider(contentsOf: capture.url) ?? NSItemProvider()
-                    }
-                    .help("Drag into any app")
-
-                HStack(spacing: 6) {
-                    actionButton("doc.on.doc", "Copy") { onAction(.copy) }
-                    actionButton("square.and.arrow.down", "Save") { onAction(.save) }
-                    if capture.isVideo {
-                        actionButton("photo.stack", "Save as GIF") { onAction(.saveGIF) }
-                        actionButton("play.rectangle", "Open") { onAction(.open) }
-                    } else {
-                        actionButton("pencil.tip.crop.circle", "Annotate") { onAction(.annotate) }
-                        actionButton("pin", "Pin to screen") { onAction(.pin) }
+                }
+                Spacer()
+                if hovering {
+                    HStack {
+                        CornerButton(symbol: "square.and.arrow.down", help: "Save") { onAction(.save) }
+                        Spacer()
+                        if capture.isVideo {
+                            CornerButton(symbol: "scissors", help: "Edit: trim, mute, export") { onAction(.editVideo) }
+                        } else {
+                            CornerButton(symbol: "pencil.tip.crop.circle", help: "Annotate") { onAction(.annotate) }
+                        }
                     }
                 }
             }
-            .padding(10)
-
-            Button { onAction(.close) } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 16))
-                    .symbolRenderingMode(.hierarchical)
-            }
-            .buttonStyle(.plain)
-            .padding(4)
-            .help("Close")
-            .accessibilityLabel("Close")
+            .padding(8)
+            .transition(.opacity)
         }
-        .frame(width: 260, height: 190)
-        .glassSurface(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .frame(width: size.width, height: size.height)
+        .clipShape(shape)
+        .overlay(shape.strokeBorder(.white.opacity(0.55), lineWidth: 1.5))
+        .overlay(shape.strokeBorder(.black.opacity(0.18), lineWidth: 0.5))
+        .contentShape(shape)
+        .onHover { inside in
+            if reduceMotion {
+                hovering = inside
+            } else {
+                withAnimation(.easeOut(duration: 0.15)) { hovering = inside }
+            }
+        }
+        .accessibilityElement(children: .contain)
     }
+}
 
-    private func actionButton(_ symbol: String, _ help: String, action: @escaping () -> Void) -> some View {
+/// A round dark-glass button for a corner of the Quick Access thumbnail.
+private struct CornerButton: View {
+    let symbol: String
+    let help: String
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .frame(maxWidth: .infinity, minHeight: 22)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 30, height: 30)
+                .hudSurface(cornerRadius: 15)
+                .scaleEffect(hovering ? 1.08 : 1)
+                .contentShape(Circle())
         }
-        .glassButtonStyle()
-        .controlSize(.small)
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.12), value: hovering)
         .help(help)
         .accessibilityLabel(help)
     }

@@ -78,6 +78,14 @@ A screenshot copied by the capture side lands on the pasteboard. The history sid
 | Keep it in the video | Marquee's windows are excluded from recordings, except the bubble (`SCContentFilter … exceptingWindows:`) | `Record/ScreenRecorder.swift` |
 | Voice file | The microphone is its own audio track; it's copied to an .m4a (`AVAssetExportSession`, AppleM4A) before tracks are mixed | `Record/AudioMixdown.swift` |
 
+## Editing recordings
+
+| Step | API | Marquee |
+|---|---|---|
+| Play and trim | `AVPlayerView` with `beginTrimming` (QuickTime's trim bar) | `Record/VideoEditor.swift` |
+| Export | `AVMutableComposition` of the kept range (sound optional) + `AVAssetExportSession` (passthrough, 1080p or 720p presets) | `VideoExport` |
+| Resolution while recording | Output size fitted inside 1920×1080 or 1280×720 | `ScreenRecorder.outputSize` (unit tested) |
+
 ## Measure
 
 | Step | API | Marquee |

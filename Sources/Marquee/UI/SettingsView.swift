@@ -334,6 +334,7 @@ private struct MeasureSettings: View {
 @MainActor
 private struct RecordingSettings: View {
     @AppStorage(Preferences.Key.recordFPS.rawValue) private var fps = 30
+    @AppStorage(Preferences.Key.recordResolution.rawValue) private var resolution = RecordResolution.original.rawValue
     @AppStorage(Preferences.Key.recordShowCursor.rawValue) private var showCursor = true
     @AppStorage(Preferences.Key.recordAudio.rawValue) private var desktopAudio = false
     @AppStorage(Preferences.Key.recordMicrophone.rawValue) private var micEnabled = false
@@ -385,6 +386,14 @@ private struct RecordingSettings: View {
                     .foregroundStyle(.secondary)
             }
             Section("Video") {
+                Picker("Resolution", selection: $resolution) {
+                    ForEach(RecordResolution.allCases) { Text($0.title).tag($0.rawValue) }
+                }
+                Text(resolution == RecordResolution.original.rawValue
+                     ? "Recordings keep your display's full sharpness (Retina is twice the size in points)."
+                     : "Recordings are scaled down to fit \(RecordResolution(rawValue: resolution)?.title ?? ""). Smaller files, still sharp for sharing.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Picker("Frame rate", selection: $fps) {
                     Text("30 fps").tag(30)
                     Text("60 fps").tag(60)

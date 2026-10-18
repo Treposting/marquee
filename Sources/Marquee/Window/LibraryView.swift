@@ -131,7 +131,9 @@ struct LibraryItemMenu: View {
         let library = CaptureLibrary.shared
         Button("Open") { library.open(item) }
         Button("Copy") { library.copy(item) }
-        if !item.isVideo {
+        if item.isVideo {
+            Button("Edit…") { VideoEditorController.edit(library.fileURL(for: item)) }
+        } else {
             Button("Annotate…") { library.annotate(item) }
         }
         Button("Show in Finder") { library.reveal(item) }

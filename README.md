@@ -37,6 +37,13 @@ A free, open-source menu-bar app for macOS that takes screenshots and screen rec
 
 ## What's new
 
+**0.5.15**
+- **Edit recordings.** Trim, remove the sound, and export as MP4 (original, 1080p or 720p) or GIF, from the ✂ on a recording's thumbnail or Library → Edit….
+- **Recording resolution.** Record at full Retina sharpness, 1080p or 720p.
+- **A new Quick Access thumbnail.** Hover for actions in its corners and Copy in the middle.
+- **A cleaner annotation editor** with one glass toolbar and single-key tools.
+- **About Marquee** shows who makes it, with a Buy Me a Coffee link.
+
 **0.5.14**
 - **Ignore apps in clipboard history.** Nothing copied in Passwords, Keychain Access or popular password managers is saved, even when the app doesn't mark it as private. Add any other app in **Settings → Clipboard → Ignored apps**, or right-click an item → **Ignore Copies from <App>**.
 
@@ -138,8 +145,8 @@ Press <kbd>⌥</kbd><kbd>⇧</kbd><kbd>⌘</kbd><kbd>A</kbd> and the toolbar app
 - **Scrolling capture** <sup>macOS 14+</sup>. Select the part that scrolls, then scroll down (or press **Auto-scroll**) and press **Done**: Marquee stitches one long screenshot. Fixed headers and bottom bars appear once. Start it from All-in-One (Screenshot → Scrolling, or press S), the menu, Home, or a shortcut you set. Auto-scroll needs the Accessibility permission.
 - **Self-timer.** Captures the full screen after 5 seconds.
 - **Copy text (OCR).** Select part of the screen and the text in it goes to your clipboard. It uses Apple's Vision framework on your Mac.
-- **Quick Access overlay.** A thumbnail appears after each capture. Copy it, save it, annotate it, pin it, or drag it straight into Slack, Mail or Finder.
-- **Annotate.** Add arrows, rectangles, ellipses, freehand pen, highlights, text and numbered steps. Pixelate anything sensitive.
+- **Quick Access overlay.** A thumbnail appears after each capture. Hover it for actions in its corners (close, pin, save, annotate) and Copy in the middle, or drag it straight into Slack, Mail or Finder.
+- **Annotate.** Add arrows, rectangles, ellipses, freehand pen, highlights, text and numbered steps. Pixelate anything sensitive. One-key tools: A, R, O, P, H, T, N, X.
 - **Pin to screen.** Keep a screenshot floating above every window.
 
 ### Record
@@ -150,6 +157,8 @@ Press <kbd>⌥</kbd><kbd>⇧</kbd><kbd>⌘</kbd><kbd>A</kbd> and the toolbar app
 - **Your voice as its own file.** Turn on **Also Save My Voice as a Separate File** (microphone menu or Settings → Recording) and your microphone is saved as an .m4a next to the video, for editing.
 - **Camera bubble.** Show yourself in the recording with any connected camera (built-in, USB, capture card, virtual camera, iPhone or Desk View): pick a camera, a shape (circle, rounded, square, portrait), a size, a corner and a border, including yellow, blue, pink and rainbow glows, from the **Camera** menu on the recording toolbar or in Settings → Recording. Drag the bubble anywhere, even while recording.
 - **While recording:** a timer, the mic meter, Stop and Discard on the toolbar. The menu bar shows a blinking red dot with the elapsed time (`12s`, then `4:05`, then `1:04:05`); click it to stop. The cursor is optional.
+- **Edit recordings.** Trim the start and end, remove the sound, and export as MP4 (original, 1080p or 720p) or GIF, from the scissors on the thumbnail or Library → Edit….
+- **Resolution.** Record at your display's full Retina sharpness, or at 1080p or 720p for smaller files (Settings → Recording).
 - **Save as GIF** from the overlay with one click.
 
 ### Measure <sup>macOS 14+</sup>
@@ -384,6 +393,6 @@ The workflow updates `Info.plist` if the version changed, runs the tests, signs 
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE). Made by [Nahid Hassan Bulbul](https://github.com/0nahid) ([website](https://nahid.pages.dev/)). If Marquee helps you, you can [buy me a coffee](https://buymeacoffee.com/0nahid).
 
 Marquee is an independent project. It is built only on public Apple APIs and contains no code or assets from any commercial app.

@@ -40,6 +40,7 @@ enum Preferences {
         case recordVoiceSeparately
         case ignorePasswordManagers
         case ignoredApps
+        case recordResolution
     }
 
     static var defaults: UserDefaults { .standard }
@@ -74,6 +75,7 @@ enum Preferences {
             Key.autoPaste.rawValue: true,
             Key.monitorPaused.rawValue: false,
             Key.recordFPS.rawValue: 30,
+            Key.recordResolution.rawValue: RecordResolution.original.rawValue,
             Key.recordShowCursor.rawValue: true,
             Key.recordAudio.rawValue: false,
             Key.recordMicrophone.rawValue: false,
@@ -105,6 +107,9 @@ enum Preferences {
     static var linkPreviews: Bool { defaults.bool(forKey: Key.linkPreviews.rawValue) }
 
     static var recordFPS: Int { defaults.integer(forKey: Key.recordFPS.rawValue) == 60 ? 60 : 30 }
+    static var recordResolution: RecordResolution {
+        RecordResolution(rawValue: defaults.string(forKey: Key.recordResolution.rawValue) ?? "") ?? .original
+    }
     static var recordShowCursor: Bool { defaults.bool(forKey: Key.recordShowCursor.rawValue) }
     /// Record desktop audio (what the Mac plays).
     static var recordAudio: Bool {
@@ -177,5 +182,29 @@ enum Preferences {
     static var saveFolder: URL {
         let path = defaults.string(forKey: Key.saveFolder.rawValue) ?? defaultSaveFolder.path
         return URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)
+    }
+}
+
+/// The largest video size a recording is saved at. Original keeps Retina sharpness.
+enum RecordResolution: String, CaseIterable, Identifiable {
+    case original, hd1080, hd720
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .original: return "Original (Retina)"
+        case .hd1080: return "1080p"
+        case .hd720: return "720p"
+        }
+    }
+
+    /// The box a landscape video fits inside; portrait videos use it turned on its side.
+    var box: CGSize? {
+        switch self {
+        case .original: return nil
+        case .hd1080: return CGSize(width: 1920, height: 1080)
+        case .hd720: return CGSize(width: 1280, height: 720)
+        }
     }
 }

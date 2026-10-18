@@ -4,6 +4,17 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+## 0.5.15 — 2026-10-18
+
+### Added
+- **Edit recordings**: trim the start and end with the QuickTime trim bar, remove the sound, then copy the result or export it as MP4 (original size, 1080p or 720p) or GIF. Open the editor from the scissors on a recording's thumbnail, or right-click a recording in the Library → Edit….
+- **About Marquee**: the About panel (app menu, and now the menu bar menu) and the bottom of Home show who makes Marquee, with links to GitHub, the website and the source code, and a Buy Me a Coffee link (also in the menu bar menu and on the website).
+- **Recording resolution**: Settings → Recording → Video → Resolution: Original (Retina), 1080p or 720p, for smaller files.
+
+### Changed
+- **Quick Access thumbnail**: the capture fills the thumbnail, sized to its shape. Hover to see the actions around it: close and pin (Save as GIF for recordings) in the top corners, save and annotate (edit for recordings) in the bottom corners, and Copy in the middle.
+- **Annotate**: a cleaner editor. Tools, colors, three stroke sizes and undo sit on one glass toolbar; Copy, Save and Done on the right. Single keys pick tools (A arrow, R rectangle, O ellipse, P pen, H highlight, T text, N step, X pixelate). The image has rounded corners and a size and zoom readout.
+
 ## 0.5.14 — 2026-10-17
 
 ### Added

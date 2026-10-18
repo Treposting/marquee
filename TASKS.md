@@ -1,13 +1,13 @@
 # Tasks
 
-Status as of v0.5.14 (2026-10-17). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
+Status as of v0.5.15 (2026-10-18). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Done
 
 **Capture**
 - [x] Area, window, full screen, timed (5 s) and OCR capture through `/usr/sbin/screencapture`
 - [x] Scrolling capture (macOS 14+): select, scroll or Auto-scroll, stitched by row fingerprints; fixed headers/footers once
-- [x] Quick Access overlay: copy, save, annotate, pin, drag out
+- [x] Quick Access overlay: thumbnail sized to the capture; hover shows close/pin/save/annotate (GIF/edit for recordings) in the corners and Copy in the middle; drag out
 - [x] Annotation editor: arrows, shapes, pen, highlight, text, numbered steps, pixelate
 - [x] Pin screenshots above all windows
 - [x] All-in-One (⌥⇧⌘A): toolbar first; editable selection (redraw, move, resize, nudge, ⌫ for whole screen); Screenshot and Record repeat the last target, with an inline Area / Full Screen / Window / Scrolling picker; Copy (⌘C/⌃C), Copy Text, Pin, Color, Settings; keys ↩ F W S R ⇧F ⇧W T P C ,
@@ -18,6 +18,7 @@ Status as of v0.5.14 (2026-10-17). Project context and conventions are in [CLAUD
 - [x] Area / full screen / window to MP4 (H.264, 30/60 fps), optional cursor
 - [x] Microphone (any input, live level meter) and desktop audio, mixed into one track; optional separate voice .m4a
 - [x] Camera bubble: any connected camera (built-in, USB, capture card, virtual, iPhone, Desk View); shape, size, corner, border with glows, mirror; draggable; follows plug/unplug
+- [x] Video editor: trim (AVPlayerView trim bar), mute, copy, export MP4 original/1080p/720p or GIF; recording resolution Original/1080p/720p
 - [x] Recording toolbar; instant start or 3/5/10 s countdown; blinking menu-bar timer; GIF export
 
 **Tools**
@@ -52,6 +53,7 @@ Status as of v0.5.14 (2026-10-17). Project context and conventions are in [CLAUD
 
 Each release adds a "What's new" entry to README.md, a dated CHANGELOG section, and a line here.
 
+- **0.5.15:** video editor (trim, mute, export MP4/GIF); recording resolution; Quick Access hover corners; annotate redesign; About info and Buy Me a Coffee
 - **0.5.14:** ignore password managers, Keychain and chosen apps in clipboard history
 - **0.5.13:** Liquid Glass design across the whole app
 - **0.5.12:** updater installs into Applications from a disk image or protected copy; closes other running copies
@@ -76,6 +78,8 @@ Built and passing CI, but not yet tried by hand:
 - [ ] Scrolling capture: manual scroll and Auto-scroll on a long web page, a page with a sticky header, and a chat
 - [ ] Measure guides (H/V, drag, arrows, Tab, ⌫) and measuring on two displays at once
 - [ ] Color picker from the menu bar, a shortcut, Home and All-in-One: clicks and Esc work
+- [ ] Video editor: trim, mute, copy, export MP4 original/1080p/720p and GIF; recording at 1080p/720p
+- [ ] Quick Access hover corners and the new annotate toolbar (color dots show their colors on glass)
 - [ ] Clipboard panel: Magic Mouse scrolling over a browser, click to paste, closing rules, categories, link and file previews
 - [ ] Ignored apps: copies from Passwords and an added app aren't saved; "Ignore and Delete Its Items"
 - [ ] Liquid Glass pages in light and dark mode, and on macOS 13–15 (material fallbacks)

@@ -118,6 +118,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(actionItem(.clipboardHistory))
         menu.addItem(.separator())
         menu.addItem(item("Settings…", #selector(openSettings), key: ","))
+        menu.addItem(item("About Marquee", #selector(showAbout)))
+        menu.addItem(item("Buy Me a Coffee…", #selector(buyMeACoffee)))
         if Updater.shared.isReadyToInstall {
             menu.addItem(item("Restart to Update", #selector(restartToUpdate)))
         } else {
@@ -161,9 +163,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         WindowManager.shared.showMain(.settings)
     }
 
+    @objc private func buyMeACoffee() {
+        NSWorkspace.shared.open(AppInfo.buyMeACoffee)
+    }
+
     @objc private func showAbout() {
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.orderFrontStandardAboutPanel(nil)
+        AppInfo.showAboutPanel()
     }
 
     @objc private func quit() { NSApp.terminate(nil) }

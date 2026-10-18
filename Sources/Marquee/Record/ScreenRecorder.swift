@@ -50,7 +50,8 @@ final class ScreenRecorder {
             height: rect.height
         ).integral
 
-        let (width, height) = Self.outputSize(for: local.size, backingScale: screen.backingScaleFactor)
+        let (width, height) = Self.outputSize(for: local.size, backingScale: screen.backingScaleFactor,
+                                              resolution: Preferences.recordResolution)
         let fps = Preferences.recordFPS
         let captureAudio = desktopAudio
 
@@ -140,11 +141,18 @@ final class ScreenRecorder {
 
     /// Pixel size of the video: Retina resolution, but kept within H.264's
     /// 4096×2304 hardware-encoder limit, and even in both dimensions.
-    private static func outputSize(for size: CGSize, backingScale: CGFloat) -> (Int, Int) {
+    /// Also fits the chosen resolution (1080p, 720p); never scales up past Retina size.
+    nonisolated static func outputSize(for size: CGSize, backingScale: CGFloat,
+                           resolution: RecordResolution = .original) -> (Int, Int) {
         let landscape = size.width >= size.height
         let maxW: CGFloat = landscape ? 4096 : 2304
         let maxH: CGFloat = landscape ? 2304 : 4096
-        let scale = min(backingScale, maxW / max(size.width, 1), maxH / max(size.height, 1))
+        var scale = min(backingScale, maxW / max(size.width, 1), maxH / max(size.height, 1))
+        if let box = resolution.box {
+            let boxW = landscape ? box.width : box.height
+            let boxH = landscape ? box.height : box.width
+            scale = min(scale, boxW / max(size.width, 1), boxH / max(size.height, 1))
+        }
         func even(_ v: CGFloat) -> Int { max(2, Int(v) / 2 * 2) }
         return (even(size.width * scale), even(size.height * scale))
     }
