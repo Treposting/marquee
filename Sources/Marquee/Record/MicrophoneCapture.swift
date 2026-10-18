@@ -32,6 +32,15 @@ final class MicrophoneCapture: NSObject, AVCaptureAudioDataOutputSampleBufferDel
     private var _sink: ((CMSampleBuffer) -> Void)?
     private(set) var deviceName: String?
 
+    private var _muted = false
+
+    /// While muted, silence is recorded in place of the microphone, so the voice track keeps
+    /// its timing and the video stays in sync.
+    var muted: Bool {
+        get { lock.lock(); defer { lock.unlock() }; return _muted }
+        set { lock.lock(); _muted = newValue; lock.unlock() }
+    }
+
     /// Receives re-timed sample buffers while recording. Called on a private queue.
     var sink: ((CMSampleBuffer) -> Void)? {
         get { lock.lock(); defer { lock.unlock() }; return _sink }
@@ -124,7 +133,29 @@ final class MicrophoneCapture: NSObject, AVCaptureAudioDataOutputSampleBufferDel
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let sink else { return }
-        sink(retimedToHostClock(sampleBuffer) ?? sampleBuffer)
+        let buffer = retimedToHostClock(sampleBuffer) ?? sampleBuffer
+        sink(muted ? (Self.silenced(buffer) ?? buffer) : buffer)
+    }
+
+    /// A copy of an audio buffer with the same format and timing, but silent.
+    private static func silenced(_ buffer: CMSampleBuffer) -> CMSampleBuffer? {
+        guard let format = CMSampleBufferGetFormatDescription(buffer),
+              let source = CMSampleBufferGetDataBuffer(buffer) else { return nil }
+        let length = CMBlockBufferGetDataLength(source)
+        var block: CMBlockBuffer?
+        guard CMBlockBufferCreateWithMemoryBlock(allocator: kCFAllocatorDefault, memoryBlock: nil, blockLength: length,
+                                                 blockAllocator: kCFAllocatorDefault, customBlockSource: nil,
+                                                 offsetToData: 0, dataLength: length,
+                                                 flags: kCMBlockBufferAssureMemoryNowFlag, blockBufferOut: &block) == noErr,
+              let block, CMBlockBufferFillDataBytes(with: 0, blockBuffer: block, offsetIntoDestination: 0, dataLength: length) == noErr
+        else { return nil }
+        var silent: CMSampleBuffer?
+        let status = CMAudioSampleBufferCreateReadyWithPacketDescriptions(
+            allocator: kCFAllocatorDefault, dataBuffer: block, formatDescription: format,
+            sampleCount: CMSampleBufferGetNumSamples(buffer),
+            presentationTimeStamp: CMSampleBufferGetPresentationTimeStamp(buffer),
+            packetDescriptions: nil, sampleBufferOut: &silent)
+        return status == noErr ? silent : nil
     }
 
     /// Capture timestamps use the session's clock (often the audio device's own clock);

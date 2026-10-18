@@ -65,7 +65,7 @@ final class Capture: ObservableObject, Identifiable {
         }
     }
 
-    static func fileName(for date: Date, suffix: String = "", ext: String = "png") -> String {
+    nonisolated static func fileName(for date: Date, suffix: String = "", ext: String = "png") -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"

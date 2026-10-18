@@ -24,7 +24,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         recording.onFinished = { [weak self] url in self?.deliverRecording(url) }
         recording.onError = { [weak self] error in self?.showRecordingError(error) }
         ScrollCaptureController.shared.onFinished = { [weak self] url in self?.handleCapture(at: url) }
-        Updater.shared.onStateChange = { [weak self] in self?.rebuildMenu() }
+        UpdateNotifier.setUp()
+        Updater.shared.onStateChange = { [weak self] in
+            self?.rebuildMenu()
+            self?.updateBadge()
+        }
         Updater.shared.startAutomaticChecks()
 
         installMainMenu()
@@ -106,6 +110,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The menu-bar menu keeps the quick actions; everything else is in the Marquee window.
     private func rebuildMenu() {
         let menu = NSMenu()
+        if Updater.shared.hasUpdate, let version = Updater.shared.latestVersion {
+            let update = item(Updater.shared.isReadyToInstall ? "Restart to Update to Marquee \(version)"
+                                                               : "Update Available: Marquee \(version)…",
+                              Updater.shared.isReadyToInstall ? #selector(restartToUpdate) : #selector(showUpdate))
+            update.image = Self.redDot
+            menu.addItem(update)
+            menu.addItem(.separator())
+        }
         menu.addItem(item("Open Marquee", #selector(openMainWindow)))
         menu.addItem(.separator())
         for action: ShortcutAction in [.allInOne, .captureArea, .captureWindow, .captureFullscreen, .captureScrolling] {
@@ -161,6 +173,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openSettings() {
         WindowManager.shared.showMain(.settings)
+    }
+
+    @objc private func showUpdate() { Updater.shared.showWindow() }
+
+    private static var redDot: NSImage {
+        let image = NSImage(size: NSSize(width: 10, height: 10), flipped: false) { rect in
+            NSColor.systemRed.setFill()
+            NSBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1)).fill()
+            return true
+        }
+        image.isTemplate = false
+        return image
+    }
+
+    /// A small red dot on the menu bar icon while an update is waiting. It's a layer on the
+    /// button, so the icon itself keeps following the menu bar's light or dark look.
+    private func updateBadge() {
+        guard let button = statusItem.button else { return }
+        button.wantsLayer = true
+        let name = "updateDot"
+        let existing = button.layer?.sublayers?.first { $0.name == name }
+        let show = Updater.shared.hasUpdate && !RecordingController.shared.isRecording
+        guard show else {
+            existing?.removeFromSuperlayer()
+            button.setAccessibilityLabel("Marquee")
+            return
+        }
+        let dot = existing ?? CALayer()
+        dot.name = name
+        dot.backgroundColor = NSColor.systemRed.cgColor
+        dot.borderColor = NSColor.windowBackgroundColor.cgColor
+        dot.borderWidth = 1
+        let size: CGFloat = 7
+        dot.frame = CGRect(x: button.bounds.maxX - size - 2, y: button.bounds.maxY - size - 3, width: size, height: size)
+        dot.cornerRadius = size / 2
+        if existing == nil { button.layer?.addSublayer(dot) }
+        button.setAccessibilityLabel("Marquee, update available")
     }
 
     @objc private func buyMeACoffee() {
@@ -368,6 +417,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem.button else { return }
         recordingTimer?.invalidate()
         recordingTimer = nil
+        if recording { button.layer?.sublayers?.first { $0.name == "updateDot" }?.removeFromSuperlayer() }
         if recording {
             statusItem.menu = nil
             recordingDotVisible = true
@@ -387,6 +437,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = Self.idleIcon
             button.title = ""
             button.toolTip = nil
+            updateBadge()
             button.action = nil
             button.target = nil
             statusItem.menu = mainMenu

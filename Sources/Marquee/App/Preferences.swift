@@ -41,6 +41,7 @@ enum Preferences {
         case ignorePasswordManagers
         case ignoredApps
         case recordResolution
+        case notifyUpdates
     }
 
     static var defaults: UserDefaults { .standard }
@@ -82,6 +83,7 @@ enum Preferences {
             Key.recordCountdownSeconds.rawValue: 3,
             Key.measureTolerance.rawValue: 12,
             Key.autoCheckUpdates.rawValue: true,
+            Key.notifyUpdates.rawValue: true,
             Key.hasCompletedOnboarding.rawValue: false,
             Key.keepLibrary.rawValue: true,
             Key.menuBarIcon.rawValue: "camera.viewfinder",
@@ -153,6 +155,8 @@ enum Preferences {
 
     static var measureTolerance: Int { min(max(0, defaults.integer(forKey: Key.measureTolerance.rawValue)), 64) }
     static var autoCheckUpdates: Bool { defaults.bool(forKey: Key.autoCheckUpdates.rawValue) }
+    /// A notification when a new version is found in the background.
+    static var notifyUpdates: Bool { defaults.bool(forKey: Key.notifyUpdates.rawValue) }
     /// Keep a copy of every screenshot and recording in the Library.
     static var keepLibrary: Bool { defaults.bool(forKey: Key.keepLibrary.rawValue) }
 

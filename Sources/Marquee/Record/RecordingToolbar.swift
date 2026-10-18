@@ -24,6 +24,9 @@ final class RecordingSession: ObservableObject {
     @Published var cameraEnabled = false
     @Published var cameraName = "No camera"
     @Published var cameraProblem: String?
+    /// Mid-recording: the microphone records silence, or the camera bubble is hidden.
+    @Published var micMuted = false
+    @Published var cameraHidden = false
     let sizeLabel: String
 
     init(micEnabled: Bool, micID: String?, desktopAudio: Bool, separateVoice: Bool, sizeLabel: String) {
@@ -46,6 +49,8 @@ struct RecordingToolbar: View {
         var showMicMenu: () -> Void
         var toggleDesktopAudio: () -> Void
         var showCameraMenu: () -> Void
+        var toggleMicMute: () -> Void
+        var toggleCamera: () -> Void
     }
 
     @ObservedObject var session: RecordingSession
@@ -173,23 +178,45 @@ struct RecordingToolbar: View {
             Text(ElapsedTime.format(session.elapsed))
                 .font(.system(size: 14, weight: .semibold, design: .monospaced))
                 .monospacedDigit()
+                .lineLimit(1)
+                .fixedSize()
         }
         .padding(.horizontal, 10)
 
         if session.micEnabled {
-            HStack(spacing: 6) {
-                Image(systemName: "mic.fill").font(.system(size: 12, weight: .semibold))
-                LevelMeter(level: session.micLevel)
+            Button(action: actions.toggleMicMute) {
+                HStack(spacing: 6) {
+                    Image(systemName: session.micMuted ? "mic.slash.fill" : "mic.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(session.micMuted ? recordRed : Color.white)
+                        .frame(width: 14)
+                    LevelMeter(level: session.micMuted ? 0 : session.micLevel)
+                }
+                .padding(.horizontal, 8)
+                .frame(height: 34)
+                .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(session.micMuted ? recordRed.opacity(0.18) : Color.white.opacity(0.07)))
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 6)
-            .help(session.separateVoice ? "\(session.micName). Your voice is also saved as its own file." : session.micName)
+            .buttonStyle(.plain)
+            .help(session.micMuted ? "Microphone muted. Click to unmute" : "Mute the microphone (silence is recorded)")
+            .accessibilityLabel(session.micMuted ? "Unmute microphone" : "Mute microphone")
         }
         if session.cameraEnabled {
-            Image(systemName: "video.fill")
-                .font(.system(size: 12, weight: .semibold))
-                .padding(.horizontal, 6)
-                .help("Recording your camera")
+            Button(action: actions.toggleCamera) {
+                Image(systemName: session.cameraHidden ? "video.slash.fill" : "video.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(session.cameraHidden ? recordRed : Color.white)
+                    .frame(width: 34, height: 34)
+                    .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(session.cameraHidden ? recordRed.opacity(0.18) : Color.white.opacity(0.07)))
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .help(session.cameraHidden ? "Camera hidden. Click to show it again" : "Hide the camera from the recording")
+            .accessibilityLabel(session.cameraHidden ? "Show camera" : "Hide camera")
         }
+
         if session.desktopAudio {
             Image(systemName: "speaker.wave.2.fill")
                 .font(.system(size: 12, weight: .semibold))
@@ -199,15 +226,15 @@ struct RecordingToolbar: View {
 
         ToolbarDivider()
 
+        // Icon only, so the bar keeps its size however long the recording gets.
         Button(action: actions.stop) {
-            HStack(spacing: 7) {
-                RoundedRectangle(cornerRadius: 2.5).fill(.white).frame(width: 9, height: 9)
-                Text("Stop").fontWeight(.semibold)
-            }
+            RoundedRectangle(cornerRadius: 2.5).fill(.white).frame(width: 11, height: 11)
+                .frame(width: 18)
         }
         .buttonStyle(RecordButtonStyle())
         .keyboardShortcut(.defaultAction)
-        .help("Stop and save")
+        .help("Stop and save (Return)")
+        .accessibilityLabel("Stop and save")
 
         IconButton(symbol: "trash", help: "Discard this recording", action: actions.discard)
     }

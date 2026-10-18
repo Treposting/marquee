@@ -83,7 +83,9 @@ A screenshot copied by the capture side lands on the pasteboard. The history sid
 | Step | API | Marquee |
 |---|---|---|
 | Play and trim | `AVPlayerView` with `beginTrimming` (QuickTime's trim bar) | `Record/VideoEditor.swift` |
-| Export | `AVMutableComposition` of the kept range (sound optional) + `AVAssetExportSession` (passthrough, 1080p or 720p presets) | `VideoExport` |
+| Cut sections | Kept pieces (trim minus cuts) inserted back to back into an `AVMutableComposition`; text times remapped around cuts | `Record/VideoEdit.swift` (unit tested) |
+| Text on video | Each overlay drawn into an image, shown by `AVVideoCompositionCoreAnimationTool` with timed opacity | `VideoExport.textLayer` |
+| Export | `AVAssetExportSession`: passthrough when nothing is drawn, otherwise re-encoded; 1080p or 720p presets | `VideoExport` |
 | Resolution while recording | Output size fitted inside 1920×1080 or 1280×720 | `ScreenRecorder.outputSize` (unit tested) |
 
 ## Measure

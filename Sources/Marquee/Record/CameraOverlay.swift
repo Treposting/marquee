@@ -147,6 +147,28 @@ enum CameraStyle {
         return CGSize(width: (height * shape.aspect).rounded(), height: height)
     }
 
+    /// A bubble resized in place: it keeps its distance from the corner of `area` it's closest
+    /// to (so it doesn't grow off an edge), then is kept inside `area`.
+    static func resized(_ bubble: CGRect, to size: CGSize, in area: CGRect) -> CGRect {
+        let left = bubble.midX < area.midX
+        let bottom = bubble.midY < area.midY
+        let x = left ? bubble.minX : bubble.maxX - size.width
+        let y = bottom ? bubble.minY : bubble.maxY - size.height
+        return clamped(CGRect(origin: CGPoint(x: x, y: y), size: size), in: area)
+    }
+
+    /// The bubble moved back inside `area` if any part of it sticks out.
+    static func clamped(_ bubble: CGRect, in area: CGRect) -> CGRect {
+        guard area.width >= bubble.width, area.height >= bubble.height else {
+            return CGRect(x: area.midX - bubble.width / 2, y: area.midY - bubble.height / 2,
+                          width: bubble.width, height: bubble.height)
+        }
+        var rect = bubble
+        rect.origin.x = min(max(rect.minX, area.minX), area.maxX - rect.width)
+        rect.origin.y = min(max(rect.minY, area.minY), area.maxY - rect.height)
+        return rect
+    }
+
     /// Where the bubble goes inside `area` (global AppKit coordinates).
     static func frame(in area: CGRect, size: CGSize, position: Position, margin: CGFloat = 24) -> CGRect {
         let x = position.isLeft ? area.minX + margin : area.maxX - margin - size.width
@@ -253,6 +275,8 @@ final class CameraBubble {
     private var area: CGRect = .zero
     private var defaultsObserver: NSObjectProtocol?
     private var camerasObserver: NSObjectProtocol?
+    /// The corner last applied, so a change in Settings moves the bubble right away.
+    private var appliedPosition: CameraStyle.Position?
 
     /// Called when the camera in use was unplugged: with the new camera's name, or nil if
     /// there's none left and the bubble was hidden.
@@ -304,6 +328,7 @@ final class CameraBubble {
     }
 
     func hide() {
+        appliedPosition = nil
         feed.stop()
         panel?.orderOut(nil)
         panel = nil
@@ -327,11 +352,17 @@ final class CameraBubble {
         }
     }
 
+    /// Hides or shows the bubble without stopping the camera. A hidden bubble isn't recorded.
+    func setHidden(_ hidden: Bool) {
+        if hidden { panel?.orderOut(nil) } else { panel?.orderFrontRegardless() }
+    }
+
     /// Moves the bubble to a corner of the recording area.
     func move(to position: CameraStyle.Position) {
         guard let panel else { return }
         let bubble = CameraStyle.frame(in: area, size: CameraStyle.bubbleSize, position: position)
         panel.setFrame(bubble.insetBy(dx: -CameraStyle.halo, dy: -CameraStyle.halo), display: true)
+        appliedPosition = position
     }
 
     private func makePanel() {
@@ -353,19 +384,24 @@ final class CameraBubble {
 
     /// Applies shape, size, border and mirroring. Size changes keep the bubble's centre unless
     /// it's being placed for the first time.
+    /// Applies the current settings right away, also mid-recording: a new corner moves the
+    /// bubble there; a new size or shape keeps it in its corner and inside the recording area.
     private func applyStyle(reposition: Bool) {
         guard let panel, let view else { return }
         let halo = CameraStyle.halo
-        let bubble = CameraStyle.bubbleSize
-        let size = CGSize(width: bubble.width + halo * 2, height: bubble.height + halo * 2)
-        var frame = panel.frame
-        if reposition {
-            frame = CameraStyle.frame(in: area, size: bubble, position: CameraStyle.position).insetBy(dx: -halo, dy: -halo)
-        } else if frame.size != size {
-            frame = CGRect(x: frame.midX - size.width / 2, y: frame.midY - size.height / 2,
-                           width: size.width, height: size.height)
+        let size = CameraStyle.bubbleSize
+        let position = CameraStyle.position
+        let current = panel.frame.insetBy(dx: halo, dy: halo)
+        let bubble: CGRect
+        if reposition || position != appliedPosition {
+            bubble = CameraStyle.frame(in: area, size: size, position: position)
+        } else if current.size != size {
+            bubble = CameraStyle.resized(current, to: size, in: area)
+        } else {
+            bubble = CameraStyle.clamped(current, in: area)
         }
-        panel.setFrame(frame, display: true)
+        appliedPosition = position
+        if bubble != current { panel.setFrame(bubble.insetBy(dx: -halo, dy: -halo), display: true) }
         view.apply(shape: CameraStyle.shape, border: CameraStyle.border, mirror: CameraStyle.mirror)
     }
 

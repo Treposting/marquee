@@ -257,11 +257,17 @@ private struct MenuBarIconSection: View {
 @MainActor
 private struct UpdatesSection: View {
     @AppStorage(Preferences.Key.autoCheckUpdates.rawValue) private var autoCheck = true
+    @AppStorage(Preferences.Key.notifyUpdates.rawValue) private var notify = true
     @ObservedObject private var updater = Updater.shared
 
     var body: some View {
         Section("Updates") {
             Toggle("Check for updates automatically", isOn: $autoCheck)
+            Toggle("Notify me when an update is available", isOn: $notify)
+                .disabled(!autoCheck)
+            Text("Marquee looks for a new version every hour. When there is one, the menu bar icon gets a red dot.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             HStack {
                 Text("Version \(updater.currentVersion)")
                     .foregroundStyle(.secondary)
@@ -367,7 +373,7 @@ private struct RecordingSettings: View {
                 }
                 Toggle("Record desktop audio", isOn: $desktopAudio)
                 Toggle("Also save my voice as a separate file", isOn: $separateVoice)
-                Text("Desktop audio is what your Mac plays: videos, calls, music. When both are on, they're mixed into one soundtrack. Your voice can also be saved on its own, as an .m4a file in your screenshots folder, for editing. You can change all of this on the recording toolbar too.")
+                Text("Desktop audio is what your Mac plays: videos, calls, music. When both are on, they're mixed into one soundtrack. Your voice can also be saved on its own for editing: the video and the voice (.m4a) go into one folder in your screenshots folder, named alike. You can change all of this on the recording toolbar too.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

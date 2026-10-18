@@ -17,8 +17,8 @@ final class AnnotationWindowController: NSObject, NSWindowDelegate {
 
     func present() {
         let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let width = min(max(document.size.width + 80, 940), screen.width * 0.88)
-        let height = min(max(document.size.height + 150, 560), screen.height * 0.88)
+        let width = min(max(document.size.width + 80, 860), screen.width * 0.88)
+        let height = min(max(document.size.height + 180, 560), screen.height * 0.88)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: width, height: height),
@@ -29,7 +29,7 @@ final class AnnotationWindowController: NSObject, NSWindowDelegate {
         // The floating glass toolbar takes the place of a title bar.
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
-        window.minSize = NSSize(width: 940, height: 520)
+        window.minSize = NSSize(width: 820, height: 520)
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.contentViewController = NSHostingController(rootView: AnnotationEditorView(
@@ -39,7 +39,7 @@ final class AnnotationWindowController: NSObject, NSWindowDelegate {
             onDone: { [weak self] in self?.finish() }
         ))
         window.setContentSize(NSSize(width: width, height: height))
-        window.center()
+        window.centerOnActiveScreen()
         self.window = window
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
@@ -103,55 +103,74 @@ struct AnnotationEditorView: View {
     /// Stroke sizes offered as three dots.
     private static let widths: [CGFloat] = [3, 6, 11]
 
-    /// Room above the canvas for the floating toolbar.
-    private static let toolbarClearance: CGFloat = 72
+    /// Room above and below the canvas for the floating bars.
+    private static let topClearance: CGFloat = 72
+    private static let bottomClearance: CGFloat = 64
 
     var body: some View {
         // The canvas fills the window; the controls float over it on glass, as in macOS 26/27.
-        ZStack(alignment: .top) {
+        // Tools sit on top, and the size and Copy / Save / Done along the bottom, so every
+        // control fits however small the image is.
+        ZStack {
             GeometryReader { geo in
                 let size = document.size
-                let available = CGSize(width: geo.size.width - 64, height: geo.size.height - Self.toolbarClearance - 64)
+                let available = CGSize(width: geo.size.width - 64,
+                                       height: geo.size.height - Self.topClearance - Self.bottomClearance - 8)
                 let scale = max(min(1, available.width / size.width, available.height / size.height), 0.05)
-                ZStack {
-                    canvas(scale: scale)
-                        .frame(width: size.width * scale, height: size.height * scale)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.black.opacity(0.12)))
-                        .shadow(color: .black.opacity(0.22), radius: 18, y: 6)
-                        .position(x: geo.size.width / 2,
-                                  y: Self.toolbarClearance + (geo.size.height - Self.toolbarClearance - 40) / 2)
-
-                    Text("\(Int(size.width)) × \(Int(size.height))  ·  \(Int((scale * 100).rounded()))%")
-                        .font(.system(size: 11, weight: .medium).monospacedDigit())
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 12)
-                        .frame(height: 24)
-                        .glassSurface(Capsule())
-                        .position(x: geo.size.width / 2, y: geo.size.height - 22)
-                        .accessibilityLabel("Image \(Int(size.width)) by \(Int(size.height)), shown at \(Int((scale * 100).rounded())) percent")
-                }
+                canvas(scale: scale)
+                    .frame(width: size.width * scale, height: size.height * scale)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(.black.opacity(0.12)))
+                    .shadow(color: .black.opacity(0.22), radius: 18, y: 6)
+                    .position(x: geo.size.width / 2,
+                              y: Self.topClearance + (geo.size.height - Self.topClearance - Self.bottomClearance) / 2)
+                    .overlay(alignment: .bottom) {
+                        HStack(spacing: 12) {
+                            Text("\(Int(size.width)) × \(Int(size.height))  ·  \(Int((scale * 100).rounded()))%")
+                                .font(.system(size: 11, weight: .medium).monospacedDigit())
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 12)
+                                .frame(height: 28)
+                                .glassSurface(Capsule())
+                                .accessibilityLabel("Image \(Int(size.width)) by \(Int(size.height)), shown at \(Int((scale * 100).rounded())) percent")
+                            Spacer(minLength: 8)
+                            actions
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 14)
+                    }
             }
             .background(
                 LinearGradient(colors: [Color(nsColor: .underPageBackgroundColor), Color(nsColor: .windowBackgroundColor)],
                                startPoint: .top, endPoint: .bottom)
             )
 
-            HStack(alignment: .center, spacing: 12) {
-                // Room for the window's close, minimize and zoom buttons.
-                Color.clear.frame(width: 64, height: 1)
-                Spacer(minLength: 0)
-                tools
-                Spacer(minLength: 0)
-                actions
+            VStack {
+                HStack(spacing: 12) {
+                    // Room for the window's close, minimize and zoom buttons.
+                    Color.clear.frame(width: 64, height: 1)
+                    Spacer(minLength: 0)
+                    tools
+                    Spacer(minLength: 0)
+                    Color.clear.frame(width: 64, height: 1)
+                }
+                .padding(.top, 12)
+                .padding(.horizontal, 14)
+                Spacer()
             }
-            .padding(.top, 12)
-            .padding(.horizontal, 14)
+
+            // ⌫ removes the selected shape.
+            Button("Delete") { document.deleteSelected() }
+                .keyboardShortcut(.delete, modifiers: [])
+                .disabled(document.selectedID == nil)
+                .opacity(0)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
         }
-        .frame(minWidth: 940, minHeight: 520)
+        .frame(minWidth: 820, minHeight: 520)
     }
 
-    /// Tools, colors, stroke sizes and undo, on one glass capsule.
+    /// Tools, then what applies to the current tool, then undo, on one glass capsule.
     private var tools: some View {
         HStack(spacing: 10) {
             HStack(spacing: 2) {
@@ -160,44 +179,13 @@ struct AnnotationEditorView: View {
                 }
             }
             divider
-            HStack(spacing: 5) {
-                ForEach(Self.swatches) { swatch in
-                    Button { document.color = swatch.color } label: {
-                        Circle()
-                            .fill(swatch.color)
-                            .frame(width: 16, height: 16)
-                            .overlay(Circle().strokeBorder(.black.opacity(0.18), lineWidth: 0.5))
-                            .padding(3)
-                            .overlay(Circle().strokeBorder(Color.accentColor, lineWidth: document.color == swatch.color ? 2 : 0))
-                            .contentShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(swatch.name)
-                    .accessibilityLabel(swatch.name)
-                    .accessibilityAddTraits(document.color == swatch.color ? .isSelected : [])
-                }
-                ColorPicker("Custom color", selection: $document.color)
-                    .labelsHidden()
-                    .frame(width: 26)
-                    .help("Custom color")
-            }
-            divider
-            HStack(spacing: 2) {
-                ForEach(Self.widths, id: \.self) { width in
-                    let selected = abs(document.lineWidth - width) < 0.5
-                    Button { document.lineWidth = width } label: {
-                        Circle()
-                            .fill(Color.primary.opacity(selected ? 0.9 : 0.45))
-                            .frame(width: 4 + width * 0.9, height: 4 + width * 0.9)
-                            .frame(width: 26, height: 30)
-                            .background(Circle().fill(Color.accentColor.opacity(selected ? 0.2 : 0)).frame(width: 26, height: 26))
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(width < 4 ? "Thin" : width < 8 ? "Medium" : "Thick")
-                    .accessibilityLabel(width < 4 ? "Thin" : width < 8 ? "Medium" : "Thick")
-                    .accessibilityAddTraits(selected ? .isSelected : [])
-                }
+            switch document.tool {
+            case .pixelate:
+                redactStyles
+            case .select:
+                selectOptions
+            default:
+                colorsAndSizes
             }
             divider
             HStack(spacing: 2) {
@@ -212,6 +200,83 @@ struct AnnotationEditorView: View {
         .padding(.horizontal, 10)
         .frame(height: 46)
         .glassSurface(Capsule())
+        .animation(.easeOut(duration: 0.15), value: document.tool)
+    }
+
+    @ViewBuilder
+    private var colorsAndSizes: some View {
+        HStack(spacing: 5) {
+            ForEach(Self.swatches) { swatch in
+                Button { document.color = swatch.color } label: {
+                    Circle()
+                        .fill(swatch.color)
+                        .frame(width: 16, height: 16)
+                        .overlay(Circle().strokeBorder(.black.opacity(0.18), lineWidth: 0.5))
+                        .padding(3)
+                        .overlay(Circle().strokeBorder(Color.accentColor, lineWidth: document.color == swatch.color ? 2 : 0))
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .help(swatch.name)
+                .accessibilityLabel(swatch.name)
+                .accessibilityAddTraits(document.color == swatch.color ? .isSelected : [])
+            }
+            ColorPicker("Custom color", selection: $document.color)
+                .labelsHidden()
+                .frame(width: 26)
+                .help("Custom color")
+        }
+        divider
+        HStack(spacing: 2) {
+            ForEach(Self.widths, id: \.self) { width in
+                let selected = abs(document.lineWidth - width) < 0.5
+                Button { document.lineWidth = width } label: {
+                    Circle()
+                        .fill(Color.primary.opacity(selected ? 0.9 : 0.45))
+                        .frame(width: 4 + width * 0.9, height: 4 + width * 0.9)
+                        .frame(width: 26, height: 30)
+                        .background(Circle().fill(Color.accentColor.opacity(selected ? 0.2 : 0)).frame(width: 26, height: 26))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(width < 4 ? "Thin" : width < 8 ? "Medium" : "Thick")
+                .accessibilityLabel(width < 4 ? "Thin" : width < 8 ? "Medium" : "Thick")
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+        }
+    }
+
+    /// Pixelate, smooth blur or a solid block. Changing it restyles the selected redaction.
+    private var redactStyles: some View {
+        HStack(spacing: 4) {
+            ForEach(RedactStyle.allCases) { style in
+                let on = document.redactStyle == style
+                Button { document.redactStyle = style } label: {
+                    Label(style.title, systemImage: style.symbol)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(on ? Color.white : Color.primary)
+                        .padding(.horizontal, 10)
+                        .frame(height: 30)
+                        .background(Capsule().fill(on ? Color.accentColor : Color.primary.opacity(0.06)))
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .help(style.help)
+                .accessibilityAddTraits(on ? .isSelected : [])
+            }
+        }
+        .fixedSize()
+    }
+
+    private var selectOptions: some View {
+        HStack(spacing: 8) {
+            Text(document.selectedID == nil ? "Click a shape to move it" : "Drag to move, corners to resize")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .fixedSize()
+            IconButton(symbol: "trash", help: "Delete the selected shape (⌫)") { document.deleteSelected() }
+                .disabled(document.selectedID == nil)
+        }
     }
 
     /// Copy, Save… and Done.
@@ -243,12 +308,29 @@ struct AnnotationEditorView: View {
     private func canvas(scale: CGFloat) -> some View {
         let size = document.size
         let base = Image(nsImage: document.baseImage)
-        let pixelated = Image(nsImage: document.pixelated)
+        let hidden = document.hidden
         let annotations = document.visibleAnnotations
+        let selected = document.selected
         return Canvas { ctx, _ in
             ctx.scaleBy(x: scale, y: scale)
             ctx.draw(base, in: CGRect(origin: .zero, size: size))
-            AnnotationRenderer.draw(annotations, in: ctx, imageSize: size, pixelated: pixelated)
+            AnnotationRenderer.draw(annotations, in: ctx, imageSize: size, hidden: hidden)
+            // The selected shape's outline and corner handles. Editor only, never exported.
+            if let selected {
+                let box = selected.bounds.insetBy(dx: -4 / scale, dy: -4 / scale)
+                ctx.stroke(Path(box), with: .color(.accentColor),
+                           style: StrokeStyle(lineWidth: 1.5 / scale, dash: [5 / scale, 3 / scale]))
+                if selected.isBoxShaped {
+                    let r = selected.rect
+                    let handle = 9 / scale
+                    for corner in [CGPoint(x: r.minX, y: r.minY), CGPoint(x: r.maxX, y: r.minY),
+                                   CGPoint(x: r.minX, y: r.maxY), CGPoint(x: r.maxX, y: r.maxY)] {
+                        let dot = CGRect(x: corner.x - handle / 2, y: corner.y - handle / 2, width: handle, height: handle)
+                        ctx.fill(Path(ellipseIn: dot), with: .color(.white))
+                        ctx.stroke(Path(ellipseIn: dot), with: .color(.accentColor), lineWidth: 1.5 / scale)
+                    }
+                }
+            }
         }
         .contentShape(Rectangle())
         .gesture(
@@ -272,6 +354,7 @@ extension AnnotationTool {
     /// Single-key shortcut while the editor is open.
     var key: Character {
         switch self {
+        case .select: return "v"
         case .arrow: return "a"
         case .rectangle: return "r"
         case .ellipse: return "o"

@@ -37,6 +37,13 @@ A free, open-source menu-bar app for macOS that takes screenshots and screen rec
 
 ## What's new
 
+**0.5.16**
+- **More video editing.** Cut sections out of the middle and put text on the video (caption, bold or highlight).
+- **Mute the mic or hide the camera while recording**, and separate voice files saved in a folder with their video.
+- **Redact three ways** in Annotate: pixelate, smooth blur or a solid block, and redactions stay movable. A new Select tool moves any shape.
+- **Updates show up within the hour**: a red dot on the menu bar icon and a notification.
+- **Windows open in the middle of your screen**, and the camera bubble follows its settings right away.
+
 **0.5.15**
 - **Edit recordings.** Trim, remove the sound, and export as MP4 (original, 1080p or 720p) or GIF, from the ✂ on a recording's thumbnail or Library → Edit….
 - **Recording resolution.** Record at full Retina sharpness, 1080p or 720p.
@@ -146,7 +153,7 @@ Press <kbd>⌥</kbd><kbd>⇧</kbd><kbd>⌘</kbd><kbd>A</kbd> and the toolbar app
 - **Self-timer.** Captures the full screen after 5 seconds.
 - **Copy text (OCR).** Select part of the screen and the text in it goes to your clipboard. It uses Apple's Vision framework on your Mac.
 - **Quick Access overlay.** A thumbnail appears after each capture. Hover it for actions in its corners (close, pin, save, annotate) and Copy in the middle, or drag it straight into Slack, Mail or Finder.
-- **Annotate.** Add arrows, rectangles, ellipses, freehand pen, highlights, text and numbered steps. Pixelate anything sensitive. One-key tools: A, R, O, P, H, T, N, X.
+- **Annotate.** Add arrows, rectangles, ellipses, freehand pen, highlights, text and numbered steps. Redact anything sensitive by pixelating, blurring or covering it; redactions stay movable. Select (V) moves any shape. One-key tools: V, A, R, O, P, H, T, N, X.
 - **Pin to screen.** Keep a screenshot floating above every window.
 
 ### Record
@@ -154,10 +161,11 @@ Press <kbd>⌥</kbd><kbd>⇧</kbd><kbd>⌘</kbd><kbd>A</kbd> and the toolbar app
 - **Area or full screen** to MP4 (H.264), at 30 or 60 fps.
 - **Recording toolbar.** After you pick the area, a toolbar appears under it. Choose any microphone (built-in, USB or Bluetooth) with a live level meter, turn desktop audio on or off, then press Record. Recording starts instantly or after a 3, 5 or 10 second countdown that ends with "Go", whichever you choose in Settings.
 - **Microphone and desktop audio together**, mixed into one soundtrack that plays everywhere.
-- **Your voice as its own file.** Turn on **Also Save My Voice as a Separate File** (microphone menu or Settings → Recording) and your microphone is saved as an .m4a next to the video, for editing.
+- **Your voice as its own file.** Turn on **Also Save My Voice as a Separate File** (microphone menu or Settings → Recording) and each recording gets its own folder in your screenshots folder with the video and your voice (.m4a), named alike.
+- **Mute while recording.** The microphone and camera buttons on the recording toolbar mute the mic (silence is recorded, so the sound stays in sync) or hide the camera bubble, and bring them back.
 - **Camera bubble.** Show yourself in the recording with any connected camera (built-in, USB, capture card, virtual camera, iPhone or Desk View): pick a camera, a shape (circle, rounded, square, portrait), a size, a corner and a border, including yellow, blue, pink and rainbow glows, from the **Camera** menu on the recording toolbar or in Settings → Recording. Drag the bubble anywhere, even while recording.
 - **While recording:** a timer, the mic meter, Stop and Discard on the toolbar. The menu bar shows a blinking red dot with the elapsed time (`12s`, then `4:05`, then `1:04:05`); click it to stop. The cursor is optional.
-- **Edit recordings.** Trim the start and end, remove the sound, and export as MP4 (original, 1080p or 720p) or GIF, from the scissors on the thumbnail or Library → Edit….
+- **Edit recordings.** Trim the start and end, cut sections out of the middle, add text on top, remove the sound, and export as MP4 (original, 1080p or 720p) or GIF, from the scissors on the thumbnail or Library → Edit….
 - **Resolution.** Record at your display's full Retina sharpness, or at 1080p or 720p for smaller files (Settings → Recording).
 - **Save as GIF** from the overlay with one click.
 

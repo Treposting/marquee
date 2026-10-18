@@ -250,6 +250,20 @@ final class RecordingController {
         }
     }
 
+    /// Mid-recording: records silence instead of the microphone, or back again.
+    func toggleMicMute() {
+        guard let session else { return }
+        session.micMuted.toggle()
+        microphone?.muted = session.micMuted
+    }
+
+    /// Mid-recording: hides the camera bubble (and so takes it out of the video), or shows it.
+    func toggleCameraVisibility() {
+        guard let session else { return }
+        session.cameraHidden.toggle()
+        camera.setHidden(session.cameraHidden)
+    }
+
     func toggleDesktopAudio() {
         guard let session else { return }
         session.desktopAudio.toggle()
@@ -356,12 +370,12 @@ final class RecordingController {
             }
             if discard {
                 try? FileManager.default.removeItem(at: url)
-                if let voice = recorder.voiceURL { try? FileManager.default.removeItem(at: voice) }
+                if let folder = recorder.voiceFolder { try? FileManager.default.removeItem(at: folder) }
                 Toast.show("Recording discarded")
             } else {
                 onFinished?(url)
-                if let voice = recorder.voiceURL {
-                    Toast.show("Voice saved to \(voice.deletingLastPathComponent().lastPathComponent)", duration: 2.5)
+                if let folder = recorder.voiceFolder {
+                    Toast.show("Saved the video and your voice in “\(folder.lastPathComponent)”", duration: 3)
                 }
             }
         }
@@ -433,7 +447,9 @@ final class RecordingController {
             discard: { [weak self] in self?.discard() },
             showMicMenu: { [weak self] in self?.showMicMenu() },
             toggleDesktopAudio: { [weak self] in self?.toggleDesktopAudio() },
-            showCameraMenu: { [weak self] in self?.showCameraMenu() }
+            showCameraMenu: { [weak self] in self?.showCameraMenu() },
+            toggleMicMute: { [weak self] in self?.toggleMicMute() },
+            toggleCamera: { [weak self] in self?.toggleCameraVisibility() }
         )
         let size = NSSize(width: 860, height: 64)
         let panel = KeyablePanel(

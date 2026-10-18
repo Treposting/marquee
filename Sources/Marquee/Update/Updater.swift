@@ -46,6 +46,13 @@ final class Updater: ObservableObject {
 
     var currentVersion: String { AppVersion.current?.description ?? "?" }
     var isReadyToInstall: Bool { state == .readyToInstall }
+    /// A newer version is waiting: the menu bar icon shows a red dot and the menu offers it.
+    var hasUpdate: Bool { state == .available || state == .readyToInstall }
+
+    /// How often to look for a new release. GitHub answers "not modified" cheaply (ETag), so
+    /// checking hourly costs almost nothing and new versions show up the same day.
+    private static let checkInterval: TimeInterval = 60 * 60
+    private var wakeObserver: NSObjectProtocol?
 
     // MARK: - Checking
 
@@ -55,14 +62,26 @@ final class Updater: ObservableObject {
             guard Preferences.autoCheckUpdates else { return }
             self?.check(userInitiated: false)
         }
-        let timer = Timer(timeInterval: 24 * 60 * 60, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: Self.checkInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard Preferences.autoCheckUpdates else { return }
                 self?.check(userInitiated: false)
             }
         }
+        timer.tolerance = 5 * 60
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
+        // A Mac that slept through the hourly check looks again shortly after it wakes.
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                runAfter(30) {
+                    guard Preferences.autoCheckUpdates else { return }
+                    self?.check(userInitiated: false)
+                }
+            }
+        }
     }
 
     func check(userInitiated: Bool) {
@@ -93,7 +112,13 @@ final class Updater: ObservableObject {
                         return
                     }
                     state = .available
-                    showWindow()
+                    if userInitiated {
+                        showWindow()
+                    } else {
+                        // Found in the background: a red dot and a notification, not a window
+                        // popping up in the middle of your work.
+                        UpdateNotifier.announce(version: latest.description)
+                    }
                 } else {
                     state = .upToDate
                 }
@@ -103,6 +128,9 @@ final class Updater: ObservableObject {
         }
     }
 
+    private static let etagKey = "updateReleaseETag"
+    private static let cachedReleaseKey = "updateReleaseCache"
+
     private func fetchLatestRelease() async throws -> ReleaseInfo {
         guard let url = URL(string: "https://api.github.com/repos/\(Self.repository)/releases/latest") else {
             throw UpdateError.badResponse
@@ -110,12 +138,32 @@ final class Updater: ObservableObject {
         var request = URLRequest(url: url)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("Marquee/\(currentVersion)", forHTTPHeaderField: "User-Agent")
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.timeoutInterval = 20
+        // With the last answer's ETag, GitHub replies 304 when nothing changed. Those replies
+        // don't count against its rate limit, which keeps hourly checks free.
+        let defaults = UserDefaults.standard
+        let cached = defaults.data(forKey: Self.cachedReleaseKey)
+        if cached != nil, let etag = defaults.string(forKey: Self.etagKey) {
+            request.setValue(etag, forHTTPHeaderField: "If-None-Match")
+        }
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw UpdateError.badResponse }
+        let http = response as? HTTPURLResponse
+        let body: Data
+        switch http?.statusCode {
+        case 200:
+            body = data
+            defaults.set(data, forKey: Self.cachedReleaseKey)
+            defaults.set(http?.value(forHTTPHeaderField: "ETag"), forKey: Self.etagKey)
+        case 304:
+            guard let cached else { throw UpdateError.badResponse }
+            body = cached
+        default:
+            throw UpdateError.badResponse
+        }
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(ReleaseInfo.self, from: data)
+        return try decoder.decode(ReleaseInfo.self, from: body)
     }
 
     // MARK: - Installing
@@ -187,9 +235,9 @@ final class Updater: ObservableObject {
             window.isMovableByWindowBackground = true
             window.isReleasedWhenClosed = false
             window.contentViewController = NSHostingController(rootView: UpdateView(updater: self))
-            window.center()
             self.window = window
         }
+        if window?.isVisible == false { window?.centerOnActiveScreen() }
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
     }

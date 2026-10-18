@@ -213,6 +213,9 @@
       transition: background .15s, color .15s;
     }
     .btn:hover { background: var(--ink); color: var(--paper); }
+    /* Second button: dark, so the yellow Download stays the main action. */
+    .btn.coffee { background: var(--ink); color: var(--paper); box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .3); }
+    .btn.coffee:hover { background: var(--tape); color: var(--tape-ink); }
     .btn svg { width: 17px; height: 17px; }
     .textlink { font-weight: 500; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; text-decoration-thickness: 2px; }
     .textlink:hover { text-decoration-color: var(--ochre); }
@@ -420,6 +423,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
                 Download for Mac
               </a>
+              <a class="btn coffee" href="https://buymeacoffee.com/0nahid">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 3v3M12 3v3"/></svg>
+                Buy me a coffee
+              </a>
               <a class="textlink" href="https://github.com/Treposting/marquee">Source on GitHub</a>
             </div>
             <p class="label meta">Runs on macOS 13 or later, on Apple Silicon and Intel. MIT licensed.</p>
@@ -585,8 +592,11 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
             Download for Mac
           </a>
+          <a class="btn coffee" href="https://buymeacoffee.com/0nahid">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 3v3M12 3v3"/></svg>
+            Buy me a coffee
+          </a>
           <a class="textlink" href="https://github.com/Treposting/marquee">Star it on GitHub</a>
-          <a class="textlink" href="https://buymeacoffee.com/0nahid">Buy me a coffee</a>
         </div>
       </div>
     </section>

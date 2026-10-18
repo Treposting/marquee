@@ -4,7 +4,23 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+## 0.5.16 — 2026-10-18
+
+### Added
+- **Mute the mic or hide the camera while recording**: buttons on the recording toolbar. A muted mic records silence, so the sound stays in sync; a hidden camera leaves the video until you show it again.
+- **Separate voice files have their own folder**: the video and your voice (.m4a) are saved together in a folder named after the recording, so you always know which voice goes with which video.
+- **Video editor: cut sections and add text.** Mark a start and end (I and O) and remove that part; playback skips it and the timeline shows it in red. Add text on top in three styles (caption, bold, highlight) at the top, middle or bottom, for the whole video, between the marks, or for 3 seconds. Everything stays editable until you export.
+- **Annotate: redact three ways.** The redact tool pixelates, smoothly blurs, or covers with a solid block (Secure). Redactions stay movable and resizable after you place them, and the new Select tool (V) moves any shape; ⌫ deletes it. Undo covers moves too.
+- **Know about updates sooner**: Marquee checks for a new version every hour and after your Mac wakes (was once a day). When one is found, the menu bar icon gets a red dot, the menu offers "Update Available", and a notification appears; click it to see what's new. Turn the notification off in Settings → Capture → Updates.
+
+### Changed
+- **Windows open in the middle of the screen you're on**: the Marquee window, Software Update, onboarding, and the annotation and video editors.
+- **Annotate fits small images**: tools stay on top and Copy, Save and Done move to the bottom, so every control shows however small the capture is.
+- **Website**: a Buy Me a Coffee button next to Download.
+- **Recording toolbar**: Stop is an icon, so the bar keeps its size however long you record.
+
 ### Fixed
+- **Camera bubble follows settings right away** ([#7](https://github.com/Treposting/marquee/issues/7)): a new position in Settings moves it at once, without turning the camera off and on, and a new size keeps it in its corner and inside the recording area instead of pushing it off screen.
 - **Copy and paste sounds didn't play** for some people while the screenshot shutter did ([#8](https://github.com/Treposting/marquee/issues/8)). They now play as system sound effects, the same way as the shutter: through the device set in System Settings → Sound → "Play sound effects through", at the alert volume.
 
 ## 0.5.15 — 2026-10-18

@@ -60,10 +60,10 @@ final class WindowManager: NSObject, NSWindowDelegate {
             window.minSize = NSSize(width: 860, height: 560)
             window.contentViewController = NSHostingController(rootView: MainView(navigation: navigation))
             window.delegate = self
-            window.center()
-            window.setFrameAutosaveName("MarqueeMainWindow")
             mainWindow = window
         }
+        // Each time it opens, it opens in the middle of the screen you're on.
+        if mainWindow?.isVisible == false { mainWindow?.centerOnActiveScreen() }
         setDockVisible(true)
         NSApp.activate(ignoringOtherApps: true)
         mainWindow?.makeKeyAndOrderFront(nil)
@@ -91,7 +91,7 @@ final class WindowManager: NSObject, NSWindowDelegate {
                 OnboardingView { [weak self] openApp in self?.finishOnboarding(openApp: openApp) }
             )
             window.delegate = self
-            window.center()
+            window.centerOnActiveScreen()
             onboardingWindow = window
         }
         setDockVisible(true)

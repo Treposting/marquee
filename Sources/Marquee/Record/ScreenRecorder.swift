@@ -14,8 +14,8 @@ final class ScreenRecorder {
     var isRecording: Bool { stream != nil }
     /// Save the microphone as its own audio file when the recording stops.
     private var separateVoice = false
-    /// The voice file from the last recording, if one was saved.
-    private(set) var voiceURL: URL?
+    /// When the voice was saved separately: the folder holding the video and the voice.
+    private(set) var voiceFolder: URL?
 
     /// Called when the stream stops on its own (display disconnected, permission revoked…).
     var onUnexpectedStop: (() -> Void)?
@@ -93,7 +93,7 @@ final class ScreenRecorder {
         }
         self.microphone = microphone
         self.separateVoice = separateVoice && microphone != nil
-        voiceURL = nil
+        voiceFolder = nil
         self.stream = stream
         self.output = output
         startDate = Date()
@@ -118,12 +118,13 @@ final class ScreenRecorder {
         }
         guard let url = await output.finish() else { return nil }
         // The voice comes out before the tracks are mixed, while it's still on its own track.
+        var voice: URL?
         if separateVoice {
-            let date = Date()
-            let destination = Capture.uniqueURL(in: Preferences.saveFolder, date: date, ext: "m4a")
+            let destination = FileManager.default.temporaryDirectory
+                .appendingPathComponent("Marquee-voice-\(UUID().uuidString).m4a")
             do {
                 try await AudioMixdown.exportMicrophoneTrack(of: url, to: destination)
-                voiceURL = destination
+                voice = destination
             } catch {
                 NSLog("Marquee: couldn't save the voice file: \(error)")
             }
@@ -136,7 +137,37 @@ final class ScreenRecorder {
                 NSLog("Marquee: couldn't mix audio tracks: \(error)")
             }
         }
+        if let voice {
+            do {
+                voiceFolder = try Self.makeVoiceFolder(in: Preferences.saveFolder, date: Date(), video: url, voice: voice)
+            } catch {
+                NSLog("Marquee: couldn't make the recording folder: \(error)")
+            }
+        }
         return url
+    }
+
+    /// Puts a recording and its separate voice side by side in their own folder, named alike,
+    /// so it's clear which voice belongs to which video:
+    ///
+    ///     Marquee Recording 2026-10-18 at 10.15.00/
+    ///         Marquee Recording 2026-10-18 at 10.15.00.mp4
+    ///         Marquee Recording 2026-10-18 at 10.15.00 Voice.m4a
+    ///
+    /// The video is copied (Marquee keeps using the original); the voice is moved.
+    nonisolated static func makeVoiceFolder(in parent: URL, date: Date, video: URL, voice: URL) throws -> URL {
+        let fm = FileManager.default
+        let name = (Capture.fileName(for: date, ext: "mp4") as NSString).deletingPathExtension
+        var folder = parent.appendingPathComponent(name, isDirectory: true)
+        var n = 2
+        while fm.fileExists(atPath: folder.path) {
+            folder = parent.appendingPathComponent("\(name) (\(n))", isDirectory: true)
+            n += 1
+        }
+        try fm.createDirectory(at: folder, withIntermediateDirectories: true)
+        try fm.copyItem(at: video, to: folder.appendingPathComponent("\(name).mp4"))
+        try fm.moveItem(at: voice, to: folder.appendingPathComponent("\(name) Voice.m4a"))
+        return folder
     }
 
     /// Pixel size of the video: Retina resolution, but kept within H.264's
