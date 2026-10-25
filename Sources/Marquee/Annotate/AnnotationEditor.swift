@@ -17,7 +17,9 @@ final class AnnotationWindowController: NSObject, NSWindowDelegate {
 
     func present() {
         let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let width = min(max(document.size.width + 80, 860), screen.width * 0.88)
+        // Never narrower than the toolbar, however small the image is.
+        let minWidth = AnnotationEditorView.minWidth
+        let width = max(min(max(document.size.width + 80, minWidth), screen.width * 0.88), minWidth)
         let height = min(max(document.size.height + 180, 560), screen.height * 0.88)
 
         let window = NSWindow(
@@ -29,7 +31,7 @@ final class AnnotationWindowController: NSObject, NSWindowDelegate {
         // The floating glass toolbar takes the place of a title bar.
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
-        window.minSize = NSSize(width: 820, height: 520)
+        window.minSize = NSSize(width: AnnotationEditorView.minWidth, height: 520)
         window.isReleasedWhenClosed = false
         window.delegate = self
         window.contentViewController = NSHostingController(rootView: AnnotationEditorView(
@@ -103,6 +105,9 @@ struct AnnotationEditorView: View {
     /// Stroke sizes offered as three dots.
     private static let widths: [CGFloat] = [3, 6, 11]
 
+    /// Wide enough for the full toolbar plus room for the window buttons.
+    static let minWidth: CGFloat = 1010
+
     /// Room above and below the canvas for the floating bars.
     private static let topClearance: CGFloat = 72
     private static let bottomClearance: CGFloat = 64
@@ -167,7 +172,7 @@ struct AnnotationEditorView: View {
                 .allowsHitTesting(false)
                 .accessibilityHidden(true)
         }
-        .frame(minWidth: 820, minHeight: 520)
+        .frame(minWidth: Self.minWidth, minHeight: 520)
     }
 
     /// Tools, then what applies to the current tool, then undo, on one glass capsule.

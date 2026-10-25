@@ -10,6 +10,11 @@ final class ClipboardMonitor {
     private let store: ClipboardStore
     private var timer: Timer?
     private var lastChangeCount = 0
+    /// Sees ⌘V typed in other apps, to play the paste sound. Needs Accessibility.
+    private var pasteKeyMonitor: Any?
+    /// Keeps App Nap from pausing the poll while no Marquee window is open, so copies are
+    /// seen (and sounded) right away.
+    private var activity: NSObjectProtocol?
 
     /// Marker types defined at http://nspasteboard.org that password managers
     /// and other apps set to ask clipboard managers not to record an entry.
@@ -35,11 +40,33 @@ final class ClipboardMonitor {
         timer.tolerance = 0.2
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
+        activity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep], reason: "Watching the clipboard")
+        watchPasteKey()
+    }
+
+    /// Global key monitors only get events once Accessibility is allowed, and only if added
+    /// after that, so this is retried from `poll` until it's in place.
+    private func watchPasteKey() {
+        guard pasteKeyMonitor == nil, Paster.isTrusted else { return }
+        pasteKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
+            guard event.charactersIgnoringModifiers?.lowercased() == "v",
+                  event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command,
+                  !event.isARepeat else { return }
+            Task { @MainActor in
+                guard !Preferences.monitorPaused, !(NSPasteboard.general.types ?? []).isEmpty else { return }
+                Sounds.play(.paste)
+            }
+        }
     }
 
     func stop() {
         timer?.invalidate()
         timer = nil
+        if let pasteKeyMonitor { NSEvent.removeMonitor(pasteKeyMonitor) }
+        pasteKeyMonitor = nil
+        if let activity { ProcessInfo.processInfo.endActivity(activity) }
+        activity = nil
     }
 
     /// Call after Marquee itself writes to the pasteboard (e.g. pasting a
@@ -49,6 +76,7 @@ final class ClipboardMonitor {
     }
 
     private func poll() {
+        if pasteKeyMonitor == nil { watchPasteKey() }
         let pb = NSPasteboard.general
         guard pb.changeCount != lastChangeCount else { return }
         lastChangeCount = pb.changeCount
@@ -70,7 +98,11 @@ final class ClipboardMonitor {
             store.addText(text, app: app)
         } else if let png = Self.pngData(from: pb) {
             store.addImage(pngData: png, app: app)
+        } else {
+            return
         }
+        // Copies made in any app sound too; Marquee's own were already sounded.
+        Sounds.play(.copy)
     }
 
     private static func pngData(from pb: NSPasteboard) -> Data? {

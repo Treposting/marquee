@@ -4,6 +4,23 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+## 0.5.18 — 2026-10-25
+
+### Added
+- **QuitX on Home.** A small card for [QuitX](https://quitx.kiron.dev), a free, open-source menu bar app to quit, force quit and manage running apps. Close it with ✕ and it stays hidden; QuitX also has its own page under "More apps" in the sidebar.
+- **Choose the copy and paste sounds.** Settings → Capture → General has a Copy sound and a Paste sound picker with every macOS sound (Tink, Pop, Glass, Purr, Bottle…). Picking one plays it.
+- **Tuck Quick Access to the side.** Hover the thumbnail and click the tab on its left edge: it slides off the screen, leaving a small handle. Click the handle to bring it back. A tucked thumbnail doesn't hide by itself.
+
+### Changed
+- **Liquid Glass across the Marquee window.** Cards, Home's action tiles, Library captures and clipboard cards sit on glass, and Settings switches tabs with a glass bar while keeping native macOS controls.
+- **Quick Access hides itself after 20 seconds** if you don't use it. Hovering it pauses the countdown, and it stays while you annotate. Change or turn it off in Settings → Capture → Hide overlay after.
+- **Pasting from clipboard history moves the item to the top**, like copying it again.
+
+### Fixed
+- **Copy and paste sounds in other apps.** The sound now plays when you copy anywhere, and when you paste with ⌘V in any app (pasting needs Marquee allowed in Accessibility), even with no Marquee window open. Pasting from clipboard history plays one sound, not two.
+- **Recordings look washed out.** Videos are now recorded in sRGB and tagged with their color profile, so colors match the screen. (#10)
+- **Annotate window with a small screenshot:** the window is now always wide enough for the whole toolbar, so no tools are cut off.
+
 ## 0.5.17 — 2026-10-18
 
 ### Added

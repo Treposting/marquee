@@ -82,9 +82,6 @@ private struct LibraryTile: View {
                     .aspectRatio(16 / 10, contentMode: .fit)
                     .background(Color.primary.opacity(0.04))
                     .clipShape(Page.tile)
-                    .overlay(Page.tile.strokeBorder(Color.primary.opacity(hovering ? 0.25 : 0.1)))
-                    .shadow(color: .black.opacity(hovering ? 0.14 : 0.06), radius: hovering ? 8 : 3, y: hovering ? 3 : 1)
-                    .animation(.easeOut(duration: 0.15), value: hovering)
                 if item.isVideo {
                     Label("Recording", systemImage: "play.fill")
                         .font(.system(size: 10, weight: .semibold))
@@ -113,8 +110,13 @@ private struct LibraryTile: View {
                 }
             }
             .frame(height: 18)
+            .padding(.horizontal, 2)
         }
-        .contentShape(Rectangle())
+        // The thumbnail and its date share one glass card; its corners match the tile's.
+        .padding(8)
+        .glassSurface(Page.card, tint: hovering ? Color.primary.opacity(0.06) : nil, interactive: true)
+        .animation(.easeOut(duration: 0.15), value: hovering)
+        .contentShape(Page.card)
         .onHover { hovering = $0 }
         .onTapGesture(count: 2) { CaptureLibrary.shared.open(item) }
         .contextMenu { LibraryItemMenu(item: item) }

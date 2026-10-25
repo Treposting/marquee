@@ -37,6 +37,13 @@ A free, open-source menu-bar app for macOS that takes screenshots and screen rec
 
 ## What's new
 
+**0.5.18**
+- **Recordings keep their true colors** (no more washed-out video), and Annotate always fits its toolbar.
+- **Quick Access hides after 20 seconds** if unused, and can be tucked to the screen's edge.
+- **Copy and paste sounds work everywhere**, play once, and you can pick them.
+- **More Liquid Glass**: glass cards across every page and a glass tab bar in Settings.
+- **QuitX**: a card on Home and a page in the sidebar for the free menu bar app that quits apps.
+
 **0.5.17**
 - **Drag text anywhere in the video editor**, with a layers panel to show, hide, reorder and delete text.
 
@@ -155,7 +162,7 @@ Press <kbd>⌥</kbd><kbd>⇧</kbd><kbd>⌘</kbd><kbd>A</kbd> and the toolbar app
 - **Scrolling capture** <sup>macOS 14+</sup>. Select the part that scrolls, then scroll down (or press **Auto-scroll**) and press **Done**: Marquee stitches one long screenshot. Fixed headers and bottom bars appear once. Start it from All-in-One (Screenshot → Scrolling, or press S), the menu, Home, or a shortcut you set. Auto-scroll needs the Accessibility permission.
 - **Self-timer.** Captures the full screen after 5 seconds.
 - **Copy text (OCR).** Select part of the screen and the text in it goes to your clipboard. It uses Apple's Vision framework on your Mac.
-- **Quick Access overlay.** A thumbnail appears after each capture. Hover it for actions in its corners (close, pin, save, annotate) and Copy in the middle, or drag it straight into Slack, Mail or Finder.
+- **Quick Access overlay.** A thumbnail appears after each capture. Hover it for actions in its corners (close, pin, save, annotate) and Copy in the middle, or drag it straight into Slack, Mail or Finder. Tuck it to the screen's edge with the tab on its side, and it hides itself after 20 seconds if you don't use it.
 - **Annotate.** Add arrows, rectangles, ellipses, freehand pen, highlights, text and numbered steps. Redact anything sensitive by pixelating, blurring or covering it; redactions stay movable. Select (V) moves any shape. One-key tools: V, A, R, O, P, H, T, N, X.
 - **Pin to screen.** Keep a screenshot floating above every window.
 
@@ -280,7 +287,7 @@ Out of the box only two shortcuts are set: **All-in-One** (<kbd>⌥</kbd><kbd>�
 
 | Tab | What you can change |
 |---|---|
-| Capture | Show the overlay, auto-hide it, copy and/or save after capture, save folder, shutter sound, copy and paste sound, window shadow, launch at login, menu bar icon (a built-in symbol or your own image), automatic update checks |
+| Capture | Show the overlay, auto-hide it, copy and/or save after capture, save folder, shutter sound, copy and paste sounds (pick from the macOS sounds), window shadow, launch at login, menu bar icon (a built-in symbol or your own image), automatic update checks |
 | Recording | Default microphone, desktop audio, start instantly or after 3/5/10 seconds, frame rate, cursor |
 | Measure | Edge-detection tolerance |
 | Clipboard | Turn history on or off, history size (100 to 5,000 items), paste directly into apps |

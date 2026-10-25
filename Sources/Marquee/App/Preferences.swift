@@ -22,11 +22,14 @@ enum Preferences {
         case measureTolerance
         case autoCheckUpdates
         case hasCompletedOnboarding
+        case quitXPromoDismissed
         case keepLibrary
         case skippedVersion
         case menuBarIcon
         case menuBarIconTemplate
         case copyPasteSound
+        case copySound
+        case pasteSound
         case linkPreviews
         case allInOneScreenshotTarget
         case allInOneRecordTarget
@@ -71,7 +74,7 @@ enum Preferences {
             Key.playSound.rawValue: true,
             Key.windowShadow.rawValue: true,
             Key.saveFolder.rawValue: defaultSaveFolder.path,
-            Key.overlayTimeout.rawValue: 0,
+            Key.overlayTimeout.rawValue: 20,
             Key.historyLimit.rawValue: 500,
             Key.autoPaste.rawValue: true,
             Key.monitorPaused.rawValue: false,
@@ -89,6 +92,8 @@ enum Preferences {
             Key.menuBarIcon.rawValue: "camera.viewfinder",
             Key.menuBarIconTemplate.rawValue: true,
             Key.copyPasteSound.rawValue: true,
+            Key.copySound.rawValue: "Tink",
+            Key.pasteSound.rawValue: "Pop",
             Key.linkPreviews.rawValue: true,
             Key.recordCamera.rawValue: false,
             Key.cameraMirror.rawValue: true,
@@ -101,6 +106,9 @@ enum Preferences {
     static var playSound: Bool { defaults.bool(forKey: Key.playSound.rawValue) }
     /// A short sound when Marquee copies something or pastes from clipboard history.
     static var copyPasteSound: Bool { defaults.bool(forKey: Key.copyPasteSound.rawValue) }
+    /// Names of the macOS sounds played on copy and on paste.
+    static var copySound: String { defaults.string(forKey: Key.copySound.rawValue) ?? "Tink" }
+    static var pasteSound: String { defaults.string(forKey: Key.pasteSound.rawValue) ?? "Pop" }
     static var windowShadow: Bool { defaults.bool(forKey: Key.windowShadow.rawValue) }
     static var overlayTimeout: Int { defaults.integer(forKey: Key.overlayTimeout.rawValue) }
     static var historyLimit: Int { max(10, defaults.integer(forKey: Key.historyLimit.rawValue)) }

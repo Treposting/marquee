@@ -139,11 +139,12 @@ final class HistoryPanelController: NSObject, NSWindowDelegate {
         outsideClickMonitor = nil
     }
 
-    /// Pastes straight into the app you were using and closes the panel. The item keeps its
-    /// place in history.
+    /// Pastes straight into the app you were using and closes the panel. Pasting copies it
+    /// too, so the item moves to the top of history.
     private func paste(_ item: ClipItem) {
         store.writeToPasteboard(item)
         monitor.ignoreCurrentContents()
+        store.touch(item)
         hide()
         if Preferences.autoPaste && Paster.isTrusted {
             Sounds.play(.paste)

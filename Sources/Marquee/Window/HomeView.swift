@@ -125,6 +125,8 @@ struct HomeView: View {
 
                 recent
 
+                QuitXPromo()
+
                 AboutFooter()
                     .padding(.top, 4)
             }
@@ -229,12 +231,7 @@ private struct AllInOneCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
-        .background(
-            LinearGradient(colors: [Color.accentColor.opacity(0.16), Color.accentColor.opacity(0.05)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: shape
-        )
-        .overlay(shape.strokeBorder(Color.accentColor.opacity(0.25)))
+        .glassSurface(shape, tint: Color.accentColor.opacity(0.16))
         .accessibilityElement(children: .contain)
     }
 }
@@ -296,8 +293,7 @@ private struct LatestCaptureCard: View {
         }
         .padding(14)
         .frame(maxHeight: .infinity, alignment: .top)
-        .background(Color.primary.opacity(0.035), in: shape)
-        .overlay(shape.strokeBorder(Color.primary.opacity(0.08)))
+        .glassSurface(shape)
     }
 }
 
@@ -348,11 +344,10 @@ private struct TileButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let shape = Page.tile
-        let fill = configuration.isPressed ? 0.11 : (hovering ? 0.07 : 0.035)
+        let tint = configuration.isPressed ? 0.12 : (hovering ? 0.06 : 0)
         configuration.label
             .contentShape(shape)
-            .background(Color.primary.opacity(fill), in: shape)
-            .overlay(shape.strokeBorder(Color.primary.opacity(hovering ? 0.14 : 0.07)))
+            .glassSurface(shape, tint: tint > 0 ? Color.primary.opacity(tint) : nil, interactive: true)
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
             .onHover { hovering = $0 }
             .animation(.easeOut(duration: 0.15), value: hovering)

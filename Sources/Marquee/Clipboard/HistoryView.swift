@@ -240,13 +240,15 @@ struct ClipCard: View {
             .padding(.bottom, 8)
         }
         .frame(width: 230, height: 236)
-        .background(Color(nsColor: .textBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: Self.corner, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Self.corner, style: .continuous)
-                .strokeBorder(selected ? Color.accentColor : Color.primary.opacity(0.1), lineWidth: selected ? 2.5 : 1)
-        )
-        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+        .glassSurface(RoundedRectangle(cornerRadius: Self.corner, style: .continuous))
+        // Only the selected card gets a ring; the glass has its own edge.
+        .overlay {
+            if selected {
+                RoundedRectangle(cornerRadius: Self.corner, style: .continuous)
+                    .strokeBorder(Color.accentColor, lineWidth: 2.5)
+            }
+        }
     }
 
     @ViewBuilder

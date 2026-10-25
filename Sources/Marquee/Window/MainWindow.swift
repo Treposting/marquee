@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum MainSection: String, CaseIterable, Identifiable {
-    case home, library, clipboard, colors, permissions, settings
+    case home, library, clipboard, colors, permissions, settings, quitX
 
     var id: String { rawValue }
 
@@ -14,6 +14,7 @@ enum MainSection: String, CaseIterable, Identifiable {
         case .colors: return "Colors"
         case .permissions: return "Permissions"
         case .settings: return "Settings"
+        case .quitX: return "QuitX"
         }
     }
 
@@ -25,6 +26,7 @@ enum MainSection: String, CaseIterable, Identifiable {
         case .colors: return "paintpalette"
         case .permissions: return "lock.shield"
         case .settings: return "gearshape"
+        case .quitX: return "power"
         }
     }
 }
@@ -132,6 +134,7 @@ struct MainView: View {
 
     private let primary: [MainSection] = [.home, .library, .clipboard, .colors]
     private let secondary: [MainSection] = [.permissions, .settings]
+    private let moreApps: [MainSection] = [.quitX]
 
     var body: some View {
         NavigationSplitView {
@@ -145,6 +148,13 @@ struct MainView: View {
                 }
                 Section("App") {
                     ForEach(secondary) { section in
+                        NavigationLink(value: section) {
+                            Label(section.title, systemImage: section.symbol)
+                        }
+                    }
+                }
+                Section("More apps") {
+                    ForEach(moreApps) { section in
                         NavigationLink(value: section) {
                             Label(section.title, systemImage: section.symbol)
                         }
@@ -175,6 +185,8 @@ struct MainView: View {
             PermissionsPage()
         case .settings:
             SettingsView()
+        case .quitX:
+            QuitXPage()
         }
     }
 }

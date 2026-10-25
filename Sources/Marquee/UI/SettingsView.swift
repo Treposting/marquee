@@ -3,22 +3,107 @@ import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers
 
+/// The Settings tabs, switched with the glass control in the page header.
+private enum SettingsTab: String, CaseIterable, Identifiable {
+    case capture = "Capture", recording = "Recording", measure = "Measure"
+    case clipboard = "Clipboard", shortcuts = "Shortcuts"
+
+    var id: String { rawValue }
+
+    var symbol: String {
+        switch self {
+        case .capture: return "camera.viewfinder"
+        case .recording: return "record.circle"
+        case .measure: return "ruler"
+        case .clipboard: return "doc.on.clipboard"
+        case .shortcuts: return "keyboard"
+        }
+    }
+}
+
 @MainActor
 struct SettingsView: View {
+    @State private var tab: SettingsTab = .capture
+
     var body: some View {
         VStack(spacing: 0) {
             PageHeader(title: "Settings", subtitle: "Captures, recording, Measure, clipboard and shortcuts")
-            TabView {
-                CaptureSettings().tabItem { Label("Capture", systemImage: "camera.viewfinder") }
-                RecordingSettings().tabItem { Label("Recording", systemImage: "record.circle") }
-                MeasureSettings().tabItem { Label("Measure", systemImage: "ruler") }
-                ClipboardSettings().tabItem { Label("Clipboard", systemImage: "doc.on.clipboard") }
-                ShortcutsSettings().tabItem { Label("Shortcuts", systemImage: "keyboard") }
+            tabs
+                .padding(.horizontal, Page.gutter)
+                .padding(.bottom, 4)
+            Group {
+                switch tab {
+                case .capture: CaptureSettings()
+                case .recording: RecordingSettings()
+                case .measure: MeasureSettings()
+                case .clipboard: ClipboardSettings()
+                case .shortcuts: ShortcutsSettings()
+                }
             }
-            .padding(.horizontal, Page.gutter - 8)
-            .padding(.bottom, 16)
+            // Native grouped forms on the window's own background, like System Settings.
+            .scrollContentBackground(.hidden)
+            .frame(maxWidth: Page.maxWidth)
+            .frame(maxWidth: .infinity)
         }
         .frame(minWidth: 520, maxWidth: .infinity, minHeight: 480, maxHeight: .infinity)
+    }
+
+    /// Icon-and-title tabs on one Liquid Glass capsule; the current one is filled. Narrow
+    /// windows get icons only.
+    private var tabs: some View {
+        ViewThatFits(in: .horizontal) {
+            tabBar(titles: true)
+            tabBar(titles: false)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func tabBar(titles: Bool) -> some View {
+        GlassGroup(spacing: 4) {
+            HStack(spacing: 2) {
+                ForEach(SettingsTab.allCases) { item in
+                    let selected = tab == item
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { tab = item }
+                    } label: {
+                        Label(item.rawValue, systemImage: item.symbol)
+                            .labelStyle(TabLabelStyle(showsTitle: titles))
+                            .font(.system(size: 12.5, weight: selected ? .semibold : .medium))
+                            .foregroundStyle(selected ? Color.white : Color.primary)
+                            .padding(.horizontal, 14)
+                            .frame(height: 30)
+                            .background {
+                                if selected {
+                                    Capsule().fill(Color.accentColor)
+                                        .matchedGeometryEffect(id: "selection", in: selection)
+                                }
+                            }
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .help(item.rawValue)
+                    .accessibilityLabel(item.rawValue)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
+            }
+            .padding(4)
+            .glassSurface(Capsule(), interactive: true)
+        }
+        .fixedSize()
+    }
+
+    @Namespace private var selection
+}
+
+/// A tab's icon, with or without its title.
+private struct TabLabelStyle: LabelStyle {
+    let showsTitle: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 6) {
+            configuration.icon
+            if showsTitle { configuration.title }
+        }
     }
 }
 
@@ -29,9 +114,26 @@ private struct CaptureSettings: View {
     @AppStorage(Preferences.Key.saveAfterCapture.rawValue) private var saveAfterCapture = false
     @AppStorage(Preferences.Key.playSound.rawValue) private var playSound = true
     @AppStorage(Preferences.Key.copyPasteSound.rawValue) private var copyPasteSound = true
+    @AppStorage(Preferences.Key.copySound.rawValue) private var copySound = "Tink"
+    @AppStorage(Preferences.Key.pasteSound.rawValue) private var pasteSound = "Pop"
     @AppStorage(Preferences.Key.windowShadow.rawValue) private var windowShadow = true
-    @AppStorage(Preferences.Key.overlayTimeout.rawValue) private var overlayTimeout = 0
+    @AppStorage(Preferences.Key.overlayTimeout.rawValue) private var overlayTimeout = 20
     @AppStorage(Preferences.Key.saveFolder.rawValue) private var saveFolder = Preferences.defaultSaveFolder.path
+
+    /// A macOS sound for copy or paste; picking one plays it.
+    private func soundPicker(_ title: String, selection: Binding<String>) -> some View {
+        HStack {
+            Picker(title, selection: selection) {
+                ForEach(Sounds.choices, id: \.self) { Text($0).tag($0) }
+            }
+            .onChange(of: selection.wrappedValue) { name in Sounds.play(named: name) }
+            Button { Sounds.play(named: selection.wrappedValue) } label: { Image(systemName: "play.fill") }
+                .buttonStyle(.borderless)
+                .help("Play \(selection.wrappedValue)")
+                .accessibilityLabel("Play \(selection.wrappedValue)")
+        }
+        .disabled(!copyPasteSound)
+    }
 
     var body: some View {
         Form {
@@ -41,6 +143,7 @@ private struct CaptureSettings: View {
                     Text("Never").tag(0)
                     Text("5 seconds").tag(5)
                     Text("10 seconds").tag(10)
+                    Text("20 seconds").tag(20)
                     Text("30 seconds").tag(30)
                 }
                 .disabled(!showOverlay)
@@ -50,6 +153,8 @@ private struct CaptureSettings: View {
             Section("General") {
                 Toggle("Play shutter sound", isOn: $playSound)
                 Toggle("Play sound on copy and paste", isOn: $copyPasteSound)
+                soundPicker("Copy sound", selection: $copySound)
+                soundPicker("Paste sound", selection: $pasteSound)
                 Toggle("Include window shadow", isOn: $windowShadow)
                 HStack {
                     Text("Save to")

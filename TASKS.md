@@ -1,6 +1,6 @@
 # Tasks
 
-Status as of v0.5.17 (2026-10-18). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
+Status as of v0.5.18 (2026-10-25). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Done
 
@@ -32,12 +32,12 @@ Status as of v0.5.17 (2026-10-18). Project context and conventions are in [CLAUD
 - [x] ⇧⌘V panel attached to the bottom edge (click to paste, closes on Esc/paste/outside click, catches all scrolls) and a full Clipboard page
 
 **App**
-- [x] Marquee window: Home, Library, Clipboard, Colors, Permissions, Settings; shows in the Dock while open
+- [x] Marquee window: Home, Library, Clipboard, Colors, Permissions, Settings, QuitX (More apps); shows in the Dock while open
 - [x] Liquid Glass design across the app (shared page header, glass controls, matching cards; `UI/PageStyle.swift`) with fallbacks before macOS 26
 - [x] Onboarding (welcome, permissions, record shortcuts, launch at login)
 - [x] Menu-bar menu with a choice of 24 icons or your own image; standard main menu (Edit commands work in text fields)
 - [x] Shortcuts grouped by category; only All-in-One and Clipboard History have defaults
-- [x] Copy and paste sounds; light and dark Icon Composer app icon
+- [x] Copy and paste sounds (any app, choice of macOS sounds); light and dark Icon Composer app icon
 - [x] In-app updates from GitHub Releases: verified signature; installs into Applications when the running copy can't be replaced (admin prompt if needed); closes other running copies
 - [x] Stable self-signed release signing (from 0.5.5) so permissions survive updates; Permissions page with Fix Permissions (tccutil reset) and Restart Marquee
 - [x] Release workflow, universal DMG + zip, CI with tests
@@ -53,6 +53,7 @@ Status as of v0.5.17 (2026-10-18). Project context and conventions are in [CLAUD
 
 Each release adds a "What's new" entry to README.md, a dated CHANGELOG section, and a line here.
 
+- **0.5.18:** fixes #10 (washed-out recordings: sRGB + Rec. 709 tags); Annotate min width; Quick Access 20 s auto-hide and tuck to side; clipboard paste moves to top; copy/paste sounds for other apps, single sound, choosable; glass cards and Settings tab bar; QuitX promo card and sidebar page
 - **0.5.17:** video editor text drag-anywhere overlays; layers panel (show/hide, reorder, delete) and timeline lanes
 - **0.5.16:** video cut sections and text overlays; mute mic / hide camera mid-recording; voice folder; redact styles and Select tool; hourly update checks with red dot and notification; centered windows; icon Stop; fixes #7 (camera bubble) and #8 (copy/paste sound)
 - **0.5.15:** video editor (trim, mute, export MP4/GIF); recording resolution; Quick Access hover corners; annotate redesign; About info and Buy Me a Coffee

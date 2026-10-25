@@ -115,12 +115,11 @@ struct GlassMenuButton<Content: View>: View {
 }
 
 extension View {
-    /// A content card: a soft fill and hairline edge with the shared corner radius.
+    /// A content card on Liquid Glass with the shared corner radius, lightly tinted if asked.
     func pageCard(tint: Color? = nil, padding: CGFloat = 16) -> some View {
         self
             .padding(padding)
-            .background((tint ?? .primary).opacity(tint == nil ? 0.04 : 0.08), in: Page.card)
-            .overlay(Page.card.strokeBorder((tint ?? .primary).opacity(tint == nil ? 0.08 : 0.25)))
+            .glassSurface(Page.card, tint: tint?.opacity(0.16))
     }
 
     /// Standard section title inside a page ("Recent", "Capture", …).
