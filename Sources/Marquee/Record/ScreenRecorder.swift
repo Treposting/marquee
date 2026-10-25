@@ -62,6 +62,8 @@ final class ScreenRecorder {
         config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(fps))
         config.showsCursor = Preferences.recordShowCursor
         config.pixelFormat = kCVPixelFormatType_32BGRA
+        // Untagged frames come in the display's space (often P3), so players show them washed out.
+        config.colorSpaceName = CGColorSpace.sRGB
         config.queueDepth = 6
         config.capturesAudio = captureAudio
         config.excludesCurrentProcessAudio = true
