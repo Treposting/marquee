@@ -1,0 +1,130 @@
+name: Release Windows
+
+# Actions → Release Windows → Run workflow. Builds Marquee for Windows from the windows-port
+# branch (desktop/), bumps its version there, and publishes a GitHub pre-release tagged
+# windows-vX.Y.Z with the NSIS installer and the MSI. Pre-releases never show up as the
+# "latest" release, so the macOS app's updater and the site's download links ignore them.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Windows version, e.g. 0.1.0"
+        required: true
+        type: string
+      branch:
+        description: "Branch to build"
+        required: false
+        type: string
+        default: windows-port
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-windows
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-depth: 0
+
+      - name: Check version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must look like 0.1.0 (MSI installers need three numbers)."; exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/windows-v$VERSION" >/dev/null; then
+            echo "::error::windows-v$VERSION already exists."; exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Set version
+        working-directory: desktop
+        run: |
+          sed -i -E '0,/^version = ".*"$/s//version = "'"$VERSION"'"/' Cargo.toml
+          sed -i -E 's/^(  "version": )"[^"]*"/\1"'"$VERSION"'"/' crates/marquee-app/tauri.conf.json
+          grep -n '^version' Cargo.toml
+          grep -n '"version"' crates/marquee-app/tauri.conf.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+
+      - name: Test
+        working-directory: desktop
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli@2
+
+      - name: Build installers
+        working-directory: desktop/crates/marquee-app
+        run: cargo tauri build
+
+      - name: Collect files
+        run: |
+          mkdir -p out
+          cp desktop/target/release/bundle/nsis/*.exe "out/Marquee-$VERSION-windows-x64-setup.exe"
+          cp desktop/target/release/bundle/msi/*.msi "out/Marquee-$VERSION-windows-x64.msi"
+          ls -l out
+
+      # The desktop/CHANGELOG.md section for this version, then how to install.
+      - name: Release notes
+        run: |
+          awk -v v="$VERSION" 'index($0, "## " v " ") == 1 || $0 == "## " v {found = 1; next} found && /^## / {exit} found {print}' \
+            desktop/CHANGELOG.md | sed '/./,$!d' > out/notes.md
+          if [ ! -s out/notes.md ]; then
+            echo "::warning::desktop/CHANGELOG.md has no section for $VERSION."
+          fi
+          cat >> out/notes.md <<'NOTES'
+
+          ### Install on Windows
+          Download **Marquee-…-setup.exe** (installs for you only, no admin needed) or the **.msi**, and run it. Marquee starts in the tray (the area by the clock).
+
+          This is an early build and isn't code-signed yet, so Windows SmartScreen says "Windows protected your PC". Choose **More info → Run anyway**.
+
+          Looking for the Mac app? It's in the [latest release](https://github.com/Treposting/marquee/releases/latest).
+          NOTES
+          sed -i 's/^          //' out/notes.md
+
+      - name: Commit version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add desktop/Cargo.toml desktop/Cargo.lock desktop/crates/marquee-app/tauri.conf.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Release Windows v$VERSION"
+            git push origin "HEAD:${{ inputs.branch }}"
+          fi
+          echo "SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: windows-v${{ env.VERSION }}
+          target_commitish: ${{ env.SHA }}
+          name: Marquee for Windows ${{ env.VERSION }} (preview)
+          body_path: out/notes.md
+          prerelease: true
+          make_latest: false
+          files: |
+            out/*.exe
+            out/*.msi
