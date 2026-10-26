@@ -2,7 +2,17 @@
 
 A Rust port of Marquee: screenshots, screen recording, a screen ruler, a color picker and clipboard history, with the same behavior as the macOS app. It lives on the `windows-port` branch while it grows, and doesn't touch the macOS app.
 
-**Status:** phase 1 — tray app, global shortcuts, settings and the Marquee window. Captures come next. Early, unsigned builds are attached to each [Desktop (Windows)](../.github/workflows/desktop.yml) run as the `Marquee-Windows` artifact (NSIS installer and MSI).
+**Status:** phase 1 — tray app, global shortcuts, settings and the Marquee window. Captures come next.
+
+**Downloads:** previews are GitHub pre-releases tagged `windows-vX.Y.Z`, with an NSIS installer (`…-setup.exe`) and an MSI. They're unsigned for now, so SmartScreen asks first (More info → Run anyway). Every push that touches `desktop/` also builds them as the `Marquee-Windows` artifact of the [Desktop (Windows)](../.github/workflows/desktop.yml) run.
+
+## Releasing a preview
+
+1. Add a `## X.Y.Z` section to [CHANGELOG.md](CHANGELOG.md) on this branch and push.
+2. Run **Actions → Release Windows** with that version (branch `windows-port`). The workflow lives on `main` because GitHub only lists manual workflows from the default branch.
+3. It sets the version in `Cargo.toml` and `tauri.conf.json`, tests, builds, commits "Release Windows vX.Y.Z" to this branch and publishes the `windows-vX.Y.Z` pre-release. Pull afterwards.
+
+Pre-releases are never GitHub's "latest" release, so the Mac app's updater and the site's download buttons keep pointing at the Mac release.
 
 ## Layout
 
