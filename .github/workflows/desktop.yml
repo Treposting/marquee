@@ -1,0 +1,56 @@
+name: Desktop (Windows)
+
+# Marquee for Windows (Rust + Tauri), in desktop/. Linux comes later.
+on:
+  push:
+    paths: ["desktop/**", ".github/workflows/desktop.yml"]
+  pull_request:
+    paths: ["desktop/**", ".github/workflows/desktop.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: desktop
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Lint
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli@2
+
+      # Unsigned for now: Windows SmartScreen warns until there's a code-signing certificate.
+      - name: Installers
+        working-directory: desktop/crates/marquee-app
+        run: cargo tauri build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Marquee-Windows
+          path: |
+            desktop/target/release/bundle/nsis/*.exe
+            desktop/target/release/bundle/msi/*.msi
+          if-no-files-found: error

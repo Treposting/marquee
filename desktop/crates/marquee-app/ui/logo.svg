@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Marquee">
+  <style>
+    .tile { fill: #FFCF1A; }
+    .mark { stroke: #1D1D1F; }
+    .fill { fill: #1D1D1F; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #2A2A2D; stroke: rgba(255, 255, 255, .1); stroke-width: 3; }
+      .mark { stroke: #FFCF1A; }
+      .fill { fill: #FFCF1A; }
+    }
+  </style>
+  <rect class="tile" x="16" y="16" width="480" height="480" rx="116"/>
+  <g class="mark" fill="none" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M112 196V128a16 16 0 0 1 16-16h68"/>
+    <path d="M400 316v68a16 16 0 0 1-16 16h-68"/>
+  </g>
+  <rect class="mark" x="166" y="166" width="124" height="124" rx="20" fill="none" stroke-width="26"/>
+  <rect class="fill" x="222" y="222" width="124" height="124" rx="20"/>
+</svg>

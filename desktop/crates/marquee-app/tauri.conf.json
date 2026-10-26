@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Marquee",
+  "version": "0.1.0",
+  "identifier": "io.github.treposting.marquee",
+  "build": {
+    "frontendDist": "ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "publisher": "Treposting",
+    "copyright": "MIT License",
+    "category": "Utility",
+    "shortDescription": "Screenshots, recording, a screen ruler, a color picker and clipboard history",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico"],
+    "windows": {
+      "nsis": { "installMode": "currentUser" }
+    }
+  }
+}

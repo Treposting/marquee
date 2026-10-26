@@ -1,0 +1,28 @@
+[package]
+name = "marquee-app"
+description = "Marquee for Windows (Linux later): screenshots, recording, Measure, colors and clipboard history"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+default-run = "marquee"
+
+[[bin]]
+name = "marquee"
+path = "src/main.rs"
+
+[dependencies]
+marquee-core = { path = "../marquee-core" }
+marquee-icon = { path = "../marquee-icon" }
+serde.workspace = true
+serde_json.workspace = true
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+
+[target.'cfg(windows)'.dependencies]
+window-vibrancy = "0.6"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+marquee-icon = { path = "../marquee-icon" }

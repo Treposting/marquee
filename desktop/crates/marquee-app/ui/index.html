@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marquee</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="sidebar" aria-label="Sections">
+    <div class="brand">
+      <img src="logo.svg" alt="" width="28" height="28">
+      <span>Marquee</span>
+    </div>
+    <button class="nav-item" data-page="home" aria-current="page"><svg><use href="#i-home"/></svg>Home</button>
+    <button class="nav-item" data-page="library"><svg><use href="#i-library"/></svg>Library</button>
+    <button class="nav-item" data-page="clipboard"><svg><use href="#i-clipboard"/></svg>Clipboard</button>
+    <button class="nav-item" data-page="colors"><svg><use href="#i-colors"/></svg>Colors</button>
+    <div class="nav-label">App</div>
+    <button class="nav-item" data-page="settings"><svg><use href="#i-settings"/></svg>Settings</button>
+    <div class="nav-spacer"></div>
+    <div class="version" id="version"></div>
+  </nav>
+
+  <main>
+    <!-- Home -->
+    <section class="page" id="page-home" aria-labelledby="home-title">
+      <header class="page-header">
+        <div>
+          <h1 id="home-title">Marquee</h1>
+          <p>Capture, record, measure, and keep everything you copy.</p>
+        </div>
+      </header>
+      <div class="notice glass" id="coming-soon" role="status" hidden>
+        <svg><use href="#i-info"/></svg>
+        <div><strong id="coming-title"></strong> is on its way to Windows. This early build has the tray, shortcuts and settings; captures come next.</div>
+        <button class="icon-button" id="coming-close" aria-label="Dismiss"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="hero glass">
+        <div class="hero-icon"><svg><use href="#i-grid"/></svg></div>
+        <div class="hero-text">
+          <h2>All-in-One</h2>
+          <p>Select an area, then screenshot, record, copy, pin or read its text.</p>
+        </div>
+        <div class="hero-actions">
+          <button class="button primary" data-action="allInOne">Start All-in-One</button>
+          <span class="keys" id="aio-keys"></span>
+        </div>
+      </div>
+      <div id="action-groups"></div>
+    </section>
+
+    <!-- Placeholders until their phase lands -->
+    <section class="page" id="page-library" hidden>
+      <header class="page-header"><div><h1>Library</h1><p>Your recent screenshots and recordings.</p></div></header>
+      <div class="empty"><div class="empty-icon glass"><svg><use href="#i-library"/></svg></div><h2>Coming with captures</h2><p>Screenshots and recordings you take will show up here.</p></div>
+    </section>
+    <section class="page" id="page-clipboard" hidden>
+      <header class="page-header"><div><h1>Clipboard</h1><p>Everything you copy, searchable.</p></div></header>
+      <div class="empty"><div class="empty-icon glass"><svg><use href="#i-clipboard"/></svg></div><h2>Coming with clipboard history</h2><p>Text, links, images and files you copy will show up here. Password managers are never recorded.</p></div>
+    </section>
+    <section class="page" id="page-colors" hidden>
+      <header class="page-header"><div><h1>Colors</h1><p>Colors you pick from the screen.</p></div></header>
+      <div class="empty"><div class="empty-icon glass"><svg><use href="#i-colors"/></svg></div><h2>Coming with the color picker</h2><p>Pick any color on screen and copy it as HEX, RGB or HSL.</p></div>
+    </section>
+
+    <!-- Settings -->
+    <section class="page" id="page-settings" hidden aria-labelledby="settings-title">
+      <header class="page-header">
+        <div><h1 id="settings-title">Settings</h1><p>Captures, clipboard and shortcuts</p></div>
+      </header>
+      <div class="tabs glass" role="tablist">
+        <button role="tab" data-tab="general" aria-selected="true">General</button>
+        <button role="tab" data-tab="clipboard" aria-selected="false">Clipboard</button>
+        <button role="tab" data-tab="shortcuts" aria-selected="false">Shortcuts</button>
+      </div>
+      <div class="error" id="settings-error" role="alert" hidden></div>
+
+      <div class="tab-panel" data-panel="general">
+        <h3 class="group-title">After capture</h3>
+        <div class="group glass">
+          <label class="row"><span>Show Quick Access thumbnail</span><input type="checkbox" class="switch" data-pref="showOverlay"></label>
+          <label class="row"><span>Hide thumbnail after</span>
+            <select data-pref="overlayTimeout" data-number>
+              <option value="0">Never</option><option value="5">5 seconds</option><option value="10">10 seconds</option>
+              <option value="20">20 seconds</option><option value="30">30 seconds</option>
+            </select></label>
+          <label class="row"><span>Copy to clipboard</span><input type="checkbox" class="switch" data-pref="copyAfterCapture"></label>
+          <label class="row"><span>Save to folder</span><input type="checkbox" class="switch" data-pref="saveAfterCapture"></label>
+        </div>
+        <h3 class="group-title">General</h3>
+        <div class="group glass">
+          <label class="row"><span>Play shutter sound</span><input type="checkbox" class="switch" data-pref="playSound"></label>
+          <label class="row"><span>Play sound on copy and paste</span><input type="checkbox" class="switch" data-pref="copyPasteSound"></label>
+          <label class="row"><span>Launch at login</span><input type="checkbox" class="switch" data-pref="launchAtLogin"></label>
+          <label class="row"><span>Check for updates automatically</span><input type="checkbox" class="switch" data-pref="autoCheckUpdates"></label>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="clipboard" hidden>
+        <h3 class="group-title">History</h3>
+        <div class="group glass">
+          <label class="row"><span>Record clipboard history</span><input type="checkbox" class="switch" data-pref="monitorPaused" data-invert></label>
+          <label class="row"><span>Keep up to</span>
+            <select data-pref="historyLimit" data-number>
+              <option value="100">100 items</option><option value="250">250 items</option><option value="500">500 items</option>
+              <option value="1000">1,000 items</option><option value="5000">5,000 items</option>
+            </select></label>
+          <label class="row"><span>Paste into the app you were using</span><input type="checkbox" class="switch" data-pref="autoPaste"></label>
+          <label class="row"><span>Show previews for copied links</span><input type="checkbox" class="switch" data-pref="linkPreviews"></label>
+        </div>
+        <h3 class="group-title">Ignored apps</h3>
+        <div class="group glass">
+          <p class="row-note">Copies made in these apps are never stored. Password managers are on the list from the start.</p>
+          <ul class="chips" id="ignored-apps"></ul>
+          <form class="row add-row" id="ignore-form">
+            <input type="text" id="ignore-input" placeholder="App file name, like KeePass.exe" aria-label="App to ignore" spellcheck="false">
+            <button class="button" type="submit">Add</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="shortcuts" hidden>
+        <p class="hint">Click a shortcut, then press the keys. It needs Ctrl, Alt, Shift or Win plus another key. Backspace clears it.</p>
+        <div id="shortcut-groups"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Icons (Fluent-style strokes) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="m3.5 16 5-5 4 4 2.5-2.5 5.5 5"/><circle cx="15.5" cy="9.5" r="1.5"/></symbol>
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2.5"/><path d="M9 4.5h6v2.5H9zM8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
+    <symbol id="i-colors" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.8 1.8-1.7 0-1.3-1-1.6-1-2.6 0-.9.7-1.6 1.6-1.6h2.1a3.5 3.5 0 0 0 3.5-3.6C20 6.8 16.4 3.5 12 3.5z"/><circle cx="7.8" cy="11" r="1.1"/><circle cx="10.5" cy="7.4" r="1.1"/><circle cx="15" cy="7.8" r="1.1"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+    <symbol id="i-area" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/></symbol>
+    <symbol id="i-window" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 9h17"/></symbol>
+    <symbol id="i-display" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20h6M12 16.5V20"/></symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="m10 9 2-2 2 2M10 15l2 2 2-2"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M10 3h4"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M9 9h6M12 9v6"/></symbol>
+    <symbol id="i-record" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5" class="fill"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6.5" width="12.5" height="11" rx="2"/><path d="m15.5 10.5 5.5-3v9l-5.5-3"/></symbol>
+    <symbol id="i-ruler" viewBox="0 0 24 24"><rect x="2.5" y="8" width="19" height="8" rx="1.5"/><path d="M6.5 8v3M10.5 8v4M14.5 8v3M18.5 8v4"/></symbol>
+    <symbol id="i-eyedropper" viewBox="0 0 24 24"><path d="m14 6 4 4M5 19l1-4 8.5-8.5a2.8 2.8 0 0 1 4 4L10 19z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></symbol>
+  </svg>
+
+  <script src="app.js"></script>
+</body>
+</html>

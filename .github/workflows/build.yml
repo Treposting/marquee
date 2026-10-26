@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches: ["**"]
-    paths-ignore: ["site/**", "**.md", ".github/workflows/pages.yml"]
+    paths-ignore: ["site/**", "**.md", ".github/workflows/pages.yml", "desktop/**", ".github/workflows/desktop.yml"]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
