@@ -438,14 +438,14 @@
           </div>
           <figure class="pin" id="demo">
             <div class="frame">
-              <video id="demo-video" poster="assets/demo-poster.jpg" muted loop playsinline preload="metadata" aria-label="A 28-second illustration of Marquee: All-in-One, a screenshot, scrolling capture, a recording with sound and camera, Measure with a guide, the color picker and clipboard history">
+              <video id="demo-video" poster="assets/demo-poster.jpg" muted loop playsinline preload="metadata" aria-label="A 50-second narrated illustration of Marquee: All-in-One, Quick Access, scrolling capture, a recording with sound and camera, Measure with a guide, the color picker, clipboard history, the Liquid Glass window and the Windows preview">
                 <source src="assets/demo.webm" type="video/webm">
                 <source src="assets/demo.mp4" type="video/mp4">
               </video>
             </div>
             <figcaption>
-              <span class="tag"><button type="button" id="demo-toggle" aria-label="Pause demo"><svg viewBox="0 0 10 10" aria-hidden="true"><path id="demo-icon" d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor"/></svg></button>0:28 demo</span>
-              <span class="note">An illustration of the app, made for this page.</span>
+              <span class="tag"><button type="button" id="demo-toggle" aria-label="Pause demo"><svg viewBox="0 0 10 10" aria-hidden="true"><path id="demo-icon" d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor"/></svg></button><button type="button" id="demo-sound" aria-label="Turn sound on" aria-pressed="false"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3.5h2L5.5 1.5v7L3 6.5H1z" fill="currentColor"/><path id="demo-sound-icon" d="M7 3.5l2 3M9 3.5l-2 3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg></button>0:50 demo</span>
+              <span class="note">An illustration of the app, made for this page. Turn on sound for the narration.</span>
             </figcaption>
           </figure>
         </div>
@@ -801,7 +801,8 @@
       (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(intro);
     })();
   
-    // Demo video: plays while visible, with a pause button; never autoplays with reduced motion.
+    // Demo video: plays muted while visible, with pause and sound buttons; never autoplays with
+    // reduced motion. Turning sound on starts the narration from the beginning.
     (() => {
       const v = document.getElementById('demo-video');
       const btn = document.getElementById('demo-toggle');
@@ -817,6 +818,16 @@
         btn.setAttribute('aria-label', wanted ? 'Pause demo' : 'Play demo');
       };
       btn.addEventListener('click', () => { wanted = !wanted; sync(); });
+      const sound = document.getElementById('demo-sound');
+      const soundIcon = document.getElementById('demo-sound-icon');
+      const OFF = 'M7 3.5l2 3M9 3.5l-2 3', ON = 'M7 3.5a2 2 0 0 1 0 3M8.3 2.3a3.6 3.6 0 0 1 0 5.4';
+      sound.addEventListener('click', () => {
+        v.muted = !v.muted;
+        if (!v.muted) { v.currentTime = 0; wanted = true; sync(); }
+        soundIcon.setAttribute('d', v.muted ? OFF : ON);
+        sound.setAttribute('aria-pressed', String(!v.muted));
+        sound.setAttribute('aria-label', v.muted ? 'Turn sound on' : 'Turn sound off');
+      });
       new IntersectionObserver(([e]) => { visible = e.isIntersecting; sync(); }, { threshold: .3 }).observe(v);
       sync();
     })();

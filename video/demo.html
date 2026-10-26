@@ -8,9 +8,13 @@
   render(t) sets every element for time t (seconds), and video/render.mjs captures
   each frame. Open this file in a browser and add #play to watch it in real time.
 
-  Scenes: title · All-in-One (remembered target, inline target picker) · scrolling
-  capture · recording with the camera bubble · Measure with a guide · color picker ·
-  clipboard panel with categories · end card. Keep it in step with the app's UI.
+  Scenes: title · All-in-One (remembered target, inline target picker) · Quick Access
+  tucked to the side · scrolling capture · recording with the camera bubble · Measure with a
+  guide · color picker · clipboard panel with categories · the Marquee window in Liquid Glass ·
+  Marquee for Windows (preview) · end card. Keep it in step with the app's UI.
+
+  VOICEOVER lists the narration with start times; render.mjs speaks it (Gemini TTS when
+  GEMINI_API_KEY is set, macOS `say` otherwise) and mixes it into the MP4.
 -->
 <style>
   :root {
@@ -123,7 +127,7 @@
   #thumb { width: 230px; height: 104px; }
   #thumb .img { position: absolute; inset: 0; background: linear-gradient(135deg, #1D1D1F 0%, #3A2F1A 55%, #8A6A12 100%); }
   #thumb .img b { position: absolute; left: 14px; top: 16px; color: #fff; font-size: 15px; font-weight: 800; width: 120px; line-height: 1.05; }
-  #thumb .btns { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(0,0,0,.35); }
+  #thumb .btns { position: absolute; inset: 0; padding-left: 20px; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(0,0,0,.35); }
   #thumb .btns span { background: rgba(255,255,255,.92); border-radius: 999px; padding: 5px 11px; font-size: 12px; font-weight: 650; }
   #tall { width: 120px; height: 236px; background: #FBFBFA; }
   #tall .h { position: absolute; left: 10px; right: 10px; top: 10px; height: 46px; border-radius: 8px; background: linear-gradient(135deg, #1D1D1F, #8A6A12); }
@@ -200,6 +204,93 @@
   .card.on { box-shadow: 0 0 0 2.5px var(--accent), 0 2px 10px rgba(0,0,0,.1); }
   .card.press { transform: scale(.97); }
 
+  /* Quick Access: side tab while hovered, handle while tucked */
+  #thumb .side { position: absolute; left: 4px; top: 50%; width: 16px; height: 40px; margin-top: -20px; border-radius: 8px;
+    background: rgba(30,30,32,.72); color: #fff; display: grid; place-items: center; font: 800 15px "Inter"; }
+  #thumb .handle { position: absolute; right: 0; top: 0; bottom: 0; width: 22px; background: rgba(30,30,32,.78); color: #fff;
+    display: grid; place-items: center; font: 800 15px "Inter"; }
+
+  /* The Marquee window, Liquid Glass (macOS 26/27) */
+  #glasswin { left: 300px; top: 130px; width: 920px; height: 600px; border-radius: 22px; overflow: hidden; display: flex;
+    background: rgba(248,247,250,.78); backdrop-filter: blur(30px) saturate(1.8);
+    box-shadow: 0 40px 90px rgba(80,40,0,.32), 0 0 0 1px rgba(255,255,255,.6), inset 0 1px 0 rgba(255,255,255,.9); }
+  #glasswin .gside { width: 196px; padding: 14px 10px; display: flex; flex-direction: column; gap: 2px;
+    background: rgba(255,255,255,.35); border-right: 1px solid rgba(0,0,0,.05); }
+  #glasswin .lights { display: flex; gap: 8px; padding: 2px 6px 18px; }
+  #glasswin .lights i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .gitem { display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 10px; border-radius: 9px; font-size: 13px; font-weight: 500; color: #3A3835; }
+  .gitem b { width: 15px; height: 15px; border-radius: 4px; border: 1.8px solid #3478F6; display: inline-block; }
+  .gitem.on { background: rgba(52,120,246,.16); color: var(--ink); font-weight: 650; }
+  .glabel { font-size: 11px; font-weight: 650; color: #8A877F; padding: 12px 10px 4px; }
+  #glasswin .gmain { flex: 1; padding: 22px 26px; }
+  .ghead { display: flex; align-items: center; gap: 14px; }
+  .ghead svg { width: 42px; height: 42px; }
+  .ghead h3 { margin: 0; font-size: 25px; font-weight: 800; letter-spacing: -.02em; }
+  .ghead p { margin: 2px 0 0; font-size: 12.5px; color: #6E6B66; }
+  .ghead .gear { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; }
+  .gcard { border-radius: 18px; background: rgba(255,255,255,.55); backdrop-filter: blur(18px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,.75); box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 6px 18px rgba(0,0,0,.06); }
+  .grow { display: flex; gap: 14px; margin-top: 18px; }
+  .gaio { flex: 1; height: 150px; padding: 18px; background: linear-gradient(135deg, rgba(52,120,246,.2), rgba(52,120,246,.06)), rgba(255,255,255,.5); }
+  .gaio .gi { width: 42px; height: 42px; border-radius: 11px; background: linear-gradient(#5A95FF,#2F6FEA); }
+  .gaio h4 { margin: 10px 0 2px; font-size: 16px; } .gaio p { margin: 0; font-size: 12px; color: #6E6B66; }
+  .gaio .gbtnp { display: inline-block; margin-top: 12px; padding: 7px 14px; border-radius: 999px; background: #3478F6; color: #fff; font-size: 12.5px; font-weight: 650; }
+  .glatest { width: 220px; height: 150px; padding: 12px; }
+  .glatest div { height: 96px; border-radius: 12px; margin-top: 8px; background: linear-gradient(135deg, #1D1D1F 0%, #3A2F1A 55%, #8A6A12 100%); }
+  .glatest small { font-size: 11px; font-weight: 650; color: #6E6B66; }
+  .gsec { font-size: 12.5px; font-weight: 650; color: #6E6B66; margin: 18px 2px 8px; }
+  .gtiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .gtile { height: 58px; border-radius: 12px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 13px; font-weight: 650; transition: none; }
+  .gtile i { width: 32px; height: 32px; border-radius: 9px; background: rgba(52,120,246,.14); display: inline-block; }
+  .gtile.rec i { background: rgba(255,59,48,.14); }
+  .gtile small { display: block; font-size: 11px; font-weight: 500; color: #6E6B66; }
+  .gtile.hot { background: rgba(255,255,255,.82); box-shadow: inset 0 1px 0 #fff, 0 8px 20px rgba(0,0,0,.08); }
+  .gwin { margin-top: 14px; height: 54px; display: flex; align-items: center; gap: 12px; padding: 0 14px; font-size: 13px; font-weight: 650; }
+  .gwin i { width: 30px; height: 30px; border-radius: 8px; background: rgba(52,120,246,.14); display: inline-block; }
+  .gwin span { font-size: 11px; font-weight: 600; color: #6E6B66; background: rgba(0,0,0,.06); padding: 2px 8px; border-radius: 999px; }
+
+  /* Windows 11 */
+  #winos { inset: 0; overflow: hidden; font-family: "Segoe UI Variable Text", "Segoe UI", "Inter", sans-serif; }
+  #winos .wall { position: absolute; inset: 0;
+    background: radial-gradient(900px 600px at 50% 110%, #7FB2FF 0%, transparent 60%),
+                radial-gradient(700px 500px at 20% 20%, #DDE9FF 0%, transparent 60%),
+                linear-gradient(170deg, #EAF1FF, #B9D2FF 70%, #8DB4F7); }
+  #taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 48px; background: rgba(240,243,250,.82); backdrop-filter: blur(30px) saturate(1.6);
+    border-top: 1px solid rgba(255,255,255,.6); display: flex; align-items: center; justify-content: center; gap: 8px; }
+  #taskbar .tb { width: 36px; height: 36px; border-radius: 6px; display: grid; place-items: center; }
+  #taskbar .tb.on { background: rgba(255,255,255,.7); }
+  #taskbar .search { width: 180px; height: 32px; border-radius: 999px; background: rgba(255,255,255,.8); font-size: 12px; color: #555; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+  #tray { position: absolute; right: 12px; top: 0; bottom: 0; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: #1B1B1F; }
+  #tray .clock { text-align: right; line-height: 1.25; }
+  #trayicon { width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; }
+  #winapp { left: 330px; top: 140px; width: 900px; height: 570px; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;
+    background: rgba(243,244,248,.86); backdrop-filter: blur(40px) saturate(1.8); box-shadow: 0 30px 80px rgba(20,40,90,.35), 0 0 0 1px rgba(0,0,0,.08); }
+  #winapp .wtitle { height: 34px; display: flex; align-items: center; padding-left: 14px; font-size: 12px; gap: 10px; }
+  #winapp .wtitle .ctl { margin-left: auto; display: flex; }
+  #winapp .wtitle .ctl span { width: 46px; height: 34px; display: grid; place-items: center; font-size: 13px; color: #333; }
+  #winapp .wbody { flex: 1; display: flex; }
+  #winapp .wside { width: 190px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .witem { position: relative; height: 36px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border-radius: 6px; font-size: 13px; }
+  .witem b { width: 16px; height: 16px; border-radius: 4px; border: 1.6px solid #333; display: inline-block; }
+  .witem.on { background: rgba(255,255,255,.75); font-weight: 600; }
+  .witem.on::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--yellow); }
+  #winapp .wmain { flex: 1; padding: 18px 26px; border-top-left-radius: 10px; background: rgba(250,250,252,.6); border-left: 1px solid rgba(0,0,0,.05); border-top: 1px solid rgba(0,0,0,.05); }
+  #winapp h3 { margin: 4px 0 2px; font-family: "Segoe UI Variable Display", "Segoe UI", "Inter", sans-serif; font-size: 26px; font-weight: 650; }
+  #winapp .sub { font-size: 13px; color: #5C5C66; }
+  .whero { margin-top: 16px; display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,207,26,.32), rgba(255,255,255,.6)); border: 1px solid rgba(0,0,0,.06); }
+  .whero .wi { width: 46px; height: 46px; border-radius: 12px; background: var(--yellow); }
+  .whero h4 { margin: 0; font-size: 15px; } .whero p { margin: 2px 0 0; font-size: 12px; color: #5C5C66; }
+  .whero .go { margin-left: auto; white-space: nowrap; padding: 8px 14px; border-radius: 8px; background: var(--yellow); font-size: 13px; font-weight: 650; }
+  .whero kbd { font: 600 11px "Segoe UI", "Inter", system-ui, sans-serif; padding: 2px 6px; border-radius: 5px; background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.08); margin-left: 3px; }
+  .wtiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  .wtile { height: 58px; border-radius: 10px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 13px; font-weight: 600;
+    background: rgba(255,255,255,.62); border: 1px solid rgba(0,0,0,.06); }
+  .wtile i { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,207,26,.3); display: inline-block; }
+  .wtile .soon { margin-left: auto; font-size: 10.5px; color: #5C5C66; background: rgba(0,0,0,.05); padding: 1px 7px; border-radius: 999px; }
+  .wsec { font-size: 12.5px; font-weight: 600; color: #5C5C66; margin: 16px 2px 0; }
+  #trayring { width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--yellow); }
+
   /* Overlays */
   #keycap { left: 50%; bottom: 120px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; }
   #keycap kbd { min-width: 54px; height: 54px; padding: 0 14px; border-radius: 12px; background: rgba(29,29,31,.86); color: #fff;
@@ -215,6 +306,8 @@
   .card-full h1 { font-size: 84px; font-weight: 800; letter-spacing: -.04em; margin: 22px 0 6px; }
   .card-full p { font-size: 26px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
   .card-full .meta { margin-top: 26px; font-size: 16px; font-weight: 600; opacity: .7; }
+  .card-full .badges { margin-top: 18px; display: flex; gap: 10px; justify-content: center; }
+  .card-full .badges span { font-size: 15px; font-weight: 700; padding: 7px 14px; border-radius: 999px; border: 2px solid var(--ink); }
   .card-full .url { margin-top: 26px; font-size: 18px; font-weight: 700; padding: 10px 18px; border-radius: 999px; background: var(--ink); color: var(--yellow); }
 </style>
 </head>
@@ -295,7 +388,7 @@
   </div>
 
   <div id="flash" class="abs"></div>
-  <div id="thumb" class="abs thumb"><div class="img"><b>Ship Marquee to everyone</b></div><div class="btns"><span>Copy</span><span>Save</span><span>Annotate</span></div></div>
+  <div id="thumb" class="abs thumb"><div class="img"><b>Ship Marquee to everyone</b></div><div class="btns"><span>Copy</span><span>Save</span><span>Annotate</span></div><div class="side" id="thumbside">‹</div><div class="handle" id="thumbhandle">›</div></div>
   <div id="tall" class="abs thumb"><div class="h"></div><span class="tag">2,180 pt</span></div>
   <div id="toast" class="abs glass"><i>✓</i><span id="toasttxt">Screenshot copied</span></div>
 
@@ -354,6 +447,62 @@
     </div>
   </div>
 
+  <!-- The Marquee window in Liquid Glass -->
+  <div id="glasswin" class="abs">
+    <div class="gside">
+      <div class="lights"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i></div>
+      <div class="gitem on"><b></b>Home</div><div class="gitem"><b></b>Library</div><div class="gitem"><b></b>Clipboard</div><div class="gitem"><b></b>Colors</div>
+      <div class="glabel">App</div><div class="gitem"><b></b>Permissions</div><div class="gitem"><b></b>Settings</div>
+      <div class="glabel">More apps</div><div class="gitem"><b style="border-color:#E0A800"></b>QuitX</div>
+    </div>
+    <div class="gmain">
+      <div class="ghead"><svg viewBox="0 0 512 512"><rect x="16" y="16" width="480" height="480" rx="116" fill="#FFCF1A"/><g fill="none" stroke="#1D1D1F" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"><path d="M112 196V128a16 16 0 0 1 16-16h68"/><path d="M400 316v68a16 16 0 0 1-16 16h-68"/></g><rect x="166" y="166" width="124" height="124" rx="20" fill="none" stroke="#1D1D1F" stroke-width="26"/><rect x="222" y="222" width="124" height="124" rx="20" fill="#1D1D1F"/></svg><div><h3>Marquee</h3><p>Capture, record, measure, and keep everything you copy.</p></div><span class="gear gcard"></span></div>
+      <div class="grow">
+        <div class="gcard gaio"><div class="gi"></div><h4>All-in-One</h4><p>Select an area, then screenshot, record, copy, pin or read its text.</p><span class="gbtnp">Start All-in-One</span></div>
+        <div class="gcard glatest"><small>Latest capture</small><div></div></div>
+      </div>
+      <div class="gsec">Capture</div>
+      <div class="gtiles">
+        <div class="gcard gtile" id="gt0"><i></i><div>Area<small>Drag over the screen</small></div></div>
+        <div class="gcard gtile" id="gt1"><i></i><div>Window<small>Click a window</small></div></div>
+        <div class="gcard gtile" id="gt2"><i></i><div>Scrolling<small>One long screenshot</small></div></div>
+        <div class="gcard gtile rec" id="gt3"><i></i><div>Record Area<small>With audio</small></div></div>
+        <div class="gcard gtile" id="gt4"><i></i><div>Measure<small>Sizes on screen</small></div></div>
+        <div class="gcard gtile" id="gt5"><i></i><div>Clipboard<small>Everything you copied</small></div></div>
+      </div>
+      <div class="gcard gwin"><i></i>Marquee for Windows <span>Preview</span></div>
+    </div>
+  </div>
+
+  <!-- Marquee for Windows -->
+  <div id="winos" class="abs">
+    <div class="wall"></div>
+    <div id="winapp" class="abs">
+      <div class="wtitle"><svg width="16" height="16" viewBox="0 0 512 512"><rect x="16" y="16" width="480" height="480" rx="116" fill="#FFCF1A"/><rect x="222" y="222" width="124" height="124" rx="20" fill="#1D1D1F"/></svg>Marquee<div class="ctl"><span>—</span><span>☐</span><span>✕</span></div></div>
+      <div class="wbody">
+        <div class="wside"><div class="witem on"><b></b>Home</div><div class="witem"><b></b>Library</div><div class="witem"><b></b>Clipboard</div><div class="witem"><b></b>Colors</div><div class="witem"><b></b>Settings</div></div>
+        <div class="wmain">
+          <h3>Marquee</h3><div class="sub">Capture, record, measure, and keep everything you copy.</div>
+          <div class="whero"><div class="wi"></div><div><h4>All-in-One</h4><p>Select an area, then screenshot, record, copy, pin or read its text.</p></div><span class="go">Start All-in-One</span><span><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>A</kbd></span></div>
+          <div class="wsec">Capture</div>
+          <div class="wtiles">
+            <div class="wtile"><i></i>Area<span class="soon">Soon</span></div><div class="wtile"><i></i>Window<span class="soon">Soon</span></div><div class="wtile"><i></i>Full Screen<span class="soon">Soon</span></div>
+            <div class="wtile"><i></i>Scrolling<span class="soon">Soon</span></div><div class="wtile"><i></i>Self-Timer<span class="soon">Soon</span></div><div class="wtile"><i></i>Copy Text<span class="soon">Soon</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="taskbar">
+      <div class="tb"><svg width="20" height="20" viewBox="0 0 20 20"><rect x="1" y="1" width="8.5" height="8.5" fill="#0A6CF0"/><rect x="10.5" y="1" width="8.5" height="8.5" fill="#0A6CF0"/><rect x="1" y="10.5" width="8.5" height="8.5" fill="#0A6CF0"/><rect x="10.5" y="10.5" width="8.5" height="8.5" fill="#0A6CF0"/></svg></div>
+      <div class="search">⌕&nbsp; Search</div>
+      <div class="tb"><span style="width:20px;height:16px;border-radius:3px;background:#F4B400;display:block"></span></div>
+      <div class="tb"><span style="width:20px;height:20px;border-radius:50%;background:conic-gradient(#EA4335 0 33%,#FBBC05 0 66%,#34A853 0);display:block"></span></div>
+      <div class="tb on"><svg width="22" height="22" viewBox="0 0 512 512"><rect x="16" y="16" width="480" height="480" rx="116" fill="#FFCF1A"/><rect x="222" y="222" width="124" height="124" rx="20" fill="#1D1D1F"/></svg></div>
+      <div id="tray"><span>⌃</span><span id="trayicon"><svg width="18" height="18" viewBox="0 0 512 512"><rect x="16" y="16" width="480" height="480" rx="116" fill="#FFCF1A"/><g fill="none" stroke="#1D1D1F" stroke-width="40" stroke-linecap="round"><path d="M112 196V128a16 16 0 0 1 16-16h68"/><path d="M400 316v68a16 16 0 0 1-16 16h-68"/></g><rect x="222" y="222" width="124" height="124" rx="20" fill="#1D1D1F"/></svg></span><span>ᯤ</span><span class="clock">9:41 AM<br>10/26/2026</span></div>
+    </div>
+    <div id="trayring" class="abs"></div>
+  </div>
+
   <div id="caption" class="abs"></div>
   <div id="keycap" class="abs"></div>
 
@@ -367,7 +516,8 @@
   <div id="end" class="abs card-full">
     <svg class="logo" viewBox="0 0 512 512"><rect x="16" y="16" width="480" height="480" rx="116" fill="#1D1D1F"/><g fill="none" stroke="#FFCF1A" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"><path d="M112 196V128a16 16 0 0 1 16-16h68"/><path d="M400 316v68a16 16 0 0 1-16 16h-68"/></g><rect x="166" y="166" width="124" height="124" rx="20" fill="none" stroke="#FFCF1A" stroke-width="26"/><rect x="222" y="222" width="124" height="124" rx="20" fill="#FFCF1A"/></svg>
     <h1>Marquee</h1>
-    <p>Free and open source, for macOS 13 to 27.</p>
+    <p>Free and open source.</p>
+    <div class="badges"><span>macOS 13 to 27</span><span>Windows preview</span></div>
     <div class="meta">Screenshots · Scrolling capture · Recording with camera · Measure · Colors · Clipboard history</div>
     <div class="url">marquee.nahid.bd</div>
   </div>
@@ -403,9 +553,25 @@ for (let i = 0; i < 6; i++) meter.appendChild(document.createElement('b'));
 for (let i = 0; i < 16; i++) { const r = document.createElement('i'); r.style.top = (66 + i * 10) + 'px'; r.style.width = (50 + (i * 37) % 46) + 'px'; $('tall').appendChild(r); }
 
 // Key moments (seconds).
-const T = { title: 2.2, aio: 2.4, drag0: 4.2, drag1: 5.2, pick: 5.8, area: 6.5, shot: 7.0,
-            scroll: 8.7, scrollEnd: 11.6, rec: 11.8, go: 14.3, recEnd: 16.3,
-            measure: 16.5, guide: 18.6, color: 19.6, clip: 22.0, paste: 24.4, end: 25.4, total: 27.6 };
+const T = { title: 4.0, aio: 4.2, drag0: 6.2, drag1: 7.4, pick: 8.2, area: 9.0, shot: 9.6, tuck: 12.4,
+            scroll: 14.6, scrollEnd: 18.6, rec: 18.8, go: 21.3, recEnd: 23.8,
+            measure: 24.0, guide: 26.1, color: 28.4, clip: 31.4, paste: 34.2,
+            glass: 35.4, windows: 39.4, end: 44.6, total: 49.8 };
+
+// Narration: [start (s), line]. Each line has to finish before the next one starts.
+const VOICEOVER = [
+  [0.3, 'Meet Marquee. Capture the screen, and keep the clipboard.'],
+  [T.aio + .2, 'One shortcut opens All-in-One. Drag over anything, pick a target, and it’s captured.'],
+  [T.shot + 1.0, 'The thumbnail waits in the corner, and tucks to the side when you need room.'],
+  [T.scroll + .2, 'Scrolling capture turns a whole page into one long screenshot.'],
+  [T.rec + .2, 'Record with your microphone, your Mac’s audio, and a camera bubble.'],
+  [T.measure + .2, 'Measure distances and sizes, and drop guides anywhere.'],
+  [T.color + .2, 'Pick any color on screen, and copy it.'],
+  [T.clip + .2, 'Everything you copy is kept, and one click pastes it back.'],
+  [T.glass + .2, 'It all lives in one window, now in Liquid Glass.'],
+  [T.windows + .2, 'And Marquee is coming to Windows. The first preview is out today.'],
+  [T.end + .2, 'Free and open source. Get it at marquee dot nahid dot B D.'],
+];
 
 const SEL = { x0: 410, y0: 230, x1: 1052, y1: 472 };
 // The scrolling area: the window's content beside its sidebar.
@@ -421,11 +587,14 @@ function render(t) {
   // Captions
   const caps = [
     [T.aio, T.shot + 1.5, 'All-in-One', 'One shortcut. Screenshot and Record remember what you used last.'],
+    [T.shot + 1.6, T.scroll, 'Quick Access', 'Copy, save or annotate. Tuck it to the side for room.'],
     [T.scroll, T.scrollEnd, 'Scrolling capture', 'One long screenshot of anything that scrolls.'],
     [T.rec - .1, T.recEnd, 'Record with sound and camera', 'Your mic, your Mac’s audio and a camera bubble.'],
     [T.measure, T.color - .1, 'Measure anything', 'Distances, exact sizes and guides.'],
     [T.color, T.clip - .1, 'Pick any color', 'Copied as HEX, RGB, HSL or SwiftUI.'],
-    [T.clip, T.end, 'Clipboard history', 'Categories, link previews, one click to paste.'],
+    [T.clip, T.glass, 'Clipboard history', 'Categories, link previews, one click to paste.'],
+    [T.glass, T.windows, 'One window, Liquid Glass', 'Home, Library, Clipboard, Colors and Settings.'],
+    [T.windows, T.end, 'Now on Windows', 'A first preview for Windows 10 and 11.'],
   ];
   let capOpacity = 0;
   for (const [a, b, h, s] of caps) {
@@ -502,7 +671,13 @@ function render(t) {
   show($('flash'), t >= T.shot ? .85 * (1 - prog(t, T.shot + .02, T.shot + .3, out)) : 0);
   show($('thumb'), win(t, T.shot + .25, T.scroll + .3, .3));
   css($('thumb'), { transform: `translateX(${(1 - prog(t, T.shot + .25, T.shot + .6, out)) * -260}px)` });
-  $('thumb').querySelector('.btns').style.opacity = t > T.shot + 1.0 && t < T.scroll ? 1 : 0;
+  // Hovered: actions and the side tab. Clicking the tab slides it off the left edge, leaving a handle.
+  const hovered = t > T.shot + 1.3 && t < T.tuck - .05;
+  $('thumb').querySelector('.btns').style.opacity = hovered ? 1 : 0;
+  $('thumbside').style.opacity = hovered ? 1 : 0;
+  const tuckP = prog(t, T.tuck, T.tuck + .45, out);
+  $('thumbhandle').style.opacity = tuckP;
+  if (t >= T.tuck) css($('thumb'), { transform: `translateX(${-232 * tuckP}px)` });
   const toast = [[T.shot + .35, T.shot + 1.6, 'Screenshot copied'], [T.color + 1.25, T.color + 2.3, '#FFCF1A copied'],
                  [T.paste + .1, T.paste + 1.0, 'Pasted']];
   let to = 0;
@@ -607,6 +782,23 @@ function render(t) {
     $(id).className = cls;
   });
 
+  // ----- The Marquee window, Liquid Glass -----
+  const glassO = win(t, T.glass, T.windows + .1, .35);
+  show($('glasswin'), glassO);
+  css($('glasswin'), { transform: `translateY(${(1 - prog(t, T.glass, T.glass + .5, out)) * 24}px) scale(${lerp(.97, 1, prog(t, T.glass, T.glass + .5, out))})` });
+  const hot = Math.floor((t - (T.glass + 1.0)) / .35);
+  for (let i = 0; i < 6; i++) $('gt' + i).className = 'gcard gtile' + (i === 3 ? ' rec' : '') + (t > T.glass + 1.0 && hot === i ? ' hot' : '');
+
+  // ----- Marquee for Windows -----
+  const wO = prog(t, T.windows, T.windows + .45) * (1 - prog(t, T.end, T.end + .4));
+  show($('winos'), wO);
+  const wIn = prog(t, T.windows + .3, T.windows + .85, out);
+  css($('winapp'), { opacity: wIn, transform: `translateY(${(1 - wIn) * 30}px)` });
+  const [trx, try_] = center($('trayicon'));
+  const ring = prog(t, T.windows + 1.6, T.windows + 2.4, out);
+  css($('trayring'), { left: (trx - 20) + 'px', top: (try_ - 20) + 'px', transform: `scale(${lerp(.6, 1.5, ring)})` });
+  show($('trayring'), t > T.windows + 1.6 ? (1 - ring) : 0);
+
   // ----- Cursor -----
   const [stx, sty] = center($('shotTgt'));
   const [pax, pay] = center($('pArea'));
@@ -622,6 +814,9 @@ function render(t) {
     [T.pick + .25, stx, sty],
     [T.area - .1, pax, pay],             // Area
     [T.shot + .5, pax, pay],
+    [T.shot + 1.3, 140, 724],            // over the thumbnail
+    [T.tuck - .35, 36, 724],             // its side tab
+    [T.tuck + .15, 36, 724],
     [T.scroll + 1.0, 760, 460],          // over the page while it scrolls
     [T.scrollEnd - 1.0, 770, 470],
     [T.scrollEnd - .5, dnx, dny],        // Done
@@ -644,6 +839,7 @@ function render(t) {
 
 window.render = render;
 window.TOTAL = T.total;
+window.VOICEOVER = VOICEOVER;
 render(0);
 if (location.hash === '#play') {
   const start = performance.now();
