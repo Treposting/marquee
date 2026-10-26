@@ -84,11 +84,6 @@ fn app_version(app: AppHandle) -> String {
     app.package_info().version.to_string()
 }
 
-#[tauri::command]
-fn window_material(app: AppHandle) -> &'static str {
-    app.try_state::<window::Material>().map_or("none", |m| *m.0.lock().unwrap())
-}
-
 /// The action the page should explain, if any; asking clears it.
 #[tauri::command]
 fn take_pending(app: AppHandle) -> Option<&'static str> {
@@ -107,7 +102,6 @@ fn main() {
             list_actions,
             perform,
             app_version,
-            window_material,
             take_pending
         ])
         .setup(|app| {

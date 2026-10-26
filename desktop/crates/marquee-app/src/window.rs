@@ -5,11 +5,6 @@ use std::sync::Mutex;
 use marquee_core::shortcuts::Action;
 use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewUrl, WebviewWindowBuilder};
 
-/// The backdrop behind the window's web content: "mica", "acrylic" or "none" (solid). The page
-/// asks for it on load and draws a solid background when there's none.
-#[derive(Default)]
-pub struct Material(pub Mutex<&'static str>);
-
 /// An action that isn't available yet, waiting to be explained by a page still loading.
 #[derive(Default)]
 pub struct Pending(pub Mutex<Option<&'static str>>);
@@ -46,27 +41,7 @@ fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<tauri::WebviewWindow<R
         .min_inner_size(760.0, 520.0)
         .center()
         .visible(false);
-    // Mica shows the desktop's tint through the window, like Windows 11's own apps.
-    #[cfg(windows)]
-    let builder = builder.transparent(true);
-    let window = builder.build()?;
-    let material = backdrop(&window);
-    app.manage(Material::default());
-    *app.state::<Material>().0.lock().unwrap() = material;
-    Ok(window)
-}
-
-/// Mica on Windows 11, acrylic on Windows 10, otherwise nothing.
-#[allow(unused_variables)]
-fn backdrop<R: Runtime>(window: &tauri::WebviewWindow<R>) -> &'static str {
-    #[cfg(windows)]
-    {
-        if window_vibrancy::apply_mica(window, None).is_ok() {
-            return "mica";
-        }
-        if window_vibrancy::apply_acrylic(window, Some((32, 32, 36, 160))).is_ok() {
-            return "acrylic";
-        }
-    }
-    "none"
+    // Opaque on purpose: a transparent WebView2 window with Mica or acrylic behind it kept the
+    // compositor busy enough to slow the whole system and leave a second cursor on screen.
+    builder.build()
 }

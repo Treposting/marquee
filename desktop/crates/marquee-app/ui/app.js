@@ -223,7 +223,6 @@ function renderShortcuts() {
 // Start
 
 async function start() {
-  document.documentElement.dataset.material = await invoke("window_material");
   $("#version").textContent = `Version ${await invoke("app_version")} · early Windows build`;
   prefs = await invoke("get_prefs");
   actions = await invoke("list_actions");

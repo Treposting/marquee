@@ -2,6 +2,10 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.1.1
+
+- **Faster, no more double cursor.** The Marquee window no longer makes the whole system sluggish or leaves a second cursor on screen. Its see-through background and blur were too heavy for some PCs, so the window now uses solid Windows colors.
+
 ## 0.1.0
 
 First preview: the groundwork. Captures, recording and clipboard history come in the next previews.

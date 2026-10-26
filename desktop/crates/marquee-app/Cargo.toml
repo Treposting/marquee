@@ -20,9 +20,6 @@ tauri-plugin-global-shortcut = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 
-[target.'cfg(windows)'.dependencies]
-window-vibrancy = "0.6"
-
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 marquee-icon = { path = "../marquee-icon" }
