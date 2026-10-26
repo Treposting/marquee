@@ -23,6 +23,7 @@ enum Preferences {
         case autoCheckUpdates
         case hasCompletedOnboarding
         case quitXPromoDismissed
+        case windowsPromoDismissed
         case keepLibrary
         case skippedVersion
         case menuBarIcon

@@ -4,6 +4,11 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+## 0.5.19 — 2026-10-26
+
+### Added
+- **Marquee for Windows preview.** A card on Home, and one notification, say there's an early Windows build. Close the card with ✕; turning off update notifications skips the notification.
+
 ## 0.5.18 — 2026-10-25
 
 ### Added
