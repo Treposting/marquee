@@ -30,6 +30,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.updateBadge()
         }
         Updater.shared.startAutomaticChecks()
+        // Not during the first launch, which has onboarding to get through.
+        if Preferences.hasCompletedOnboarding {
+            runAfter(20) { UpdateNotifier.announceWindowsPreview() }
+        }
 
         installMainMenu()
         AppModel.shared.configure(store: store, monitor: monitor) { [weak self] action in self?.perform(action) }

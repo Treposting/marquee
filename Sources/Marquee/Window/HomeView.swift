@@ -125,6 +125,8 @@ struct HomeView: View {
 
                 recent
 
+                WindowsPreviewCard()
+
                 QuitXPromo()
 
                 AboutFooter()

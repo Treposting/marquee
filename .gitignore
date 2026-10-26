@@ -7,9 +7,13 @@ xcuserdata/
 DerivedData/
 *.p12
 video/stills/
+video/voice/
 
 # Marquee for Windows (desktop/ on the windows-port branch): Rust build output and icons
 # generated at build time. Listed here too so switching back to main doesn't show them.
 desktop/target/
 desktop/crates/marquee-app/icons/
 desktop/crates/marquee-app/gen/
+
+# Local secrets (GEMINI_API_KEY for the demo narration). Never committed.
+.env

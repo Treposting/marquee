@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Marquee</title>
-  <meta name="description" content="A free, open-source Mac menu-bar app for screenshots, screen recording, annotation, OCR and clipboard history.">
+  <meta name="description" content="A free, open-source Mac menu-bar app for screenshots, screen recording, annotation, OCR and clipboard history. Windows preview available.">
   <meta property="og:title" content="Marquee">
   <meta property="og:description" content="Capture the screen. Keep the clipboard. Free and open source for macOS.">
   <meta property="og:image" content="https://treposting.github.io/marquee/assets/og.png">
@@ -220,6 +220,10 @@
     .textlink { font-weight: 500; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; text-decoration-thickness: 2px; }
     .textlink:hover { text-decoration-color: var(--ochre); }
     .meta { width: 100%; padding-block: 0 4px; }
+    .win-meta { padding-block: 0; }
+    .windows-note { margin-top: 36px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 12px; max-width: 760px; }
+    .windows-note h3 { margin: 0 0 6px; }
+    .windows-note p { margin: 0; }
 
     /* Quick Access toast that appears after a demo capture */
     .toast {
@@ -430,17 +434,18 @@
               <a class="textlink" href="https://github.com/Treposting/marquee">Source on GitHub</a>
             </div>
             <p class="label meta">Runs on macOS 13 or later, on Apple Silicon and Intel. MIT licensed.</p>
+            <p class="label meta win-meta">New: <a class="textlink" data-windows-link href="https://github.com/Treposting/marquee/releases?q=windows&amp;expanded=true">Marquee for Windows preview</a>, an early build for Windows 10 and 11.</p>
           </div>
           <figure class="pin" id="demo">
             <div class="frame">
-              <video id="demo-video" poster="assets/demo-poster.jpg" muted loop playsinline preload="metadata" aria-label="A 28-second illustration of Marquee: All-in-One, a screenshot, scrolling capture, a recording with sound and camera, Measure with a guide, the color picker and clipboard history">
+              <video id="demo-video" poster="assets/demo-poster.jpg" muted loop playsinline preload="metadata" aria-label="A 50-second narrated illustration of Marquee: All-in-One, Quick Access, scrolling capture, a recording with sound and camera, Measure with a guide, the color picker, clipboard history, the Liquid Glass window and the Windows preview">
                 <source src="assets/demo.webm" type="video/webm">
                 <source src="assets/demo.mp4" type="video/mp4">
               </video>
             </div>
             <figcaption>
-              <span class="tag"><button type="button" id="demo-toggle" aria-label="Pause demo"><svg viewBox="0 0 10 10" aria-hidden="true"><path id="demo-icon" d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor"/></svg></button>0:28 demo</span>
-              <span class="note">An illustration of the app, made for this page.</span>
+              <span class="tag"><button type="button" id="demo-toggle" aria-label="Pause demo"><svg viewBox="0 0 10 10" aria-hidden="true"><path id="demo-icon" d="M2 1h2v8H2zM6 1h2v8H6z" fill="currentColor"/></svg></button><button type="button" id="demo-sound" aria-label="Turn sound on" aria-pressed="false"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3.5h2L5.5 1.5v7L3 6.5H1z" fill="currentColor"/><path id="demo-sound-icon" d="M7 3.5l2 3M9 3.5l-2 3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg></button>0:50 demo</span>
+              <span class="note">An illustration of the app, made for this page. Turn on sound for the narration.</span>
             </figcaption>
           </figure>
         </div>
@@ -581,6 +586,10 @@
             <li><b>Open it once with right-click</b><p>Releases aren't notarized by Apple yet, so macOS asks you to confirm the first launch: right-click the app and choose Open.</p></li>
             <li><b>Allow Screen Recording</b><p>macOS asks the first time you capture. Accessibility is optional; it lets Marquee paste into other apps for you.</p></li>
           </ol>
+        <div class="windows-note" id="windows">
+          <h3>On Windows?</h3>
+          <p>An early preview of <a class="textlink" data-windows-link href="https://github.com/Treposting/marquee/releases?q=windows&amp;expanded=true">Marquee for Windows</a> is out: the tray app, shortcuts and settings for now, with screenshots, recording and clipboard history coming in the next previews. Run the installer; it isn't code-signed yet, so choose <b>More info → Run anyway</b> when Windows asks.</p>
+        </div>
       </div>
     </section>
 
@@ -623,6 +632,25 @@
   </div>
 
   <script>
+    // Windows previews are pre-releases, which GitHub's "latest" link skips. Point the Windows
+    // links at the newest one's installer; without the API they keep the releases search link.
+    (() => {
+      const links = document.querySelectorAll('[data-windows-link]');
+      fetch('https://api.github.com/repos/Treposting/marquee/releases?per_page=30')
+        .then((r) => (r.ok ? r.json() : []))
+        .then((releases) => {
+          const release = releases.find((r) => r.tag_name.startsWith('windows-v') && !r.draft);
+          if (!release) return;
+          const setup = release.assets.find((a) => a.name.endsWith('-setup.exe'));
+          const version = release.tag_name.replace('windows-v', '');
+          for (const link of links) {
+            link.href = setup ? setup.browser_download_url : release.html_url;
+            link.title = `Marquee for Windows ${version} (preview)`;
+          }
+        })
+        .catch(() => {});
+    })();
+
     (() => {
       const canvas = document.getElementById('canvas');
       const thesis = document.getElementById('thesis');
@@ -773,7 +801,8 @@
       (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(intro);
     })();
   
-    // Demo video: plays while visible, with a pause button; never autoplays with reduced motion.
+    // Demo video: plays muted while visible, with pause and sound buttons; never autoplays with
+    // reduced motion. Turning sound on starts the narration from the beginning.
     (() => {
       const v = document.getElementById('demo-video');
       const btn = document.getElementById('demo-toggle');
@@ -789,6 +818,16 @@
         btn.setAttribute('aria-label', wanted ? 'Pause demo' : 'Play demo');
       };
       btn.addEventListener('click', () => { wanted = !wanted; sync(); });
+      const sound = document.getElementById('demo-sound');
+      const soundIcon = document.getElementById('demo-sound-icon');
+      const OFF = 'M7 3.5l2 3M9 3.5l-2 3', ON = 'M7 3.5a2 2 0 0 1 0 3M8.3 2.3a3.6 3.6 0 0 1 0 5.4';
+      sound.addEventListener('click', () => {
+        v.muted = !v.muted;
+        if (!v.muted) { v.currentTime = 0; wanted = true; sync(); }
+        soundIcon.setAttribute('d', v.muted ? OFF : ON);
+        sound.setAttribute('aria-pressed', String(!v.muted));
+        sound.setAttribute('aria-label', v.muted ? 'Turn sound on' : 'Turn sound off');
+      });
       new IntersectionObserver(([e]) => { visible = e.isIntersecting; sync(); }, { threshold: .3 }).observe(v);
       sync();
     })();

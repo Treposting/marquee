@@ -1,6 +1,6 @@
 # Tasks
 
-Status as of v0.5.18 (2026-10-25). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
+Status as of v0.5.19 (2026-10-26). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Done
 
@@ -53,6 +53,7 @@ Status as of v0.5.18 (2026-10-25). Project context and conventions are in [CLAUD
 
 Each release adds a "What's new" entry to README.md, a dated CHANGELOG section, and a line here.
 
+- **0.5.19:** Marquee for Windows preview: Home card and one-time notification; website Windows links (Windows previews ship as `windows-vX.Y.Z` pre-releases from the `windows-port` branch)
 - **0.5.18:** fixes #10 (washed-out recordings: sRGB + Rec. 709 tags); Annotate min width; Quick Access 20 s auto-hide and tuck to side; clipboard paste moves to top; copy/paste sounds for other apps, single sound, choosable; glass cards and Settings tab bar; QuitX promo card and sidebar page
 - **0.5.17:** video editor text drag-anywhere overlays; layers panel (show/hide, reorder, delete) and timeline lanes
 - **0.5.16:** video cut sections and text overlays; mute mic / hide camera mid-recording; voice folder; redact styles and Select tool; hourly update checks with red dot and notification; centered windows; icon Stop; fixes #7 (camera bubble) and #8 (copy/paste sound)

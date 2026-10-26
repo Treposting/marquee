@@ -37,6 +37,9 @@ A free, open-source menu-bar app for macOS that takes screenshots and screen rec
 
 ## What's new
 
+**0.5.19**
+- **Marquee for Windows preview**: an early build for Windows 10 and 11 (tray, shortcuts and settings so far) is in the [`windows-v` pre-releases](https://github.com/Treposting/marquee/releases?q=windows&expanded=true). Home has a card for it.
+
 **0.5.18**
 - **Recordings keep their true colors** (no more washed-out video), and Annotate always fits its toolbar.
 - **Quick Access hides after 20 seconds** if unused, and can be tucked to the screen's edge.

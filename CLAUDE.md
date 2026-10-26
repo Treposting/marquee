@@ -67,11 +67,15 @@ The **Issue updates** workflow (`.github/workflows/issue-updates.yml`, logic in 
 
 ## Demo video
 
-`node video/render.mjs` renders `video/demo.html` to `site/assets/demo.mp4` (about 28 s). It needs Playwright with Chromium (`npm i playwright && npx playwright install chromium`, or point `NODE_PATH` at an install). When the app's UI changes, update the matching scene in `demo.html` too. Then make the WebM and poster:
+`node video/render.mjs` renders `video/demo.html` to `site/assets/demo.mp4` (about 50 s, narrated). It needs Playwright with Chromium (`npm i playwright && npx playwright install chromium`, or point `NODE_PATH` at an install). When the app's UI changes, update the matching scene in `demo.html` too.
+
+Narration: the `VOICEOVER` list in `demo.html` (start time, line). With `GEMINI_API_KEY` in `.env` at the repo root (git-ignored, never commit it) the lines are spoken by Gemini TTS, voice Kore; otherwise by macOS `say`. Spoken lines are cached in `video/voice/` (git-ignored), so only changed lines are requested again; the free tier allows about 10 requests a day per model, and the script moves on to the next TTS model when one runs out. It warns when a line runs into the next part; move the scene times in `T` until it doesn't. `--no-voice` renders silently.
+
+Then make the WebM (with audio) and poster:
 
 ```
-ffmpeg -y -i site/assets/demo.mp4 -c:v libvpx-vp9 -b:v 0 -crf 36 -row-mt 1 -an site/assets/demo.webm
-ffmpeg -y -ss 12.9 -i site/assets/demo.mp4 -frames:v 1 -q:v 4 site/assets/demo-poster.jpg
+ffmpeg -y -i site/assets/demo.mp4 -c:v libvpx-vp9 -b:v 0 -crf 36 -row-mt 1 -c:a libopus -b:a 96k site/assets/demo.webm
+ffmpeg -y -ss 8.7 -i site/assets/demo.mp4 -frames:v 1 -q:v 4 site/assets/demo-poster.jpg
 ```
 
 `node video/render.mjs --stills 3,7.2` writes single frames to `video/stills/` (git-ignored) for checking.
