@@ -4,6 +4,7 @@ Early previews of the Windows app. The Release Windows workflow copies a version
 
 ## Unreleased
 
+- **All-in-One** (Ctrl+Alt+Shift+A): the toolbar appears right away, and its actions use the full screen until you select an area. Drag to select, drag inside the selection to move it, drag a handle to resize it, use the arrow keys to nudge it (Shift for 10 pixels) and Delete to go back to the full screen. Then **Screenshot** (Enter), **Copy** (Ctrl+C, straight to the clipboard), **Window** (W, then click one) or **Full Screen** (F). The gear opens Settings and Esc cancels. Recording, Copy Text, Pin and the color picker join the toolbar as they arrive on Windows.
 - **Clipboard history.** Marquee remembers the text, links, images and files you copy, with the app each came from. Copying the same thing again moves it to the top instead of adding a duplicate. It keeps up to the number set in Settings → Clipboard; pinned items are always kept.
 - **Clipboard History panel** (Ctrl+Alt+Shift+V): opens along the bottom of the screen. Type to search, filter by kind, use the arrow keys to choose, and press Enter (or double-click) to paste into the app you were using. Ctrl+1 to Ctrl+9 paste one of the first nine, Ctrl+P pins, Delete removes, Esc closes. With "Paste into the app you were using" off, the item is copied and you press Ctrl+V yourself.
 - **Clipboard page** in the Marquee window: the same history as a grid, with search, filters, Copy, Pin and Delete, plus Pause history and Clear history (pinned items stay).

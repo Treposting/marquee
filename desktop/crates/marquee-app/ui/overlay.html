@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Marquee capture</title>
+  <meta name="color-scheme" content="light dark">
   <link rel="stylesheet" href="overlay.css">
 </head>
 <body>
@@ -10,6 +11,23 @@
   <canvas id="frame"></canvas>
   <canvas id="ui"></canvas>
   <div id="hint" class="pill" role="status"></div>
+  <!-- All-in-One only. -->
+  <div id="toolbar" role="toolbar" aria-label="All-in-One" hidden>
+    <button class="primary" data-action="screenshot" title="Screenshot (Enter)">
+      <svg viewBox="0 0 20 20"><path d="M3.5 7V4.5h3M13.5 4.5h3V7M16.5 13v2.5h-3M6.5 15.5h-3V13"/><circle cx="10" cy="10" r="2.6"/></svg>Screenshot<kbd>Enter</kbd></button>
+    <button data-action="copy" title="Copy to clipboard (Ctrl+C)">
+      <svg viewBox="0 0 20 20"><rect x="7" y="7" width="9.5" height="9.5" rx="1.6"/><path d="M4.5 13V5a1 1 0 0 1 1-1H13"/></svg>Copy<kbd>Ctrl+C</kbd></button>
+    <button data-action="window" title="Pick a window (W)">
+      <svg viewBox="0 0 20 20"><rect x="3" y="4.5" width="14" height="11" rx="1.6"/><path d="M3 7.5h14"/></svg>Window<kbd>W</kbd></button>
+    <button data-action="fullscreen" title="Full screen (F)">
+      <svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="10" rx="1.6"/><path d="M7.5 16.5h5M10 13.5v3"/></svg>Full Screen<kbd>F</kbd></button>
+    <span class="divider" aria-hidden="true"></span>
+    <span id="size" class="size"></span>
+    <button class="round" data-action="settings" title="Marquee settings" aria-label="Marquee settings">
+      <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.5"/><path d="M10 3v1.8M10 15.2V17M17 10h-1.8M4.8 10H3M15 5l-1.3 1.3M6.3 13.7 5 15M15 15l-1.3-1.3M6.3 6.3 5 5"/></svg></button>
+    <button class="round" data-action="close" title="Cancel (Esc)" aria-label="Cancel">
+      <svg viewBox="0 0 20 20"><path d="M6 6l8 8M14 6l-8 8"/></svg></button>
+  </div>
   <script src="overlay.js"></script>
 </body>
 </html>

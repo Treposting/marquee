@@ -114,6 +114,12 @@ fn app_version(app: AppHandle) -> String {
     app.package_info().version.to_string()
 }
 
+/// The page the window should open on, if something asked for one; asking clears it.
+#[tauri::command]
+fn take_page(app: AppHandle) -> Option<&'static str> {
+    app.try_state::<window::PendingPage>().and_then(|p| p.0.lock().unwrap().take())
+}
+
 /// The action the page should explain, if any; asking clears it.
 #[tauri::command]
 fn take_pending(app: AppHandle) -> Option<&'static str> {
@@ -135,6 +141,7 @@ fn main() {
             perform,
             app_version,
             take_pending,
+            take_page,
             save_folder,
             choose_save_folder,
             capture::overlay_info,

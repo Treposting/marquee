@@ -360,6 +360,9 @@ async function start() {
   renderShortcuts();
   await showComingSoon();
   listen("coming-soon", showComingSoon);
+  const page = await invoke("take_page");
+  if (page) showPage(page);
+  listen("show-page", (e) => { invoke("take_page"); showPage(e.payload); });
 }
 
 start().catch((e) => console.error(e));

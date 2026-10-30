@@ -33,6 +33,9 @@ pub enum Target {
     Area,
     /// Click a window to capture it (Space switches to dragging an area).
     Window,
+    /// All-in-One: a toolbar from the start and an editable selection; actions use the full
+    /// screen until something is selected.
+    AllInOne,
     /// The display under the pointer.
     FullScreen,
     /// The full screen after 5 seconds.
@@ -64,7 +67,7 @@ pub fn run(app: &AppHandle, target: Target) {
                 capture_monitor(point).and_then(|m| m.capture_image().map_err(|e| e.to_string())),
                 point,
             ),
-            Target::Area | Target::Window => {
+            Target::Area | Target::Window | Target::AllInOne => {
                 if let Err(message) = open_overlay(&app, point, target) {
                     finish(&app, Err(message), point);
                 }
@@ -161,7 +164,7 @@ pub struct Session(Mutex<Option<Frozen>>);
 pub struct OverlayInfo {
     width: u32,
     height: u32,
-    /// "area" or "window": what the overlay starts in.
+    /// "area", "window" or "aio" (All-in-One): what the overlay starts in.
     mode: &'static str,
     windows: Vec<WindowRect>,
 }
@@ -170,16 +173,21 @@ pub struct OverlayInfo {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Selection {
-    /// A rectangle in the frozen frame's pixels.
+    /// A rectangle in the frozen frame's pixels. With `copy` (All-in-One's Copy), it's only
+    /// copied to the clipboard and kept in the Library.
     Area {
         x: i64,
         y: i64,
         width: i64,
         height: i64,
+        #[serde(default)]
+        copy: bool,
     },
     Window {
         id: u32,
     },
+    /// All-in-One's gear: open Settings.
+    Settings,
     Cancel,
 }
 
@@ -258,7 +266,11 @@ pub fn overlay_info(session: State<Session>) -> Option<OverlayInfo> {
     Some(OverlayInfo {
         width: frozen.image.width(),
         height: frozen.image.height(),
-        mode: if frozen.mode == Target::Window { "window" } else { "area" },
+        mode: match frozen.mode {
+            Target::Window => "window",
+            Target::AllInOne => "aio",
+            _ => "area",
+        },
         windows: frozen.windows.clone(),
     })
 }
@@ -296,7 +308,20 @@ pub fn overlay_finish(app: AppHandle, selection: Selection) {
                 BUSY.store(false, Ordering::SeqCst);
                 return;
             }
-            Selection::Area { x, y, width, height } => crop(&frozen, x, y, width, height),
+            Selection::Settings => {
+                BUSY.store(false, Ordering::SeqCst);
+                window::show_page(&app, "settings");
+                return;
+            }
+            Selection::Area { x, y, width, height, copy: true } => {
+                match crop(&frozen, x, y, width, height).and_then(|image| copy_only(&app, &image)) {
+                    Ok(()) => {}
+                    Err(message) => notify(&app, "Couldn't copy the screenshot", &message),
+                }
+                BUSY.store(false, Ordering::SeqCst);
+                return;
+            }
+            Selection::Area { x, y, width, height, .. } => crop(&frozen, x, y, width, height),
             Selection::Window { id } => {
                 // Let the overlay leave the screen, then capture the window itself, which leaves
                 // out anything overlapping it. Fall back to the frozen frame.
@@ -356,6 +381,18 @@ fn deliver(app: &AppHandle, image: &RgbaImage, point: Option<(i32, i32)>) -> Res
         (None, _) => ("Screenshot copied", "Paste it anywhere with Ctrl+V.".to_string()),
     };
     notify(app, title, &body);
+    Ok(())
+}
+
+/// All-in-One's Copy: straight to the clipboard (and the Library), with the shutter and a
+/// short notification instead of Quick Access.
+fn copy_only(app: &AppHandle, image: &RgbaImage) -> Result<(), String> {
+    if app.state::<AppState>().prefs.lock().unwrap().play_sound {
+        sound::shutter();
+    }
+    library::store(app, image)?;
+    copy_image(image)?;
+    notify(app, "Copied to the clipboard", "Paste it anywhere with Ctrl+V.");
     Ok(())
 }
 

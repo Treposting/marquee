@@ -34,6 +34,20 @@ pub fn show_main<R: Runtime>(app: &AppHandle<R>, pending: Option<Action>) {
     }
 }
 
+/// Shows the window on one of its pages ("home", "library", "clipboard", "colors", "settings").
+pub fn show_page<R: Runtime>(app: &AppHandle<R>, page: &'static str) {
+    app.manage(PendingPage::default());
+    *app.state::<PendingPage>().0.lock().unwrap() = Some(page);
+    show_main(app, None);
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.emit("show-page", page);
+    }
+}
+
+/// A page to open, waiting for a window that's still loading.
+#[derive(Default)]
+pub struct PendingPage(pub Mutex<Option<&'static str>>);
+
 /// Hides the window if it's on screen, so a capture doesn't include it. Returns whether it was.
 pub fn hide_main<R: Runtime>(app: &AppHandle<R>) -> bool {
     let Some(window) = app.get_webview_window("main") else { return false };

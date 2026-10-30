@@ -11,7 +11,8 @@ use crate::window;
 pub fn is_available(action: Action) -> bool {
     matches!(
         action,
-        Action::CaptureArea
+        Action::AllInOne
+            | Action::CaptureArea
             | Action::CaptureWindow
             | Action::CaptureFullscreen
             | Action::CaptureTimed
@@ -21,6 +22,7 @@ pub fn is_available(action: Action) -> bool {
 
 pub fn perform(app: &AppHandle, action: Action) {
     match action {
+        Action::AllInOne => capture::run(app, Target::AllInOne),
         Action::CaptureArea => capture::run(app, Target::Area),
         Action::CaptureFullscreen => capture::run(app, Target::FullScreen),
         Action::CaptureWindow => capture::run(app, Target::Window),

@@ -16,4 +16,29 @@ canvas#frame { image-rendering: auto; }
   border-radius: 4px; background: rgba(255, 255, 255, .16);
 }
 
+/* All-in-One toolbar: a light bar that follows the system's light or dark mode. */
+#toolbar {
+  --bar: #F9F9FB; --text: #1B1B1F; --muted: #5C5C66; --chip: rgba(0, 0, 0, .06);
+  position: fixed; display: flex; align-items: center; gap: 4px; padding: 6px;
+  border-radius: 14px; background: var(--bar); color: var(--text);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .12), 0 12px 32px rgba(0, 0, 0, .35);
+  cursor: default; white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) {
+  #toolbar { --bar: #2B2B2F; --text: #F2F2F4; --muted: #A8A8B3; --chip: rgba(255, 255, 255, .08); }
+}
+#toolbar button {
+  display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px;
+  border: 0; border-radius: 9px; background: transparent; color: inherit; font: 600 13px/1 "Segoe UI", system-ui, sans-serif; cursor: pointer;
+}
+#toolbar button:hover { background: var(--chip); }
+#toolbar button.primary { background: #FFCF1A; color: #1D1D1F; }
+#toolbar button.primary:hover { filter: brightness(.96); }
+#toolbar button:focus-visible { outline: 2px solid #FFCF1A; outline-offset: 2px; }
+#toolbar svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+#toolbar kbd { font: 600 11px/1 "Segoe UI", system-ui, sans-serif; padding: 3px 5px; border-radius: 5px; background: var(--chip); color: var(--muted); }
+#toolbar .primary kbd { background: rgba(0, 0, 0, .1); color: #1D1D1F; }
+#toolbar .round { width: 34px; padding: 0; justify-content: center; }
+#toolbar .divider { width: 1px; height: 24px; margin: 0 4px; background: var(--chip); }
+#toolbar .size { min-width: 92px; text-align: center; color: var(--muted); font: 600 12px/1 "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 [hidden] { display: none !important; }
