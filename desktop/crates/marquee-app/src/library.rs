@@ -70,6 +70,11 @@ fn path_of(state: &State<LibraryState>, id: &str) -> Result<PathBuf, String> {
     Ok(library.image_path(item))
 }
 
+/// The image file of a Library item.
+pub fn path_of_id(app: &AppHandle, id: &str) -> Result<PathBuf, String> {
+    path_of(&app.state::<LibraryState>(), id)
+}
+
 /// Copies a library item into the save folder under the usual name. Returns where it went.
 pub fn save_copy(app: &AppHandle, path: &Path) -> Result<PathBuf, String> {
     let prefs = app.state::<crate::AppState>().prefs.lock().unwrap().clone();

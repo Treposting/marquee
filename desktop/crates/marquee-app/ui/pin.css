@@ -1,0 +1,23 @@
+/* A pinned screenshot: the image fills a borderless, transparent window. */
+html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; user-select: none; }
+body { cursor: grab; font: 600 12px "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+body.dragging { cursor: grabbing; }
+#image { display: block; width: 100%; height: 100%; object-fit: contain; transition: opacity 120ms ease-out; }
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .25); transition: box-shadow 120ms ease-out;
+}
+body:hover::after { box-shadow: inset 0 0 0 2px #FFCF1A; }
+#close {
+  position: fixed; top: 6px; right: 6px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; background: rgba(20, 20, 22, .78); color: #fff; cursor: pointer;
+  opacity: 0; transition: opacity 120ms ease-out;
+}
+body:hover #close { opacity: 1; }
+#close svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+#status {
+  position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); padding: 4px 10px; border-radius: 999px;
+  background: #1D1D1F; color: #FFCF1A; white-space: nowrap; pointer-events: none;
+}
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

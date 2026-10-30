@@ -23,7 +23,7 @@ use tauri_plugin_notification::NotificationExt;
 use xcap::image::{imageops, RgbaImage};
 use xcap::{Monitor, Window};
 
-use crate::{library, quick_access, sound, window, AppState};
+use crate::{annotate, library, pin, quick_access, sound, window, AppState};
 
 const OVERLAY: &str = "overlay";
 const COUNTDOWN: &str = "countdown";
@@ -178,7 +178,9 @@ pub struct OverlayInfo {
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Selection {
     /// A rectangle in the frozen frame's pixels. With `copy` (All-in-One's Copy), it's only
-    /// copied to the clipboard and kept in the Library.
+    /// copied to the clipboard and kept in the Library; with `pin` (All-in-One's Pin), it's
+    /// kept in the Library and pinned where it was on screen; with `annotate`, it's kept in the
+    /// Library and opened in the editor.
     Area {
         x: i64,
         y: i64,
@@ -186,6 +188,10 @@ pub enum Selection {
         height: i64,
         #[serde(default)]
         copy: bool,
+        #[serde(default)]
+        pin: bool,
+        #[serde(default)]
+        annotate: bool,
     },
     Window {
         id: u32,
@@ -351,10 +357,33 @@ pub fn overlay_finish(app: AppHandle, selection: Selection) {
                 window::show_page(&app, "settings");
                 return;
             }
-            Selection::Area { x, y, width, height, copy: true } => {
+            Selection::Area { x, y, width, height, copy: true, .. } => {
                 match crop(&frozen, x, y, width, height).and_then(|image| copy_only(&app, &image)) {
                     Ok(()) => {}
                     Err(message) => notify(&app, "Couldn't copy the screenshot", &message),
+                }
+                BUSY.store(false, Ordering::SeqCst);
+                return;
+            }
+            Selection::Area { x, y, width, height, pin: true, .. } => {
+                let pinned = crop(&frozen, x, y, width, height).and_then(|image| {
+                    let info = library::store(&app, &image)?;
+                    let at = (frozen.origin.0 + x.max(0) as i32, frozen.origin.1 + y.max(0) as i32);
+                    pin::open(&app, &info.item.id, Some(at))
+                });
+                if let Err(message) = pinned {
+                    notify(&app, "Couldn't pin the screenshot", &message);
+                }
+                BUSY.store(false, Ordering::SeqCst);
+                return;
+            }
+            Selection::Area { x, y, width, height, annotate: true, .. } => {
+                let opened = crop(&frozen, x, y, width, height).and_then(|image| {
+                    let info = library::store(&app, &image)?;
+                    annotate::open(&app, &info.item.id)
+                });
+                if let Err(message) = opened {
+                    notify(&app, "Couldn't open the screenshot for annotating", &message);
                 }
                 BUSY.store(false, Ordering::SeqCst);
                 return;

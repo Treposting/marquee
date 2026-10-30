@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "What the Marquee window, the capture overlay, Quick Access and the clipboard panel may call",
-  "windows": ["main", "overlay", "quick-access", "clipboard-panel"],
-  "permissions": ["core:default"]
+  "description": "What Marquee's windows may call; pins can also be dragged",
+  "windows": ["main", "overlay", "quick-access", "clipboard-panel", "annotate-*", "pin-*"],
+  "permissions": ["core:default", "core:window:allow-start-dragging"]
 }

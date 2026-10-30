@@ -40,12 +40,13 @@ function finish(selection) {
 
 const cancel = () => finish({ kind: "cancel" });
 
-/** The selection (or the full screen) in frame pixels, for an action. */
-function area(copy = false) {
+/** The selection (or the full screen) in frame pixels, for an action. `then` is "copy",
+ * "pin" or "annotate" for All-in-One's buttons of those names. */
+function area(then = null) {
   const s = scale();
   const r = sel ?? { x: 0, y: 0, w: window.innerWidth, h: window.innerHeight };
   return {
-    kind: "area", copy,
+    kind: "area", copy: then === "copy", pin: then === "pin", annotate: then === "annotate",
     x: Math.round(r.x * s), y: Math.round(r.y * s),
     width: Math.round(r.w * s), height: Math.round(r.h * s),
   };
@@ -53,7 +54,9 @@ function area(copy = false) {
 
 const ACTIONS = {
   screenshot: () => finish(area()),
-  copy: () => finish(area(true)),
+  copy: () => finish(area("copy")),
+  pin: () => finish(area("pin")),
+  annotate: () => finish(area("annotate")),
   fullscreen: () => { sel = null; finish(area()); },
   window: () => setMode("window"),
   settings: () => finish({ kind: "settings" }),
@@ -284,6 +287,8 @@ window.addEventListener("keydown", (e) => {
   else if (e.ctrlKey && key.toLowerCase() === "c") { e.preventDefault(); ACTIONS.copy(); }
   else if (!e.ctrlKey && key.toLowerCase() === "f") { e.preventDefault(); ACTIONS.fullscreen(); }
   else if (!e.ctrlKey && key.toLowerCase() === "w") { e.preventDefault(); ACTIONS.window(); }
+  else if (!e.ctrlKey && key.toLowerCase() === "p") { e.preventDefault(); ACTIONS.pin(); }
+  else if (!e.ctrlKey && key.toLowerCase() === "a") { e.preventDefault(); ACTIONS.annotate(); }
   else if (key === "Delete" || key === "Backspace") { e.preventDefault(); sel = null; schedule(); }
   else if (key.startsWith("Arrow") && sel) {
     e.preventDefault();

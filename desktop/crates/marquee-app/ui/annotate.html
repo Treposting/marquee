@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Annotate – Marquee</title>
+  <link rel="stylesheet" href="annotate.css">
+</head>
+<body>
+  <header class="toolbar">
+    <div class="group tools" role="radiogroup" aria-label="Tool">
+      <button role="radio" data-tool="select" title="Select and move (V)" aria-label="Select and move"><svg><use href="#t-select"/></svg></button>
+      <button role="radio" data-tool="arrow" title="Arrow (A)" aria-label="Arrow"><svg><use href="#t-arrow"/></svg></button>
+      <button role="radio" data-tool="rectangle" title="Rectangle (R)" aria-label="Rectangle"><svg><use href="#t-rect"/></svg></button>
+      <button role="radio" data-tool="ellipse" title="Ellipse (E)" aria-label="Ellipse"><svg><use href="#t-ellipse"/></svg></button>
+      <button role="radio" data-tool="pen" title="Pen (P)" aria-label="Pen"><svg><use href="#t-pen"/></svg></button>
+      <button role="radio" data-tool="highlight" title="Highlight (H)" aria-label="Highlight"><svg><use href="#t-highlight"/></svg></button>
+      <button role="radio" data-tool="text" title="Text (T)" aria-label="Text"><svg><use href="#t-text"/></svg></button>
+      <button role="radio" data-tool="counter" title="Step number (N)" aria-label="Step number"><svg><use href="#t-counter"/></svg></button>
+      <button role="radio" data-tool="redact" title="Redact: hide sensitive info (X)" aria-label="Redact"><svg><use href="#t-redact"/></svg></button>
+    </div>
+    <div class="divider"></div>
+    <div class="group colors" role="radiogroup" aria-label="Color" id="colors"></div>
+    <div class="group sizes" role="radiogroup" aria-label="Size">
+      <button role="radio" data-size="s" title="Thin" aria-label="Thin"><span style="--d:4px"></span></button>
+      <button role="radio" data-size="m" title="Medium" aria-label="Medium"><span style="--d:7px"></span></button>
+      <button role="radio" data-size="l" title="Thick" aria-label="Thick"><span style="--d:11px"></span></button>
+    </div>
+    <div class="group redact-styles" role="radiogroup" aria-label="Redact style" id="redact-styles" hidden>
+      <button role="radio" data-redact="pixelate" title="Pixelate: blocky, the classic look">Pixelate</button>
+      <button role="radio" data-redact="blur" title="Blur: soft and unobtrusive">Blur</button>
+      <button role="radio" data-redact="solid" title="Secure: a solid block, nothing can be recovered from it">Secure</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="group">
+      <button id="undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg><use href="#t-undo"/></svg></button>
+      <button id="redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg><use href="#t-redo"/></svg></button>
+    </div>
+    <div class="divider"></div>
+    <button class="action" data-export="pin" title="Pin above other windows (Ctrl+P)"><svg><use href="#t-pin"/></svg>Pin</button>
+    <button class="action" data-export="save" title="Save to your folder and the Library (Ctrl+S)"><svg><use href="#t-save"/></svg>Save</button>
+    <button class="action primary" data-export="copy" title="Copy to the clipboard (Ctrl+C)"><svg><use href="#t-copy"/></svg>Copy</button>
+  </header>
+
+  <main id="stage">
+    <canvas id="canvas"></canvas>
+    <textarea id="text-editor" spellcheck="false" hidden aria-label="Text"></textarea>
+  </main>
+  <div id="status" role="status" hidden></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="t-select" viewBox="0 0 24 24"><path d="M5 3.5 18.5 12 12 13.5 9 20z"/></symbol>
+    <symbol id="t-arrow" viewBox="0 0 24 24"><path d="M5 19 19 5M10 5h9v9"/></symbol>
+    <symbol id="t-rect" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1.5"/></symbol>
+    <symbol id="t-ellipse" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="6.5"/></symbol>
+    <symbol id="t-pen" viewBox="0 0 24 24"><path d="M3.5 17c2.5-1 3.5-5 6-5s1.5 4.5 4 4.5S17 9 20.5 7"/></symbol>
+    <symbol id="t-highlight" viewBox="0 0 24 24"><path d="m14 5 5 5-7.5 7.5h-5v-5zM4 21h9"/></symbol>
+    <symbol id="t-text" viewBox="0 0 24 24"><path d="M5 6.5V5h14v1.5M12 5v14M9 19h6"/></symbol>
+    <symbol id="t-counter" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M10.5 9.5 12.5 8v8"/></symbol>
+    <symbol id="t-redact" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9.5h16M4 14.5h16M9.5 4v16M14.5 4v16"/></symbol>
+    <symbol id="t-undo" viewBox="0 0 24 24"><path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5H15a4.5 4.5 0 0 1 0 9h-3"/></symbol>
+    <symbol id="t-redo" viewBox="0 0 24 24"><path d="m15 14 4.5-4.5L15 5"/><path d="M19.5 9.5H9a4.5 4.5 0 0 0 0 9h3"/></symbol>
+    <symbol id="t-pin" viewBox="0 0 24 24"><path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7"/></symbol>
+    <symbol id="t-save" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></symbol>
+    <symbol id="t-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M5.5 15.5h-.5A1.5 1.5 0 0 1 3.5 14V5A1.5 1.5 0 0 1 5 3.5h9A1.5 1.5 0 0 1 15.5 5v.5"/></symbol>
+  </svg>
+  <script src="annotate.js"></script>
+</body>
+</html>

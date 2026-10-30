@@ -5,9 +5,11 @@
 //! The rest (area capture, clipboard, recording…) is added phase by phase (desktop/README.md).
 
 mod actions;
+mod annotate;
 mod capture;
 mod clipboard;
 mod library;
+mod pin;
 mod platform;
 mod previews;
 mod quick_access;
@@ -181,6 +183,16 @@ fn main() {
             clipboard::clip_category_delete,
             clipboard::clip_set_category,
             clipboard::clip_close_panel,
+            annotate::annotate_image,
+            annotate::annotate_export,
+            annotate::annotate_ready,
+            annotate::library_annotate,
+            pin::pin_info,
+            pin::pin_ready,
+            pin::pin_action,
+            pin::pin_zoom,
+            pin::pin_menu,
+            pin::library_pin,
             updater::update_status,
             updater::update_check,
             updater::update_install,
@@ -201,6 +213,8 @@ fn main() {
             }
             app.manage(capture::Session::default());
             app.manage(quick_access::QuickAccess::default());
+            app.manage(pin::Pins::default());
+            app.on_menu_event(|app, event| pin::menu_event(app, &event));
             library::init(app.handle())?;
             clipboard::init(app.handle())?;
             updater::init(app.handle());

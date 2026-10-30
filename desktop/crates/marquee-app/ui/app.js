@@ -224,6 +224,8 @@ async function renderLibrary() {
       el("button", { class: "big primary", onclick: () => shotAction(node, "library_copy", item, "Copied") }, "Copy"),
       el("button", { class: "big", onclick: () => shotAction(node, "library_save", item, "Saved") }, "Save"),
       el("div", { class: "shot-corner" },
+        el("button", { class: "round", title: "Annotate", "aria-label": "Annotate", onclick: () => shotAction(node, "library_annotate", item) }, icon("i-annotate")),
+        el("button", { class: "round", title: "Pin above other windows", "aria-label": "Pin", onclick: () => shotAction(node, "library_pin", item) }, icon("i-pin")),
         el("button", { class: "round", title: "Open", "aria-label": "Open", onclick: () => shotAction(node, "library_open", item) }, icon("i-open")),
         el("button", { class: "round", title: "Show in folder", "aria-label": "Show in folder", onclick: () => shotAction(node, "library_reveal", item) }, icon("i-folder")),
         el("button", { class: "round", title: "Delete", "aria-label": "Delete", onclick: () => shotAction(node, "library_delete", item) }, icon("i-trash")))),

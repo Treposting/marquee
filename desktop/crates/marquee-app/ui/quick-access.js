@@ -62,6 +62,8 @@ function card(item) {
       el("button", { class: "big primary", onclick: () => run(node, invoke("library_copy", { id: item.id }), "Copied") }, "Copy"),
       el("button", { class: "big", onclick: () => run(node, invoke("library_save", { id: item.id }), "Saved") }, "Save")),
     el("div", { class: "corner" },
+      el("button", { "aria-label": "Annotate", title: "Annotate", onclick: () => { run(node, invoke("library_annotate", { id: item.id })); dismiss(item.id); } }, icon("q-annotate")),
+      el("button", { "aria-label": "Pin", title: "Pin above other windows", onclick: () => { run(node, invoke("library_pin", { id: item.id })); dismiss(item.id); } }, icon("q-pin")),
       el("button", { "aria-label": "Open", title: "Open", onclick: () => run(node, invoke("library_open", { id: item.id })) }, icon("q-open")),
       el("button", { "aria-label": "Show in folder", title: "Show in folder", onclick: () => run(node, invoke("library_reveal", { id: item.id })) }, icon("q-folder")),
       el("button", { "aria-label": "Close", title: "Close", onclick: () => dismiss(item.id) }, icon("q-close"))),

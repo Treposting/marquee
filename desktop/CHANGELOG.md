@@ -2,6 +2,13 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.4.4
+
+- **Annotate.** Mark up any screenshot with arrows, rectangles, ellipses, the pen, highlights, text, numbered steps and redaction (pixelate, blur, or a solid block that hides it for good). Pick a color and a thickness; hold Shift for straight 45° arrows, squares and circles. Use Select (V) to move a mark, drag its handles to resize it, double-click text to edit it, and press Delete to remove it. Ctrl+Z and Ctrl+Y undo and redo. When you're done, **Copy** (Ctrl+C), **Save** (Ctrl+S, to your folder and the Library) or **Pin** (Ctrl+P). Every tool has a key: V, A, R, E, P, H, T, N, X.
+- **Pin to screen.** Keep a screenshot floating above every window. Drag it anywhere, scroll to make it see-through, Ctrl+scroll to zoom, and double-click or press Esc to close it. Right-click for Copy, Save, Annotate, opacity and zoom.
+- Open them from **All-in-One** (Annotate, A; Pin, P), from the buttons on a **Quick Access** thumbnail, or from any screenshot in the **Library**.
+- The All-in-One toolbar hides its key hints when the screen is narrow, so it always fits.
+
 ## 0.4.3
 
 - **Updates.** With Settings → General → Check for updates automatically on, Marquee looks for a new Windows preview shortly after it starts and then every hour. When there is one you get a notification, an "Update to …" item at the top of the tray menu and a badge in the window's sidebar. The update page shows what's new; **Install update** downloads it, checks it against the release's checksum, then closes Marquee, installs the update and opens it again. Settings also has **Check now**. If you installed Marquee from the .msi, it opens the release page instead.
