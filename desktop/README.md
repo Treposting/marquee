@@ -2,7 +2,7 @@
 
 A Rust port of Marquee: screenshots, screen recording, a screen ruler, a color picker and clipboard history, with the same behavior as the macOS app. It lives on the `windows-port` branch while it grows, and doesn't touch the macOS app.
 
-**Status:** phase 2 is done. The tray app, global shortcuts, settings and the Marquee window are in place; screenshots work (area, window picker, full screen, self-timer with a countdown), with copy, save, the shutter sound, the Quick Access thumbnail and the Library. Phase 3, clipboard history, is built on this branch and waiting for its preview release.
+**Status:** phase 2 is done. The tray app, global shortcuts, settings and the Marquee window are in place; screenshots work (area, window picker, full screen, self-timer with a countdown), with copy, save, the shutter sound, the Quick Access thumbnail and the Library. Clipboard history (phase 3) and All-in-One are in too.
 
 **Downloads:** previews are GitHub pre-releases tagged `windows-vX.Y.Z`, with an NSIS installer (`…-setup.exe`) and an MSI. They're unsigned for now, so SmartScreen asks first (More info → Run anyway). Every push that touches `desktop/` also builds them as the `Marquee-Windows` artifact of the [Desktop (Windows)](../.github/workflows/desktop.yml) run.
 
@@ -48,7 +48,7 @@ Windows first, then Linux X11, then Wayland through portals.
 |---|---|---|
 | **1 ✅** | Tray, menu, global shortcuts, settings, launch at login, window | Tauri 2, `tauri-plugin-global-shortcut`, `tauri-plugin-autostart` |
 | **2 ✅** | Screenshots: area overlay on a frozen frame (Space for windows), window picker, full screen, self-timer with countdown; copy, save, shutter sound; Quick Access thumbnails (auto-hide, tuck to the edge); Library of the last 300 | `xcap`, `arboard`, `PlaySound`, notifications; opaque overlay windows; Tauri's asset protocol for thumbnails |
-| **3 (built)** | Clipboard history ✅: text, links, images, files with the source app; the Ctrl+Alt+Shift+V panel that pastes into the previous app; the Clipboard page; skips private copies (password managers), ignored apps and paused history | `arboard`, `GetClipboardSequenceNumber`, the clipboard formats Windows' history honors, `SendInput` |
+| **3 ✅** | Clipboard history ✅: text, links, images, files with the source app; the Ctrl+Alt+Shift+V panel that pastes into the previous app; the Clipboard page; skips private copies (password managers), ignored apps and paused history | `arboard`, `GetClipboardSequenceNumber`, the clipboard formats Windows' history honors, `SendInput` |
 | 4 | Annotate, pin, color picker, Measure, copy text (OCR), scrolling capture | `tiny-skia`; Measure edge finder and scroll stitcher ported into `marquee-core`; `Windows.Media.Ocr` |
 | 5 | Recording with mic and desktop audio, camera bubble, GIF, video editor | Graphics Capture + Media Foundation H.264 (or `ffmpeg-next`), WASAPI loopback, `cpal`, `nokhwa`, `gifski` |
 | 6 | Updater, code signing, release workflow, site | Tauri updater, Authenticode (Azure Trusted Signing) |
