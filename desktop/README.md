@@ -2,7 +2,7 @@
 
 A Rust port of Marquee: screenshots, screen recording, a screen ruler, a color picker and clipboard history, with the same behavior as the macOS app. It lives on the `windows-port` branch while it grows, and doesn't touch the macOS app.
 
-**Status:** phase 2 is done. The tray app, global shortcuts, settings and the Marquee window are in place; screenshots work (area, window picker, full screen, self-timer with a countdown), with copy, save, the shutter sound, the Quick Access thumbnail and the Library. Clipboard history (phase 3) and All-in-One are in too.
+**Status:** phase 2 is done. The tray app, global shortcuts, settings and the Marquee window are in place; screenshots work (area, window picker, full screen, self-timer with a countdown), with copy, save, the shutter sound, the Quick Access thumbnail and the Library. Clipboard history (phase 3, with categories, link and file previews) and All-in-One are in too.
 
 **Downloads:** previews are GitHub pre-releases tagged `windows-vX.Y.Z`, with an NSIS installer (`…-setup.exe`) and an MSI. They're unsigned for now, so SmartScreen asks first (More info → Run anyway). Every push that touches `desktop/` also builds them as the `Marquee-Windows` artifact of the [Desktop (Windows)](../.github/workflows/desktop.yml) run.
 

@@ -2,7 +2,7 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
-## Unreleased
+## 0.4.2
 
 - **Capture opens right away.** Area, Window and All-in-One used to take a couple of seconds to show the selection. Marquee now prepares the capture screen, Quick Access and the clipboard panel when it starts, so they appear as soon as you press the shortcut or click.
 - **Settings has a gear icon** in the sidebar and the All-in-One toolbar.
