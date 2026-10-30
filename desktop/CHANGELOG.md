@@ -2,6 +2,10 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## Unreleased
+
+- **Quiet start at sign-in.** With Settings → Launch at login on, Marquee now starts in the tray when you sign in to Windows, instead of opening its window every time. Opening Marquee yourself still shows the window.
+
 ## 0.4.0
 
 - **All-in-One** (Ctrl+Alt+Shift+A): the toolbar appears right away, and its actions use the full screen until you select an area. Drag to select, drag inside the selection to move it, drag a handle to resize it, use the arrow keys to nudge it (Shift for 10 pixels) and Delete to go back to the full screen. Then **Screenshot** (Enter), **Copy** (Ctrl+C, straight to the clipboard), **Window** (W, then click one) or **Full Screen** (F). The gear opens Settings and Esc cancels. Recording, Copy Text, Pin and the color picker join the toolbar as they arrive on Windows.

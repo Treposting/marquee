@@ -25,6 +25,9 @@ use tauri::{AppHandle, Manager, RunEvent, State};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog::DialogExt;
 
+/// Added to the command line Windows uses to start Marquee at sign-in.
+const AUTOSTART_FLAG: &str = "--autostart";
+
 /// Settings and where they're saved.
 pub struct AppState {
     pub prefs: Mutex<Preferences>,
@@ -130,7 +133,10 @@ fn main() {
     let app = tauri::Builder::default()
         // A second launch shows the running copy's window instead.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| window::show_main(app, None)))
-        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![AUTOSTART_FLAG]),
+        ))
         .plugin(shortcuts::plugin())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
@@ -171,7 +177,15 @@ fn main() {
             let config_dir = app.path().app_config_dir()?;
             let prefs_path = config_dir.join("settings.json");
             let prefs = Preferences::load(&prefs_path);
+            let launch_at_login = prefs.launch_at_login;
             app.manage(AppState { prefs: Mutex::new(prefs), prefs_path });
+            // Rewrite the startup entry each launch: it then carries the current path and the
+            // flag below, even if it was made by an older version or before a reinstall.
+            if launch_at_login {
+                if let Err(e) = app.autolaunch().enable() {
+                    eprintln!("Marquee: launch at login: {e}");
+                }
+            }
             app.manage(capture::Session::default());
             app.manage(quick_access::QuickAccess::default());
             library::init(app.handle())?;
@@ -180,7 +194,10 @@ fn main() {
             if let Err(message) = shortcuts::register_all(app.handle()) {
                 eprintln!("Marquee: {message}");
             }
-            window::show_main(app.handle(), None);
+            // Started by Windows at sign-in: stay in the tray. Opened by you: show the window.
+            if !std::env::args().any(|a| a == AUTOSTART_FLAG) {
+                window::show_main(app.handle(), None);
+            }
             Ok(())
         })
         .build(tauri::generate_context!())
