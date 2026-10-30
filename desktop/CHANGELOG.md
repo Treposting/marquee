@@ -2,6 +2,15 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.4.5
+
+- **Measure.** A screen ruler for checking sizes and spacing. Set a shortcut for it in Settings → Shortcuts, or start it from the tray menu or Home. The screen freezes and:
+  - **Move the pointer** to see the width and height of the area under it, edge to edge.
+  - **Drag around an element** and the box shrinks to the element's exact size.
+  - **H** and **V** add a horizontal or vertical guide at the pointer that settles on a nearby edge. Drag guides to move them; the arrow keys nudge the selected one (Shift for 10), Tab selects the next, Delete removes it. The space between neighbouring guides is shown as you move.
+  - **Space** keeps a measurement on screen, **Ctrl+C** copies the last one (like `200 × 48`), **Ctrl+S** captures the screen with the measurements drawn on it, and **Esc** leaves.
+  - Sizes are in the same units as your display scaling (so 100 at 150% scaling is 150 real pixels); hold **Shift** to see real pixels.
+
 ## 0.4.4
 
 - **Annotate.** Mark up any screenshot with arrows, rectangles, ellipses, the pen, highlights, text, numbered steps and redaction (pixelate, blur, or a solid block that hides it for good). Pick a color and a thickness; hold Shift for straight 45° arrows, squares and circles. Use Select (V) to move a mark, drag its handles to resize it, double-click text to edit it, and press Delete to remove it. Ctrl+Z and Ctrl+Y undo and redo. When you're done, **Copy** (Ctrl+C), **Save** (Ctrl+S, to your folder and the Library) or **Pin** (Ctrl+P). Every tool has a key: V, A, R, E, P, H, T, N, X.

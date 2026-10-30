@@ -38,6 +38,9 @@ jobs:
       - name: Test
         run: cargo test
 
+      - name: Test the pages' logic
+        run: node --test crates/marquee-app/ui-tests/measure-core.test.js
+
       - uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2

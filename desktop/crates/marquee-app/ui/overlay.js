@@ -3,6 +3,7 @@
 //   window click a window to capture it (Space switches to dragging an area)
 //   aio    All-in-One: a toolbar from the start, and a selection you can redraw, move, resize
 //          and nudge before choosing what to do; with no selection, actions use the full screen
+//   measure  Measure takes over the page (measure.js)
 // Choices are reported to Rust in the frame's pixels.
 "use strict";
 
@@ -156,6 +157,7 @@ function pill(ctx, text, x, y) {
 }
 
 function draw() {
+  if (Measure.active) return;
   const W = window.innerWidth, H = window.innerHeight;
   uiCtx.clearRect(0, 0, W, H);
   uiCtx.fillStyle = "rgba(0, 0, 0, .38)";
@@ -194,6 +196,7 @@ function draw() {
 
 /** Under the selection (above it, or inside, when there's no room), or bottom center. */
 function placeToolbar() {
+  if (Measure.active) return;
   // The hint only helps before the first drag.
   hint.hidden = !!sel || !!gesture;
   if (!aio) return;
@@ -231,6 +234,7 @@ function resize() {
 window.addEventListener("resize", resize);
 
 window.addEventListener("mousemove", (e) => {
+  if (Measure.active) return;
   pointer = { x: e.clientX, y: e.clientY };
   if (gesture) {
     const clamped = { x: Math.min(Math.max(0, pointer.x), window.innerWidth), y: Math.min(Math.max(0, pointer.y), window.innerHeight) };
@@ -245,6 +249,7 @@ window.addEventListener("mousemove", (e) => {
 });
 
 window.addEventListener("mousedown", (e) => {
+  if (Measure.active) return;
   if (e.target.closest?.("#toolbar")) return;
   if (e.button === 2) return cancel();
   if (e.button !== 0 || mode !== "area") return;
@@ -257,6 +262,7 @@ window.addEventListener("mousedown", (e) => {
 });
 
 window.addEventListener("mouseup", (e) => {
+  if (Measure.active) return;
   if (e.button !== 0) return;
   pointer = { x: e.clientX, y: e.clientY };
   if (mode === "window") {
@@ -279,6 +285,7 @@ window.addEventListener("mouseup", (e) => {
 window.addEventListener("contextmenu", (e) => e.preventDefault());
 
 window.addEventListener("keydown", (e) => {
+  if (Measure.active) return;
   const key = e.key;
   if (key === "Escape") { e.preventDefault(); return cancel(); }
   if (key === " ") { e.preventDefault(); return setMode(mode === "area" ? "window" : "area"); }
@@ -317,11 +324,18 @@ async function start() {
   pointer = null;
   windowRects = [];
   document.body.style.cursor = "";
+  Measure.stop();
   const bytes = await invoke("overlay_frame");
   frame.width = info.width;
   frame.height = info.height;
   frame.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(bytes), info.width, info.height), 0, 0);
   resize();
+  if (info.mode === "measure") {
+    toolbar.hidden = true;
+    Measure.start({ frame, ui, uiContext: uiCtx, hintElement: hint, bytes, width: info.width, height: info.height });
+    await invoke("overlay_ready");
+    return;
+  }
   setMode(info.mode === "window" ? "window" : "area");
   draw();
   await invoke("overlay_ready");

@@ -16,6 +16,7 @@ pub fn is_available(action: Action) -> bool {
             | Action::CaptureWindow
             | Action::CaptureFullscreen
             | Action::CaptureTimed
+            | Action::Measure
             | Action::ClipboardHistory
     )
 }
@@ -27,6 +28,7 @@ pub fn perform(app: &AppHandle, action: Action) {
         Action::CaptureFullscreen => capture::run(app, Target::FullScreen),
         Action::CaptureWindow => capture::run(app, Target::Window),
         Action::CaptureTimed => capture::run(app, Target::Timed),
+        Action::Measure => capture::run(app, Target::Measure),
         Action::ClipboardHistory => crate::clipboard::toggle_panel(app),
         _ => window::show_main(app, Some(action)),
     }

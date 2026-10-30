@@ -159,6 +159,8 @@ fn main() {
             capture::overlay_frame,
             capture::overlay_ready,
             capture::overlay_finish,
+            capture::overlay_capture,
+            capture::overlay_copy_text,
             library::library_list,
             library::library_copy,
             library::library_save,

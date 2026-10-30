@@ -42,6 +42,8 @@ pub enum Target {
     FullScreen,
     /// The full screen after 5 seconds.
     Timed,
+    /// Measure: distances to edges, element sizes and guides over the frozen display.
+    Measure,
 }
 
 /// Ignores a second request while a capture is under way (a held-down shortcut, a double click,
@@ -69,7 +71,7 @@ pub fn run(app: &AppHandle, target: Target) {
                 capture_monitor(point).and_then(|m| m.capture_image().map_err(|e| e.to_string())),
                 point,
             ),
-            Target::Area | Target::Window | Target::AllInOne => {
+            Target::Area | Target::Window | Target::AllInOne | Target::Measure => {
                 if let Err(message) = open_overlay(&app, point, target) {
                     finish(&app, Err(message), point);
                 }
@@ -296,6 +298,7 @@ pub fn overlay_info(session: State<Session>) -> Option<OverlayInfo> {
         mode: match frozen.mode {
             Target::Window => "window",
             Target::AllInOne => "aio",
+            Target::Measure => "measure",
             _ => "area",
         },
     })
@@ -402,6 +405,30 @@ pub fn overlay_finish(app: AppHandle, selection: Selection) {
         };
         finish(&app, result, frozen.point);
     });
+}
+
+/// Measure's Ctrl+S: the screen with the measurements drawn on it, as a PNG request body.
+/// Ends the session and delivers it like any screenshot (Library, Quick Access…).
+#[tauri::command]
+pub async fn overlay_capture(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<(), String> {
+    let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else { return Err("No image.".into()) };
+    let image =
+        image::load_from_memory(bytes).map_err(|e| format!("Couldn't read the image: {e}"))?.to_rgba8();
+    let frozen = app.try_state::<Session>().and_then(|s| s.0.lock().unwrap().take());
+    if let Some(overlay) = app.get_webview_window(OVERLAY) {
+        let _ = overlay.hide();
+    }
+    let point = frozen.and_then(|f| f.point);
+    thread::spawn(move || finish(&app, Ok(image), point));
+    Ok(())
+}
+
+/// Measure's Ctrl+C: puts a measurement like "140 × 48" on the clipboard.
+#[tauri::command]
+pub fn overlay_copy_text(text: String) -> Result<(), String> {
+    Clipboard::new()
+        .and_then(|mut clipboard| clipboard.set_text(text))
+        .map_err(|e| format!("Couldn't copy it: {e}"))
 }
 
 fn crop(frozen: &Frozen, x: i64, y: i64, width: i64, height: i64) -> Result<RgbaImage, String> {
