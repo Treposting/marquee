@@ -1,7 +1,7 @@
 // The Marquee window. Talks to Rust through Tauri commands (withGlobalTauri).
 "use strict";
 
-const { invoke } = window.__TAURI__.core;
+const { invoke, convertFileSrc } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -172,6 +172,60 @@ for (const tab of $$("[role=tab]")) {
   });
 }
 
+// Library
+
+const relative = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+
+/** "2 minutes ago", "yesterday", or the date for older captures. */
+function when(iso) {
+  const date = new Date(iso);
+  const seconds = (date - Date.now()) / 1000;
+  const units = [["second", 60], ["minute", 60], ["hour", 24], ["day", 7]];
+  let value = seconds;
+  for (const [unit, size] of units) {
+    if (Math.abs(value) < size) return relative.format(Math.round(value), unit);
+    value /= size;
+  }
+  return date.toLocaleDateString();
+}
+
+function shotStatus(node, text) {
+  node.querySelector(".shot-status")?.remove();
+  const status = el("div", { class: "shot-status", role: "status" }, text);
+  node.append(status);
+  setTimeout(() => status.remove(), 1500);
+}
+
+function shotAction(node, command, item, done) {
+  invoke(command, { id: item.id }).then(() => done && shotStatus(node, done)).catch((e) => shotStatus(node, String(e)));
+}
+
+async function renderLibrary() {
+  const items = await invoke("library_list");
+  const grid = $("#library-grid");
+  grid.replaceChildren(...items.map((item) => {
+    const node = el("article", { class: "shot", "aria-label": `Screenshot from ${when(item.created)}, ${item.width} by ${item.height}` },
+      el("img", { src: convertFileSrc(item.thumb), alt: "", loading: "lazy", draggable: "false" }),
+      el("div", { class: "shot-meta" }, el("span", {}, when(item.created)), el("span", {}, `${item.width} × ${item.height}`)));
+    node.insertBefore(el("div", { class: "shot-actions" },
+      el("button", { class: "big primary", onclick: () => shotAction(node, "library_copy", item, "Copied") }, "Copy"),
+      el("button", { class: "big", onclick: () => shotAction(node, "library_save", item, "Saved") }, "Save"),
+      el("div", { class: "shot-corner" },
+        el("button", { class: "round", title: "Open", "aria-label": "Open", onclick: () => shotAction(node, "library_open", item) }, icon("i-open")),
+        el("button", { class: "round", title: "Show in folder", "aria-label": "Show in folder", onclick: () => shotAction(node, "library_reveal", item) }, icon("i-folder")),
+        el("button", { class: "round", title: "Delete", "aria-label": "Delete", onclick: () => shotAction(node, "library_delete", item) }, icon("i-trash")))),
+    node.querySelector(".shot-meta"));
+    return node;
+  }));
+  $("#library-empty").hidden = items.length > 0;
+  $("#library-clear").hidden = items.length === 0;
+}
+
+$("#library-clear").addEventListener("click", () => {
+  if (!confirm("Delete every screenshot in the library? Copies you saved to your folder stay.")) return;
+  invoke("library_clear").catch((e) => alert(String(e)));
+});
+
 // Save folder
 
 async function showSaveFolder() {
@@ -247,6 +301,8 @@ async function start() {
   actions = await invoke("list_actions");
   bindPrefs();
   await showSaveFolder();
+  await renderLibrary();
+  listen("library-changed", renderLibrary);
   renderHome();
   renderShortcuts();
   await showComingSoon();

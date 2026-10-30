@@ -1,0 +1,58 @@
+/* Quick Access: thumbnails of recent captures in the bottom-left corner of the screen. */
+:root {
+  color-scheme: light dark;
+  --yellow: #FFCF1A;
+  --ink: #1D1D1F;
+  --bg: #F3F3F5;
+  --card: #FFFFFF;
+  --edge: rgba(0, 0, 0, .08);
+  --text: #1B1B1F;
+  --text-2: #5C5C66;
+  font: 13px/1.3 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1E1E21; --card: #2B2B2F; --edge: rgba(255, 255, 255, .1); --text: #F2F2F4; --text-2: #A8A8B3; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); overflow: hidden; user-select: none; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; }
+svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+#stack { display: flex; flex-direction: column; gap: 10px; padding: 10px 34px 10px 10px; }
+
+.card { position: relative; border-radius: 10px; overflow: hidden; background: var(--card); box-shadow: 0 0 0 1px var(--edge); }
+.thumb { display: block; width: 100%; object-fit: cover; background: #00000010; }
+
+/* Copy and Save over the thumbnail, shown on hover or keyboard focus. */
+.actions {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(20, 20, 22, .42); opacity: 0; transition: opacity 120ms ease-out;
+}
+.card:hover .actions, .card:focus-within .actions { opacity: 1; }
+.actions .big { height: 32px; padding: 0 16px; border-radius: 8px; background: #fff; color: var(--ink); font-weight: 600; }
+.actions .big.primary { background: var(--yellow); }
+.corner { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
+.corner button {
+  width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+  background: rgba(20, 20, 22, .72); color: #fff;
+}
+.corner button:hover { background: rgba(20, 20, 22, .9); }
+.corner svg { width: 14px; height: 14px; }
+
+.status {
+  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+  padding: 4px 10px; border-radius: 999px; background: var(--ink); color: var(--yellow); font-weight: 600; white-space: nowrap;
+}
+
+/* Tuck: slides the stack against the screen's left edge, leaving the tab on the right. */
+.tuck, .tab {
+  position: fixed; right: 0; top: 0; bottom: 0; width: 26px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  background: transparent; color: var(--text-2);
+}
+.tuck:hover, .tab:hover { color: var(--text); background: var(--edge); }
+.tab { background: var(--yellow); color: var(--ink); font-weight: 700; }
+.tab:hover { background: var(--yellow); filter: brightness(.96); }
+@media (prefers-reduced-motion: reduce) { .actions { transition: none; } }

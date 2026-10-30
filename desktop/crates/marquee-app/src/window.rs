@@ -44,6 +44,28 @@ pub fn hide_main<R: Runtime>(app: &AppHandle<R>) -> bool {
     showing
 }
 
+/// Rounded corners for Marquee's small borderless windows (Quick Access, the self-timer), as
+/// Windows 11 draws them for normal windows. Does nothing on Windows 10 or other systems.
+#[allow(unused_variables)]
+pub fn round_corners<R: Runtime>(window: &tauri::WebviewWindow<R>) {
+    #[cfg(windows)]
+    if let Ok(hwnd) = window.hwnd() {
+        use windows_sys::Win32::Graphics::Dwm::{
+            DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_ROUND,
+        };
+        let preference = DWMWCP_ROUND;
+        // SAFETY: a valid window handle, and a pointer to a value of the size we pass.
+        unsafe {
+            DwmSetWindowAttribute(
+                hwnd.0 as _,
+                DWMWA_WINDOW_CORNER_PREFERENCE as u32,
+                (&preference as *const i32).cast(),
+                std::mem::size_of::<i32>() as u32,
+            );
+        }
+    }
+}
+
 fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<tauri::WebviewWindow<R>> {
     let builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .title("Marquee")

@@ -6,6 +6,8 @@
 
 mod actions;
 mod capture;
+mod library;
+mod quick_access;
 mod shortcuts;
 mod sound;
 mod tray;
@@ -136,7 +138,18 @@ fn main() {
             capture::overlay_info,
             capture::overlay_frame,
             capture::overlay_ready,
-            capture::overlay_finish
+            capture::overlay_finish,
+            library::library_list,
+            library::library_copy,
+            library::library_save,
+            library::library_open,
+            library::library_reveal,
+            library::library_delete,
+            library::library_clear,
+            quick_access::quick_access_items,
+            quick_access::quick_access_dismiss,
+            quick_access::quick_access_tuck,
+            quick_access::quick_access_layout
         ])
         .setup(|app| {
             let config_dir = app.path().app_config_dir()?;
@@ -144,6 +157,8 @@ fn main() {
             let prefs = Preferences::load(&prefs_path);
             app.manage(AppState { prefs: Mutex::new(prefs), prefs_path });
             app.manage(capture::Session::default());
+            app.manage(quick_access::QuickAccess::default());
+            library::init(app.handle())?;
             tray::install(app.handle())?;
             if let Err(message) = shortcuts::register_all(app.handle()) {
                 eprintln!("Marquee: {message}");

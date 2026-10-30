@@ -2,6 +2,12 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.3.0
+
+- **Quick Access.** After every screenshot, a thumbnail appears in the bottom-left corner of the screen. Hover it to **Copy** or **Save**, or use the small buttons to open it, show it in its folder or close it. Up to four stack up, newest on top. Each one hides after the time set in Settings (it waits while you hover), and the arrow tucks them against the screen's edge until you want them back.
+- **Library.** The Library page keeps your last 300 screenshots, newest first. Copy, save, open, show in folder or delete any of them, or clear the whole library.
+- **Settings → After capture** now does what it says: with Quick Access off, you get a notification instead, as before.
+
 ## 0.2.2
 
 - **Simpler Capture Area.** Area capture now shows only the dimmed screen and your selection with its size. The crosshair lines and the magnifier are gone; together they looked as if Measure and the color picker had started too.

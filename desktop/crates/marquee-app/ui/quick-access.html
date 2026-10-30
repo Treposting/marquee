@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Marquee Quick Access</title>
+  <link rel="stylesheet" href="quick-access.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="q-open" viewBox="0 0 20 20"><path d="M11 3h6v6M17 3l-8 8M14 12v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"/></symbol>
+    <symbol id="q-folder" viewBox="0 0 20 20"><path d="M2.5 5.5a1 1 0 0 1 1-1h4l2 2h7a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="q-close" viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15"/></symbol>
+    <symbol id="q-tuck" viewBox="0 0 20 20"><path d="M12 5l-5 5 5 5"/></symbol>
+    <symbol id="q-untuck" viewBox="0 0 20 20"><path d="M8 5l5 5-5 5"/></symbol>
+  </svg>
+  <main id="stack" aria-label="Recent screenshots"></main>
+  <button class="tuck" id="tuck" aria-label="Tuck screenshots against the screen edge" title="Tuck away"><svg><use href="#q-tuck"/></svg></button>
+  <button class="tab" id="tab" aria-label="Show screenshots" hidden><svg><use href="#q-untuck"/></svg><span id="tab-count"></span></button>
+  <script src="quick-access.js"></script>
+</body>
+</html>

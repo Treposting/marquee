@@ -1,6 +1,6 @@
-//! Screenshots: an area, a window, the full screen and the self-timer. What happens after a
-//! capture follows Settings → After capture: copy it, save it, play the shutter sound. The
-//! Quick Access thumbnail comes next (desktop/README.md).
+//! Screenshots: an area, a window, the full screen and the self-timer. Every capture goes into
+//! the Library; the rest follows Settings → After capture: copy it, save it, play the shutter
+//! sound and show the Quick Access thumbnail (or a notification when that's off).
 //!
 //! Area and window captures freeze the display under the pointer first, then show that frame
 //! in an opaque, full-screen overlay window (ui/overlay.html) to select from. What you select
@@ -21,7 +21,7 @@ use tauri_plugin_notification::NotificationExt;
 use xcap::image::{imageops, RgbaImage};
 use xcap::{Monitor, Window};
 
-use crate::{sound, window, AppState};
+use crate::{library, quick_access, sound, window, AppState};
 
 const OVERLAY: &str = "overlay";
 const COUNTDOWN: &str = "countdown";
@@ -62,10 +62,11 @@ pub fn run(app: &AppHandle, target: Target) {
             Target::FullScreen | Target::Timed => finish(
                 &app,
                 capture_monitor(point).and_then(|m| m.capture_image().map_err(|e| e.to_string())),
+                point,
             ),
             Target::Area | Target::Window => {
                 if let Err(message) = open_overlay(&app, point, target) {
-                    finish(&app, Err(message));
+                    finish(&app, Err(message), point);
                 }
             }
         }
@@ -93,6 +94,7 @@ fn countdown(app: &AppHandle, point: Option<(i32, i32)>, seconds: u32) {
             .background_color(tauri::window::Color(29, 29, 31, 255))
             .build()
             .ok()?;
+        window::round_corners(&window);
         let _ = window.set_position(PhysicalPosition::new(
             (mx + (mw - side * scale) / 2.0) as i32,
             (my + (mh - side * scale) / 2.0) as i32,
@@ -108,10 +110,10 @@ fn countdown(app: &AppHandle, point: Option<(i32, i32)>, seconds: u32) {
 }
 
 /// Delivers a capture or reports why there isn't one, and frees the way for the next.
-fn finish(app: &AppHandle, result: Result<RgbaImage, String>) {
+fn finish(app: &AppHandle, result: Result<RgbaImage, String>, point: Option<(i32, i32)>) {
     match result {
         Ok(image) => {
-            if let Err(message) = deliver(app, &image) {
+            if let Err(message) = deliver(app, &image, point) {
                 notify(app, "Couldn't finish the screenshot", &message);
             }
         }
@@ -146,6 +148,8 @@ pub struct Frozen {
     image: RgbaImage,
     windows: Vec<WindowRect>,
     mode: Target,
+    /// Where the capture started, for placing Quick Access on the same display.
+    point: Option<(i32, i32)>,
 }
 
 #[derive(Default)]
@@ -187,7 +191,7 @@ fn open_overlay(app: &AppHandle, point: Option<(i32, i32)>, mode: Target) -> Res
     if app.try_state::<Session>().is_none() {
         app.manage(Session::default());
     }
-    *app.state::<Session>().0.lock().unwrap() = Some(Frozen { image, windows, mode });
+    *app.state::<Session>().0.lock().unwrap() = Some(Frozen { image, windows, mode, point });
 
     if let Some(old) = app.get_webview_window(OVERLAY) {
         let _ = old.destroy();
@@ -303,7 +307,7 @@ pub fn overlay_finish(app: AppHandle, selection: Selection) {
                 })
             }
         };
-        finish(&app, result);
+        finish(&app, result, frozen.point);
     });
 }
 
@@ -322,20 +326,30 @@ fn capture_window_by_id(id: u32) -> Result<RgbaImage, String> {
 
 // MARK: After capture
 
-/// Copies and/or saves a new screenshot, plays the shutter and says what happened.
-fn deliver(app: &AppHandle, image: &RgbaImage) -> Result<(), String> {
+/// Keeps a new screenshot in the Library, copies and/or saves it, plays the shutter, then
+/// shows it in Quick Access (or says what happened in a notification).
+fn deliver(app: &AppHandle, image: &RgbaImage, point: Option<(i32, i32)>) -> Result<(), String> {
     let prefs = app.state::<AppState>().prefs.lock().unwrap().clone();
     if prefs.play_sound {
         sound::shutter();
     }
-    // Until the Quick Access thumbnail arrives, a screenshot that's neither copied nor saved
-    // would be lost, so it's copied.
-    let copy = prefs.copy_after_capture || !prefs.save_after_capture;
+    let item = library::store(app, image)?;
+    // Without Quick Access, a screenshot that's neither copied nor saved would be easy to miss
+    // (it's only in the Library), so it's copied.
+    let copy = prefs.copy_after_capture || (!prefs.save_after_capture && !prefs.show_overlay);
     if copy {
         copy_image(image)?;
     }
-    let saved = if prefs.save_after_capture { Some(save_image(app, &prefs, image)?) } else { None };
+    let saved = if prefs.save_after_capture {
+        Some(library::save_copy(app, std::path::Path::new(&item.path))?)
+    } else {
+        None
+    };
 
+    if prefs.show_overlay {
+        quick_access::show(app, item, point);
+        return Ok(());
+    }
     let (title, body) = match (&saved, copy) {
         (Some(path), true) => ("Screenshot copied and saved", file_label(path)),
         (Some(path), false) => ("Screenshot saved", file_label(path)),
@@ -345,7 +359,7 @@ fn deliver(app: &AppHandle, image: &RgbaImage) -> Result<(), String> {
     Ok(())
 }
 
-fn copy_image(image: &RgbaImage) -> Result<(), String> {
+pub fn copy_image(image: &RgbaImage) -> Result<(), String> {
     let data = ImageData {
         width: image.width() as usize,
         height: image.height() as usize,
@@ -354,14 +368,6 @@ fn copy_image(image: &RgbaImage) -> Result<(), String> {
     Clipboard::new()
         .and_then(|mut clipboard| clipboard.set_image(data))
         .map_err(|e| format!("Couldn't copy it to the clipboard: {e}"))
-}
-
-fn save_image(app: &AppHandle, prefs: &Preferences, image: &RgbaImage) -> Result<PathBuf, String> {
-    let dir = save_folder(app, prefs);
-    std::fs::create_dir_all(&dir).map_err(|e| format!("Couldn't create {}: {e}", dir.display()))?;
-    let path = marquee_core::capture::unique_path(&dir, chrono::Local::now().naive_local());
-    image.save(&path).map_err(|e| format!("Couldn't save {}: {e}", path.display()))?;
-    Ok(path)
 }
 
 /// Where screenshots are saved: the chosen folder, or Pictures\Marquee.

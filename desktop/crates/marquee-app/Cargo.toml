@@ -15,7 +15,7 @@ marquee-core = { path = "../marquee-core" }
 marquee-icon = { path = "../marquee-icon" }
 serde.workspace = true
 serde_json.workspace = true
-tauri = { version = "2", features = ["tray-icon"] }
+tauri = { version = "2", features = ["tray-icon", "protocol-asset"] }
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
@@ -26,7 +26,7 @@ arboard = "3"
 chrono.workspace = true
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_Media_Audio", "Win32_Foundation"] }
+windows-sys = { version = "0.61", features = ["Win32_Media_Audio", "Win32_Foundation", "Win32_Graphics_Dwm"] }
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
