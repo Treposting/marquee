@@ -2476,7 +2476,7 @@ dependencies = [
 
 [[package]]
 name = "marquee-app"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "arboard",
  "chrono",
@@ -2497,7 +2497,7 @@ dependencies = [
 
 [[package]]
 name = "marquee-core"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "serde",
@@ -2509,7 +2509,7 @@ dependencies = [
 
 [[package]]
 name = "marquee-icon"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "ico 0.4.0",
  "tiny-skia",
