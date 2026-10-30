@@ -16,7 +16,9 @@ use std::time::Duration;
 use arboard::{Clipboard, ImageData};
 use marquee_core::prefs::Preferences;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, State, WebviewUrl, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, State, WebviewUrl, WebviewWindowBuilder,
+};
 use tauri_plugin_notification::NotificationExt;
 use xcap::image::{imageops, RgbaImage};
 use xcap::{Monitor, Window};
@@ -59,7 +61,7 @@ pub fn run(app: &AppHandle, target: Target) {
             countdown(&app, point, TIMER_SECONDS);
         } else if was_showing {
             // Give our window time to leave the screen before it's captured.
-            thread::sleep(Duration::from_millis(300));
+            thread::sleep(Duration::from_millis(200));
         }
         match target {
             Target::FullScreen | Target::Timed => finish(
@@ -149,7 +151,10 @@ pub struct WindowRect {
 /// The frozen display while the overlay is open.
 pub struct Frozen {
     image: RgbaImage,
-    windows: Vec<WindowRect>,
+    /// The display's top-left corner on the desktop, in physical pixels.
+    origin: (i32, i32),
+    /// Listed the first time they're needed (picking a window), not before the overlay shows.
+    windows: Option<Vec<WindowRect>>,
     mode: Target,
     /// Where the capture started, for placing Quick Access on the same display.
     point: Option<(i32, i32)>,
@@ -166,7 +171,6 @@ pub struct OverlayInfo {
     height: u32,
     /// "area", "window" or "aio" (All-in-One): what the overlay starts in.
     mode: &'static str,
-    windows: Vec<WindowRect>,
 }
 
 /// The overlay's answer.
@@ -191,43 +195,60 @@ pub enum Selection {
     Cancel,
 }
 
-fn open_overlay(app: &AppHandle, point: Option<(i32, i32)>, mode: Target) -> Result<(), String> {
-    let monitor = capture_monitor(point)?;
-    let image = monitor.capture_image().map_err(|e| e.to_string())?;
-    let origin = (monitor.x().unwrap_or(0), monitor.y().unwrap_or(0));
-    let windows = visible_windows(origin, image.width(), image.height());
-    if app.try_state::<Session>().is_none() {
-        app.manage(Session::default());
+/// Creates the overlay window once, hidden, so a capture only has to show it: building a new
+/// WebView2 window for every capture took most of a second.
+pub fn prewarm(app: &AppHandle) {
+    if app.get_webview_window(OVERLAY).is_some() {
+        return;
     }
-    *app.state::<Session>().0.lock().unwrap() = Some(Frozen { image, windows, mode, point });
-
-    if let Some(old) = app.get_webview_window(OVERLAY) {
-        let _ = old.destroy();
-    }
-    let (width, height) = (monitor.width().unwrap_or(1280), monitor.height().unwrap_or(800));
-    let overlay = WebviewWindowBuilder::new(app, OVERLAY, WebviewUrl::App("overlay.html".into()))
+    let built = WebviewWindowBuilder::new(app, OVERLAY, WebviewUrl::App("overlay.html".into()))
         .title("Marquee capture")
         .decorations(false)
         .resizable(false)
         .always_on_top(true)
         .skip_taskbar(true)
         .shadow(false)
+        .focused(false)
         .visible(false)
-        .build()
-        .map_err(|e| format!("Couldn't open the capture overlay: {e}"))?;
+        .background_color(tauri::window::Color(0, 0, 0, 255))
+        .build();
+    match built {
+        Ok(overlay) => {
+            // If the overlay is closed without answering (Alt+F4), end the session; the next
+            // capture builds a new one.
+            let handle = app.clone();
+            overlay.on_window_event(move |event| {
+                if let tauri::WindowEvent::Destroyed = event {
+                    if let Some(session) = handle.try_state::<Session>() {
+                        if session.0.lock().unwrap().take().is_some() {
+                            BUSY.store(false, Ordering::SeqCst);
+                        }
+                    }
+                }
+            });
+        }
+        Err(e) => eprintln!("Marquee: couldn't prepare the capture overlay: {e}"),
+    }
+}
+
+fn open_overlay(app: &AppHandle, point: Option<(i32, i32)>, mode: Target) -> Result<(), String> {
+    let monitor = capture_monitor(point)?;
+    let image = monitor.capture_image().map_err(|e| e.to_string())?;
+    let origin = (monitor.x().unwrap_or(0), monitor.y().unwrap_or(0));
+    let (width, height) = (image.width(), image.height());
+    *app.state::<Session>().0.lock().unwrap() = Some(Frozen { image, origin, windows: None, mode, point });
+
+    let fresh = app.get_webview_window(OVERLAY).is_none();
+    prewarm(app);
+    let overlay = app.get_webview_window(OVERLAY).ok_or("Couldn't open the capture overlay.")?;
+    // Exactly over the display: Windows then treats it as full screen and keeps the taskbar
+    // behind it, with no slow switch to fullscreen mode.
     let _ = overlay.set_position(PhysicalPosition::new(origin.0, origin.1));
     let _ = overlay.set_size(PhysicalSize::new(width, height));
-    // If the overlay goes away without answering (Alt+F4), end the session.
-    let handle = app.clone();
-    overlay.on_window_event(move |event| {
-        if let tauri::WindowEvent::Destroyed = event {
-            if let Some(session) = handle.try_state::<Session>() {
-                if session.0.lock().unwrap().take().is_some() {
-                    BUSY.store(false, Ordering::SeqCst);
-                }
-            }
-        }
-    });
+    // A page that just loaded asks for the session itself; a waiting one is told to start.
+    if !fresh {
+        let _ = overlay.emit("overlay-start", ());
+    }
     Ok(())
 }
 
@@ -271,8 +292,27 @@ pub fn overlay_info(session: State<Session>) -> Option<OverlayInfo> {
             Target::AllInOne => "aio",
             _ => "area",
         },
-        windows: frozen.windows.clone(),
     })
+}
+
+/// The windows the overlay can highlight. Asked for after the overlay is showing.
+#[tauri::command]
+pub async fn overlay_windows(app: AppHandle) -> Vec<WindowRect> {
+    let Some((origin, width, height)) = app
+        .state::<Session>()
+        .0
+        .lock()
+        .unwrap()
+        .as_ref()
+        .map(|f| (f.origin, f.image.width(), f.image.height()))
+    else {
+        return Vec::new();
+    };
+    let windows = visible_windows(origin, width, height);
+    if let Some(frozen) = app.state::<Session>().0.lock().unwrap().as_mut() {
+        frozen.windows = Some(windows.clone());
+    }
+    windows
 }
 
 /// The frozen frame as raw RGBA bytes, sent without JSON encoding.
@@ -283,13 +323,10 @@ pub fn overlay_frame(session: State<Session>) -> tauri::ipc::Response {
     tauri::ipc::Response::new(bytes)
 }
 
-/// The page has drawn the frame: show the overlay and give it the keyboard. Fullscreen is set
-/// only now (on the display it was placed on, so it also covers the taskbar): doing it while
-/// hidden can show an empty window early.
+/// The page has drawn the frame: show the overlay and give it the keyboard.
 #[tauri::command]
 pub fn overlay_ready(app: AppHandle) {
     if let Some(overlay) = app.get_webview_window(OVERLAY) {
-        let _ = overlay.set_fullscreen(true);
         let _ = overlay.show();
         let _ = overlay.set_focus();
     }
@@ -298,8 +335,9 @@ pub fn overlay_ready(app: AppHandle) {
 #[tauri::command]
 pub fn overlay_finish(app: AppHandle, selection: Selection) {
     let frozen = app.try_state::<Session>().and_then(|s| s.0.lock().unwrap().take());
+    // Hidden, not closed: the next capture reuses it.
     if let Some(overlay) = app.get_webview_window(OVERLAY) {
-        let _ = overlay.destroy();
+        let _ = overlay.hide();
     }
     let Some(frozen) = frozen else { return };
     thread::spawn(move || {
@@ -327,7 +365,8 @@ pub fn overlay_finish(app: AppHandle, selection: Selection) {
                 // out anything overlapping it. Fall back to the frozen frame.
                 thread::sleep(Duration::from_millis(120));
                 capture_window_by_id(id).or_else(|_| {
-                    let rect = frozen.windows.iter().find(|w| w.id == id).ok_or("That window is gone.")?;
+                    let rect =
+                        frozen.windows.iter().flatten().find(|w| w.id == id).ok_or("That window is gone.")?;
                     crop(&frozen, rect.x as i64, rect.y as i64, rect.width as i64, rect.height as i64)
                 })
             }

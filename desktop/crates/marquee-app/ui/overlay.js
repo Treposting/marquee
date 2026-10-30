@@ -7,6 +7,7 @@
 "use strict";
 
 const { invoke } = window.__TAURI__.core;
+const { listen } = window.__TAURI__.event;
 const YELLOW = "#FFCF1A";
 const HANDLE = 8; // CSS pixels around a handle that grab it
 
@@ -18,6 +19,7 @@ const sizeLabel = document.getElementById("size");
 const uiCtx = ui.getContext("2d");
 
 let info = null;
+let windowRects = []; // arrives just after the overlay shows
 let aio = false;
 let mode = "area";
 let pointer = null; // CSS pixels
@@ -119,7 +121,7 @@ function updateHover() {
   const s = scale();
   const px = pointer.x * s, py = pointer.y * s;
   // Front to back: the first window under the pointer is the visible one.
-  hover = info.windows.find((w) => px >= w.x && py >= w.y && px < w.x + w.width && py < w.y + w.height) ?? null;
+  hover = windowRects.find((w) => px >= w.x && py >= w.y && px < w.x + w.width && py < w.y + w.height) ?? null;
 }
 
 function updateCursor() {
@@ -295,17 +297,31 @@ for (const button of toolbar.querySelectorAll("[data-action]")) {
   button.addEventListener("click", () => ACTIONS[button.dataset.action]());
 }
 
+/** Starts a capture session. The window stays loaded between captures (Rust only hides it),
+ *  so everything from the last one is reset here. */
 async function start() {
   info = await invoke("overlay_info");
-  if (!info) return cancel();
+  if (!info) return;
   aio = info.mode === "aio";
+  finished = false;
+  sel = null;
+  gesture = null;
+  hover = null;
+  pointer = null;
+  windowRects = [];
+  document.body.style.cursor = "";
   const bytes = await invoke("overlay_frame");
   frame.width = info.width;
   frame.height = info.height;
   frame.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(bytes), info.width, info.height), 0, 0);
   resize();
   setMode(info.mode === "window" ? "window" : "area");
+  draw();
   await invoke("overlay_ready");
+  windowRects = await invoke("overlay_windows");
+  updateHover();
+  schedule();
 }
 
+listen("overlay-start", () => start().catch((e) => { console.error(e); cancel(); }));
 start().catch((e) => { console.error(e); cancel(); });

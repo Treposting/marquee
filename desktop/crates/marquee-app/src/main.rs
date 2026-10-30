@@ -151,6 +151,7 @@ fn main() {
             save_folder,
             choose_save_folder,
             capture::overlay_info,
+            capture::overlay_windows,
             capture::overlay_frame,
             capture::overlay_ready,
             capture::overlay_finish,
@@ -191,6 +192,10 @@ fn main() {
             library::init(app.handle())?;
             clipboard::init(app.handle())?;
             tray::install(app.handle())?;
+            // Load the windows that appear on a shortcut now, so they open instantly later.
+            capture::prewarm(app.handle());
+            quick_access::prewarm(app.handle());
+            clipboard::prewarm(app.handle());
             if let Err(message) = shortcuts::register_all(app.handle()) {
                 eprintln!("Marquee: {message}");
             }

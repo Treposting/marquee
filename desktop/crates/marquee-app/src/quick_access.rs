@@ -57,22 +57,30 @@ pub fn show(app: &AppHandle, item: ItemInfo, anchor: Option<(i32, i32)>) {
     }
     if app.get_webview_window(LABEL).is_none() {
         // The page asks for the stack when it loads, then lays itself out.
-        let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-access.html".into()))
-            .title("Marquee Quick Access")
-            .inner_size(WIDTH, 120.0)
-            .decorations(false)
-            .resizable(false)
-            .always_on_top(true)
-            .skip_taskbar(true)
-            .focused(false)
-            .visible(false)
-            .build();
-        match built {
-            Ok(window) => crate::window::round_corners(&window),
-            Err(e) => eprintln!("Marquee: couldn't open Quick Access: {e}"),
-        }
+        prewarm(app);
     } else {
         let _ = app.emit_to(LABEL, "quick-access-changed", ());
+    }
+}
+
+/// Creates the (hidden) Quick Access window ahead of the first capture, so it appears at once.
+pub fn prewarm(app: &AppHandle) {
+    if app.get_webview_window(LABEL).is_some() {
+        return;
+    }
+    let built = WebviewWindowBuilder::new(app, LABEL, WebviewUrl::App("quick-access.html".into()))
+        .title("Marquee Quick Access")
+        .inner_size(WIDTH, 120.0)
+        .decorations(false)
+        .resizable(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .focused(false)
+        .visible(false)
+        .build();
+    match built {
+        Ok(window) => crate::window::round_corners(&window),
+        Err(e) => eprintln!("Marquee: couldn't open Quick Access: {e}"),
     }
 }
 

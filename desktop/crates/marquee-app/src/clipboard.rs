@@ -268,6 +268,31 @@ pub fn clip_close_panel(app: AppHandle) {
 
 // MARK: Panel
 
+/// Creates the (hidden) panel ahead of time, so the shortcut opens it at once.
+pub fn prewarm(app: &AppHandle) {
+    if app.get_webview_window(PANEL).is_some() {
+        return;
+    }
+    let built = WebviewWindowBuilder::new(app, PANEL, WebviewUrl::App("clipboard-panel.html".into()))
+        .title("Marquee clipboard history")
+        .decorations(false)
+        .resizable(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .focused(false)
+        .visible(false)
+        .build();
+    let Ok(panel) = built else { return };
+    crate::window::round_corners(&panel);
+    // Clicking elsewhere closes it, like a menu.
+    let handle = panel.clone();
+    panel.on_window_event(move |event| {
+        if let tauri::WindowEvent::Focused(false) = event {
+            let _ = handle.hide();
+        }
+    });
+}
+
 /// Opens the Clipboard History panel along the bottom of the display under the pointer, or
 /// closes it if it's open.
 pub fn toggle_panel(app: &AppHandle) {
@@ -278,29 +303,8 @@ pub fn toggle_panel(app: &AppHandle) {
         }
     }
     PASTE_TARGET.store(platform::foreground_window(), Ordering::SeqCst);
-    let panel = match app.get_webview_window(PANEL) {
-        Some(panel) => panel,
-        None => {
-            let built = WebviewWindowBuilder::new(app, PANEL, WebviewUrl::App("clipboard-panel.html".into()))
-                .title("Marquee clipboard history")
-                .decorations(false)
-                .resizable(false)
-                .always_on_top(true)
-                .skip_taskbar(true)
-                .visible(false)
-                .build();
-            let Ok(panel) = built else { return };
-            crate::window::round_corners(&panel);
-            // Clicking elsewhere closes it, like a menu.
-            let handle = panel.clone();
-            panel.on_window_event(move |event| {
-                if let tauri::WindowEvent::Focused(false) = event {
-                    let _ = handle.hide();
-                }
-            });
-            panel
-        }
-    };
+    prewarm(app);
+    let Some(panel) = app.get_webview_window(PANEL) else { return };
     let monitor = app
         .cursor_position()
         .ok()
