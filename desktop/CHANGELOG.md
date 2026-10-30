@@ -2,6 +2,10 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## Unreleased
+
+- **Updates.** With Settings → General → Check for updates automatically on, Marquee looks for a new Windows preview shortly after it starts and then every hour. When there is one you get a notification, an "Update to …" item at the top of the tray menu and a badge in the window's sidebar. The update page shows what's new; **Install update** downloads it, checks it against the release's checksum, then closes Marquee, installs the update and opens it again. Settings also has **Check now**. If you installed Marquee from the .msi, it opens the release page instead.
+
 ## 0.4.2
 
 - **Capture opens right away.** Area, Window and All-in-One used to take a couple of seconds to show the selection. Marquee now prepares the capture screen, Quick Access and the clipboard panel when it starts, so they appear as soon as you press the shortcut or click.

@@ -6,7 +6,7 @@ use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Wry};
 
-use crate::{actions, window, AppState};
+use crate::{actions, updater, window, AppState};
 
 pub fn install(app: &AppHandle) -> tauri::Result<()> {
     let size = 32;
@@ -18,6 +18,7 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => window::show_main(app, None),
+            "update" => updater::show(app),
             "quit" => app.exit(0),
             id => {
                 if let Some(action) = Action::from_id(id) {
@@ -70,21 +71,24 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     let quit = MenuItem::with_id(app, "quit", "Quit Marquee", true, None::<&str>)?;
     let separator = || PredefinedMenuItem::separator(app);
 
-    Menu::with_items(
-        app,
-        &[
-            &all_in_one,
-            &capture_menu,
-            &separator()?,
-            &record_area,
-            &record_screen,
-            &separator()?,
-            &measure,
-            &color,
-            &clipboard,
-            &separator()?,
-            &open,
-            &quit,
-        ],
-    )
+    let menu = Menu::new(app)?;
+    if let Some(version) = updater::available_version(app) {
+        let update = format!("Update to Marquee {version}…");
+        menu.append_items(&[&MenuItem::with_id(app, "update", update, true, None::<&str>)?, &separator()?])?;
+    }
+    menu.append_items(&[
+        &all_in_one,
+        &capture_menu,
+        &separator()?,
+        &record_area,
+        &record_screen,
+        &separator()?,
+        &measure,
+        &color,
+        &clipboard,
+        &separator()?,
+        &open,
+        &quit,
+    ])?;
+    Ok(menu)
 }

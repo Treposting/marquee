@@ -11,3 +11,4 @@ pub mod linkmeta;
 pub mod prefs;
 pub mod shortcuts;
 pub mod sound;
+pub mod update;

@@ -19,6 +19,7 @@
     <div class="nav-label">App</div>
     <button class="nav-item" data-page="settings"><svg><use href="#i-settings"/></svg>Settings</button>
     <div class="nav-spacer"></div>
+    <button class="update-pill" id="update-pill" data-page="update" hidden><span class="dot"></span><span id="update-pill-text">Update available</span></button>
     <div class="version"><span id="version"></span><span class="version-sub">Windows preview</span></div>
   </nav>
 
@@ -75,6 +76,25 @@
       <div class="empty" id="clip-empty"><div class="empty-icon glass"><svg><use href="#i-clipboard"/></svg></div><h2 id="clip-empty-title">Nothing copied yet</h2><p id="clip-empty-text">Text, links, images and files you copy show up here. Password managers are never recorded.</p></div>
     </section>
 
+    <!-- Update -->
+    <section class="page" id="page-update" hidden aria-labelledby="update-title">
+      <header class="page-header"><div><h1 id="update-title">Update</h1><p id="update-sub"></p></div></header>
+      <div class="update-card glass" id="update-card">
+        <div class="update-head">
+          <img src="logo.svg" alt="" width="44" height="44">
+          <div class="update-head-text"><h2 id="update-heading"></h2><p id="update-detail"></p></div>
+          <div class="update-actions">
+            <button class="text-button" id="update-page-link" hidden>Release page</button>
+            <button class="button primary" id="update-install" hidden>Install update</button>
+            <button class="button" id="update-check-big" hidden>Check for updates</button>
+          </div>
+        </div>
+        <div class="progress" id="update-progress" hidden><div id="update-bar"></div></div>
+        <div class="error" id="update-error" role="alert" hidden></div>
+        <div class="notes" id="update-notes" hidden></div>
+      </div>
+    </section>
+
     <!-- Settings -->
     <section class="page" id="page-settings" hidden aria-labelledby="settings-title">
       <header class="page-header">
@@ -109,6 +129,10 @@
           <label class="row"><span>Play sound on copy and paste</span><input type="checkbox" class="switch" data-pref="copyPasteSound"></label>
           <label class="row"><span>Launch at login</span><input type="checkbox" class="switch" data-pref="launchAtLogin"></label>
           <label class="row"><span>Check for updates automatically</span><input type="checkbox" class="switch" data-pref="autoCheckUpdates"></label>
+          <div class="row">
+            <span class="row-text"><span>Updates</span><span class="row-sub" id="update-status-text"></span></span>
+            <button class="text-button" id="update-check">Check now</button>
+          </div>
         </div>
       </div>
 

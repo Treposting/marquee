@@ -66,7 +66,7 @@ function showPage(name) {
   $("main").scrollTop = 0;
 }
 
-for (const item of $$(".nav-item")) item.addEventListener("click", () => showPage(item.dataset.page));
+for (const item of $$(".nav-item, .update-pill")) item.addEventListener("click", () => showPage(item.dataset.page));
 
 // Home
 
@@ -385,6 +385,90 @@ $("#choose-folder").addEventListener("click", async () => {
   }
 });
 
+// Updates
+
+let update = null;
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
+/** Release notes are short Markdown: headings, bullet lists, bold and code. Links become text. */
+function renderNotes(markdown) {
+  const inline = (line) => escapeHtml(line)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+  let html = "";
+  let list = false;
+  for (const raw of markdown.split(/\r?\n/)) {
+    const line = raw.trim();
+    const bullet = /^[-*] (.*)/.exec(line);
+    if (list && !bullet) { html += "</ul>"; list = false; }
+    if (bullet) {
+      if (!list) { html += "<ul>"; list = true; }
+      html += `<li>${inline(bullet[1])}</li>`;
+    } else if (/^#{1,6} /.test(line)) {
+      html += `<h3>${inline(line.replace(/^#+ /, ""))}</h3>`;
+    } else if (line) {
+      html += `<p>${inline(line)}</p>`;
+    }
+  }
+  return html + (list ? "</ul>" : "");
+}
+
+function renderUpdate() {
+  if (!update) return;
+  const a = update.available;
+  const checked = update.lastChecked ? `Last checked ${when(update.lastChecked)}.` : "";
+  $("#update-status-text").textContent = update.checking ? "Checking…"
+    : a ? `Marquee ${a.version} is available.`
+    : update.error ? update.error
+    : `You have the latest version (${update.current}). ${checked}`;
+  $("#update-check").disabled = update.checking || update.installing;
+  $("#update-pill").hidden = !a;
+  $("#update-pill-text").textContent = a ? `Update to ${a.version}` : "";
+
+  $("#update-sub").textContent = `You have Marquee ${update.current}.`;
+  $("#update-heading").textContent = a ? `Marquee ${a.version} is available` : update.checking ? "Checking for updates…" : "You're up to date";
+  $("#update-detail").textContent = update.installing ? "Downloading… Marquee closes, updates and opens again."
+    : a ? (a.canInstall ? "Marquee closes, installs the update and opens again." : "This copy was installed from the .msi. Download the new version from the release page.")
+    : checked || "Marquee checks GitHub for new Windows previews.";
+  $("#update-install").hidden = !a || !a.canInstall;
+  $("#update-install").disabled = update.installing;
+  $("#update-install").textContent = update.installing ? "Installing…" : "Install update";
+  $("#update-page-link").hidden = !a;
+  $("#update-check-big").hidden = !!a;
+  $("#update-check-big").disabled = update.checking;
+  $("#update-progress").hidden = !update.installing;
+  $("#update-error").hidden = !update.error;
+  $("#update-error").textContent = update.error ?? "";
+  $("#update-notes").hidden = !a?.notes;
+  $("#update-notes").innerHTML = a?.notes ? renderNotes(a.notes) : "";
+}
+
+async function refreshUpdate() {
+  update = await invoke("update_status");
+  renderUpdate();
+}
+
+async function checkForUpdates() {
+  update = { ...(update ?? {}), checking: true };
+  renderUpdate();
+  update = await invoke("update_check");
+  renderUpdate();
+}
+
+$("#update-check").addEventListener("click", checkForUpdates);
+$("#update-check-big").addEventListener("click", checkForUpdates);
+$("#update-install").addEventListener("click", () => {
+  $("#update-bar").style.width = "0";
+  invoke("update_install").catch(() => refreshUpdate());
+});
+$("#update-page-link").addEventListener("click", () => {
+  if (update?.available) invoke("update_open_page").catch((e) => alert(String(e)));
+});
+
 // Shortcuts
 
 const MODIFIERS = { Control: "Ctrl", Alt: "Alt", Shift: "Shift", Meta: "Super" };
@@ -446,6 +530,9 @@ async function start() {
   await renderClipboard();
   listen("clipboard-changed", renderClipboard);
   // Rust changed a setting itself (e.g. "Ignore this app" from the panel).
+  await refreshUpdate();
+  listen("update-changed", refreshUpdate);
+  listen("update-progress", (e) => ($("#update-bar").style.width = `${e.payload}%`));
   listen("prefs-changed", async () => { prefs = await invoke("get_prefs"); bindPrefs(); });
   renderHome();
   renderShortcuts();

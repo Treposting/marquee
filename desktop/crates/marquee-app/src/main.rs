@@ -14,6 +14,7 @@ mod quick_access;
 mod shortcuts;
 mod sound;
 mod tray;
+mod updater;
 mod window;
 
 use std::path::PathBuf;
@@ -179,7 +180,11 @@ fn main() {
             clipboard::clip_category_update,
             clipboard::clip_category_delete,
             clipboard::clip_set_category,
-            clipboard::clip_close_panel
+            clipboard::clip_close_panel,
+            updater::update_status,
+            updater::update_check,
+            updater::update_install,
+            updater::update_open_page
         ])
         .setup(|app| {
             let config_dir = app.path().app_config_dir()?;
@@ -198,6 +203,7 @@ fn main() {
             app.manage(quick_access::QuickAccess::default());
             library::init(app.handle())?;
             clipboard::init(app.handle())?;
+            updater::init(app.handle());
             tray::install(app.handle())?;
             // Load the windows that appear on a shortcut now, so they open instantly later.
             capture::prewarm(app.handle());
