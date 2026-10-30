@@ -94,6 +94,17 @@ pub struct SourceApp {
     pub id: String,
 }
 
+/// A readable name for an app from its executable: "notepad.exe" → "Notepad",
+/// "WINWORD.EXE" → "Winword", "msedge.exe" → "Msedge".
+pub fn app_display_name(exe: &str) -> String {
+    let stem = exe.rsplit_once('.').map_or(exe, |(stem, _)| stem);
+    let mut chars = stem.chars();
+    match chars.next() {
+        Some(first) => first.to_uppercase().chain(chars.flat_map(char::to_lowercase)).collect(),
+        None => exe.to_string(),
+    }
+}
+
 /// The palette offered when making a category.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -144,5 +155,17 @@ impl ClipFilter {
             ClipFilter::Pinned => item.pinned,
             ClipFilter::Category(id) => item.category_id == Some(id),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn app_names_from_executables() {
+        assert_eq!(app_display_name("notepad.exe"), "Notepad");
+        assert_eq!(app_display_name("WINWORD.EXE"), "Winword");
+        assert_eq!(app_display_name("Code"), "Code");
     }
 }

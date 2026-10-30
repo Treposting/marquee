@@ -14,7 +14,8 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
-          "$APPDATA/Library/**"
+          "$APPDATA/Library/**",
+          "$APPDATA/Clipboard/images/**"
         ]
       }
     }

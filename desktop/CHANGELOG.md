@@ -2,6 +2,13 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## Unreleased
+
+- **Clipboard history.** Marquee remembers the text, links, images and files you copy, with the app each came from. Copying the same thing again moves it to the top instead of adding a duplicate. It keeps up to the number set in Settings → Clipboard; pinned items are always kept.
+- **Clipboard History panel** (Ctrl+Alt+Shift+V): opens along the bottom of the screen. Type to search, filter by kind, use the arrow keys to choose, and press Enter (or double-click) to paste into the app you were using. Ctrl+1 to Ctrl+9 paste one of the first nine, Ctrl+P pins, Delete removes, Esc closes. With "Paste into the app you were using" off, the item is copied and you press Ctrl+V yourself.
+- **Clipboard page** in the Marquee window: the same history as a grid, with search, filters, Copy, Pin and Delete, plus Pause history and Clear history (pinned items stay).
+- **Private copies stay private.** Copies that password managers mark as private (the way Windows' own clipboard history is told to skip them) are never recorded, nor is anything from the apps in Settings → Clipboard → Ignored apps, or anything copied while history is paused.
+
 ## 0.3.0
 
 - **Quick Access.** After every screenshot, a thumbnail appears in the bottom-left corner of the screen. Hover it to **Copy** or **Save**, or use the small buttons to open it, show it in its folder or close it. Up to four stack up, newest on top. Each one hides after the time set in Settings (it waits while you hover), and the arrow tucks them against the screen's edge until you want them back.

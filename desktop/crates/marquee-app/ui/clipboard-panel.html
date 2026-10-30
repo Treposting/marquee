@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Marquee clipboard history</title>
+  <link rel="stylesheet" href="clip-card.css">
+  <link rel="stylesheet" href="clipboard-panel.css">
+</head>
+<body>
+  <div class="bar">
+    <input id="search" type="search" placeholder="Search clipboard history" aria-label="Search clipboard history" spellcheck="false" autocomplete="off">
+    <div class="filters" role="radiogroup" aria-label="Show">
+      <button role="radio" data-filter="all" aria-checked="true">All</button>
+      <button role="radio" data-filter="text" aria-checked="false">Text</button>
+      <button role="radio" data-filter="links" aria-checked="false">Links</button>
+      <button role="radio" data-filter="images" aria-checked="false">Images</button>
+      <button role="radio" data-filter="files" aria-checked="false">Files</button>
+      <button role="radio" data-filter="pinned" aria-checked="false">Pinned</button>
+    </div>
+    <p class="keys"><kbd>Enter</kbd> paste <kbd>Ctrl+1–9</kbd> paste one <kbd>Ctrl+P</kbd> pin <kbd>Del</kbd> delete <kbd>Esc</kbd> close</p>
+  </div>
+  <div class="row" id="row" role="listbox" aria-label="Clipboard history" tabindex="-1"></div>
+  <div class="empty" id="empty" hidden></div>
+  <script src="clip-card.js"></script>
+  <script src="clipboard-panel.js"></script>
+</body>
+</html>

@@ -6,7 +6,9 @@
 
 mod actions;
 mod capture;
+mod clipboard;
 mod library;
+mod platform;
 mod quick_access;
 mod shortcuts;
 mod sound;
@@ -149,7 +151,14 @@ fn main() {
             quick_access::quick_access_items,
             quick_access::quick_access_dismiss,
             quick_access::quick_access_tuck,
-            quick_access::quick_access_layout
+            quick_access::quick_access_layout,
+            clipboard::clip_list,
+            clipboard::clip_copy,
+            clipboard::clip_paste,
+            clipboard::clip_pin,
+            clipboard::clip_delete,
+            clipboard::clip_clear,
+            clipboard::clip_close_panel
         ])
         .setup(|app| {
             let config_dir = app.path().app_config_dir()?;
@@ -159,6 +168,7 @@ fn main() {
             app.manage(capture::Session::default());
             app.manage(quick_access::QuickAccess::default());
             library::init(app.handle())?;
+            clipboard::init(app.handle())?;
             tray::install(app.handle())?;
             if let Err(message) = shortcuts::register_all(app.handle()) {
                 eprintln!("Marquee: {message}");

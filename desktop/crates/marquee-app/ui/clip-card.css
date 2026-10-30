@@ -1,0 +1,30 @@
+/* Clipboard history cards: a colored header per kind, a preview, then source and age. */
+.clip {
+  --kind: #2F6FEB;
+  display: flex; flex-direction: column; overflow: hidden;
+  border-radius: 12px; background: var(--card, #fff); box-shadow: 0 0 0 1px var(--edge, rgba(0,0,0,.08));
+  outline: none; position: relative;
+}
+.clip.kind-link { --kind: #0E9AA7; }
+.clip.kind-image { --kind: #EA7A1F; }
+.clip.kind-file { --kind: #1F9D6B; }
+.clip header {
+  display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px;
+  background: var(--kind); color: #fff; font-size: 12px; font-weight: 600;
+}
+.clip-pin { padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.25); font-size: 11px; }
+.clip-index { margin-left: auto; padding: 1px 6px; border-radius: 5px; background: rgba(255,255,255,.22); font-size: 11px; font-variant-numeric: tabular-nums; }
+.clip-body { flex: 1; min-height: 0; padding: 10px; overflow: hidden; font-size: 12.5px; line-height: 1.45; }
+.clip-text { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; white-space: pre-wrap; }
+.kind-link .clip-text { color: var(--text-2, #5C5C66); -webkit-line-clamp: 4; }
+.clip-host { font-weight: 600; margin-bottom: 4px; overflow-wrap: anywhere; }
+.clip-body.clip-picture { padding: 0; background: #00000010; }
+.clip-body.clip-picture img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.clip-filename { font-weight: 600; overflow-wrap: anywhere; }
+.clip-more { color: var(--text-2, #5C5C66); margin-top: 4px; }
+.clip footer {
+  display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px 8px;
+  color: var(--text-2, #5C5C66); font-size: 11.5px; white-space: nowrap;
+}
+.clip-source { overflow: hidden; text-overflow: ellipsis; }
+.clip.selected { box-shadow: 0 0 0 2px var(--kind), 0 6px 18px rgba(0,0,0,.16); }

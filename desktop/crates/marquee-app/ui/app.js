@@ -128,6 +128,7 @@ async function save() {
   actions = await invoke("list_actions");
   renderHome();
   renderShortcuts();
+  renderClipboard();
 }
 
 function bindPrefs() {
@@ -226,6 +227,56 @@ $("#library-clear").addEventListener("click", () => {
   invoke("library_clear").catch((e) => alert(String(e)));
 });
 
+// Clipboard
+
+let clipFilter = "all";
+
+async function renderClipboard() {
+  const items = await invoke("clip_list", { filter: clipFilter, query: $("#clip-search").value });
+  $("#clip-grid").replaceChildren(...items.map((item) => {
+    const card = ClipCards.render(item, { convertFileSrc });
+    card.tabIndex = 0;
+    const act = (command, done) => invoke(command, { id: item.id })
+      .then(() => done && shotStatus(card, done))
+      .catch((e) => shotStatus(card, String(e)));
+    card.append(el("div", { class: "clip-actions" },
+      el("button", { title: "Copy", "aria-label": "Copy", onclick: () => act("clip_copy", "Copied") }, icon("i-copy")),
+      el("button", { title: item.pinned ? "Unpin" : "Pin", "aria-label": item.pinned ? "Unpin" : "Pin", "aria-pressed": String(item.pinned), onclick: () => act("clip_pin") }, icon("i-pin")),
+      el("button", { title: "Delete", "aria-label": "Delete", onclick: () => act("clip_delete") }, icon("i-trash"))));
+    card.addEventListener("dblclick", () => act("clip_copy", "Copied"));
+    return card;
+  }));
+  const filtered = clipFilter !== "all" || $("#clip-search").value;
+  $("#clip-empty").hidden = items.length > 0;
+  $("#clip-empty-title").textContent = filtered ? "Nothing matches" : "Nothing copied yet";
+  $("#clip-empty-text").textContent = filtered
+    ? "Try other words or another filter."
+    : "Text, links, images and files you copy show up here. Password managers are never recorded.";
+  $("#clip-paused").hidden = !prefs.monitorPaused;
+  $("#clip-pause").textContent = prefs.monitorPaused ? "Resume history" : "Pause history";
+  const history = actions.find((a) => a.id === "clipboardHistory");
+  $("#clip-keys").replaceChildren(history?.shortcut ? keyCaps(history.shortcut) : "a shortcut you set in Settings");
+}
+
+$("#clip-search").addEventListener("input", renderClipboard);
+for (const button of $$("[data-clip-filter]")) {
+  button.addEventListener("click", () => {
+    clipFilter = button.dataset.clipFilter;
+    for (const b of $$("[data-clip-filter]")) b.setAttribute("aria-checked", String(b === button));
+    renderClipboard();
+  });
+}
+$("#clip-pause").addEventListener("click", async () => {
+  prefs.monitorPaused = !prefs.monitorPaused;
+  await save();
+  bindPrefs();
+  renderClipboard();
+});
+$("#clip-clear").addEventListener("click", () => {
+  if (!confirm("Clear clipboard history? Pinned items stay.")) return;
+  invoke("clip_clear").catch((e) => alert(String(e)));
+});
+
 // Save folder
 
 async function showSaveFolder() {
@@ -303,6 +354,8 @@ async function start() {
   await showSaveFolder();
   await renderLibrary();
   listen("library-changed", renderLibrary);
+  await renderClipboard();
+  listen("clipboard-changed", renderClipboard);
   renderHome();
   renderShortcuts();
   await showComingSoon();

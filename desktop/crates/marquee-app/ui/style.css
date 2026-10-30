@@ -163,6 +163,26 @@ kbd {
 .icon-button svg { width: 16px; height: 16px; }
 
 /* Empty states */
+/* Clipboard */
+.header-actions { display: flex; gap: 8px; }
+.clip-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.clip-toolbar input[type="text"] { flex: 0 1 280px; }
+.clip-filters { display: flex; flex-wrap: wrap; gap: 4px; }
+.clip-filters button { height: 28px; padding: 0 10px; border: 0; border-radius: 999px; background: var(--chip); }
+.clip-filters button[aria-checked="true"] { background: var(--yellow); color: var(--ink); font-weight: 600; }
+.clip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; padding-bottom: 28px; }
+.clip-grid .clip { height: 210px; --card: var(--glass); --edge: var(--glass-edge); }
+.clip-actions {
+  position: absolute; top: 34px; right: 6px; display: flex; gap: 4px; opacity: 0; transition: opacity 120ms ease-out;
+}
+.clip:hover .clip-actions, .clip:focus-within .clip-actions { opacity: 1; }
+.clip-actions button {
+  width: 28px; height: 28px; border: 0; border-radius: 7px; display: grid; place-items: center;
+  background: rgba(20, 20, 22, .78); color: #fff;
+}
+.clip-actions button[aria-pressed="true"] { background: var(--yellow); color: var(--ink); }
+.clip-actions svg { width: 15px; height: 15px; }
+
 /* Library */
 .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding-bottom: 28px; }
 .shot { position: relative; border-radius: var(--radius-sm); overflow: hidden; background: var(--glass); box-shadow: 0 0 0 1px var(--glass-edge); }
