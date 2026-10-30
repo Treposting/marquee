@@ -2,7 +2,7 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
-## Unreleased
+## 0.4.1
 
 - **Quiet start at sign-in.** With Settings → Launch at login on, Marquee now starts in the tray when you sign in to Windows, instead of opening its window every time. Opening Marquee yourself still shows the window.
 
