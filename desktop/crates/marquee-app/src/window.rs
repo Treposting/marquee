@@ -34,6 +34,16 @@ pub fn show_main<R: Runtime>(app: &AppHandle<R>, pending: Option<Action>) {
     }
 }
 
+/// Hides the window if it's on screen, so a capture doesn't include it. Returns whether it was.
+pub fn hide_main<R: Runtime>(app: &AppHandle<R>) -> bool {
+    let Some(window) = app.get_webview_window("main") else { return false };
+    let showing = window.is_visible().unwrap_or(false) && !window.is_minimized().unwrap_or(false);
+    if showing {
+        let _ = window.hide();
+    }
+    showing
+}
+
 fn build<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<tauri::WebviewWindow<R>> {
     let builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .title("Marquee")

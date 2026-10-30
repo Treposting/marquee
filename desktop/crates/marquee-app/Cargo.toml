@@ -19,6 +19,14 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-dialog = "2"
+xcap = "0.9"
+arboard = "3"
+chrono.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Media_Audio", "Win32_Foundation"] }
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

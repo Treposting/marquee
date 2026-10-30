@@ -2,7 +2,7 @@
 
 A Rust port of Marquee: screenshots, screen recording, a screen ruler, a color picker and clipboard history, with the same behavior as the macOS app. It lives on the `windows-port` branch while it grows, and doesn't touch the macOS app.
 
-**Status:** phase 1 — tray app, global shortcuts, settings and the Marquee window. Captures come next.
+**Status:** phase 2 has started. The tray app, global shortcuts, settings and the Marquee window are in place, and full-screen, window and self-timer screenshots work (copy, save, shutter sound). Area selection and the Quick Access thumbnail are next.
 
 **Downloads:** previews are GitHub pre-releases tagged `windows-vX.Y.Z`, with an NSIS installer (`…-setup.exe`) and an MSI. They're unsigned for now, so SmartScreen asks first (More info → Run anyway). Every push that touches `desktop/` also builds them as the `Marquee-Windows` artifact of the [Desktop (Windows)](../.github/workflows/desktop.yml) run.
 
@@ -23,7 +23,7 @@ desktop/
 ├── crates/marquee-icon   Draws the app and tray icons at build time from the same geometry as
 │                         site/assets/logo.svg, so the repo has no binary assets
 └── crates/marquee-app    The app (Tauri 2): tray, global shortcuts, launch at login, single
-                          instance, the window (ui/: HTML, CSS, JS) with Mica on Windows 11
+                          instance, screenshots (capture.rs), the window (ui/: HTML, CSS, JS)
 ```
 
 ## Build
@@ -33,7 +33,7 @@ Needs Rust (stable) and, on Windows, the WebView2 runtime (already on Windows 11
 ```
 cd desktop
 cargo test                      # core + icon tests
-cargo run -p marquee-app        # run the app (also runs on macOS, without Mica, for UI work)
+cargo run -p marquee-app        # run the app (also runs on macOS, for UI work)
 cargo install tauri-cli --version "^2" --locked
 cd crates/marquee-app && cargo tauri build   # NSIS installer and MSI in target/release/bundle
 ```
@@ -46,8 +46,8 @@ Windows first, then Linux X11, then Wayland through portals.
 
 | Phase | What | Windows APIs / crates |
 |---|---|---|
-| **1 ✅** | Tray, menu, global shortcuts, settings, launch at login, window | Tauri 2, `tauri-plugin-global-shortcut`, `tauri-plugin-autostart`, `window-vibrancy` (Mica) |
-| 2 | Screenshots: area overlay, window, full screen, self-timer; Quick Access thumbnail (20 s auto-hide, tuck to side); Library | Windows Graphics Capture (`windows-capture`) or `xcap`; transparent topmost overlay window |
+| **1 ✅** | Tray, menu, global shortcuts, settings, launch at login, window | Tauri 2, `tauri-plugin-global-shortcut`, `tauri-plugin-autostart` |
+| **2 (in progress)** | Screenshots: full screen, front window and self-timer ✅ with copy, save and shutter sound ✅; area overlay and window picker; Quick Access thumbnail (20 s auto-hide, tuck to side); Library | `xcap`, `arboard`, `PlaySound`, notifications; transparent topmost overlay window |
 | 3 | Clipboard history, ⇧-style panel, paste into the previous app, ignore password managers | `AddClipboardFormatListener`, `arboard`, `SendInput`; skip `ExcludeClipboardContentFromMonitorProcessing` / `CanIncludeInClipboardHistory` |
 | 4 | Annotate, pin, color picker, Measure, copy text (OCR), scrolling capture | `tiny-skia`; Measure edge finder and scroll stitcher ported into `marquee-core`; `Windows.Media.Ocr` |
 | 5 | Recording with mic and desktop audio, camera bubble, GIF, video editor | Graphics Capture + Media Foundation H.264 (or `ffmpeg-next`), WASAPI loopback, `cpal`, `nokhwa`, `gifski` |
@@ -60,3 +60,4 @@ Linux later: X11 works much like Windows. Wayland needs `xdg-desktop-portal` (Sc
 - Default shortcuts: All-in-One **Ctrl+Alt+Shift+A**, Clipboard History **Ctrl+Alt+Shift+V** (Ctrl+Shift+V is "paste as plain text" in many Windows apps). Every other action has none until you set one.
 - Ignored apps are matched by executable name (`KeePass.exe`); common password managers are on the list from the start.
 - Settings are JSON in `%APPDATA%\io.github.treposting.marquee\settings.json`.
+- Screenshots are saved to `Pictures\Marquee` unless you choose another folder in Settings.

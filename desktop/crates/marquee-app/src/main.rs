@@ -1,11 +1,13 @@
 // No console window in release builds on Windows.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-//! Marquee for Windows: a tray app with global shortcuts and the Marquee window. Capture,
-//! recording and the clipboard are added phase by phase (see desktop/README.md).
+//! Marquee for Windows: a tray app with global shortcuts, screenshots and the Marquee window.
+//! The rest (area capture, clipboard, recording…) is added phase by phase (desktop/README.md).
 
 mod actions;
+mod capture;
 mod shortcuts;
+mod sound;
 mod tray;
 mod window;
 
@@ -17,6 +19,7 @@ use marquee_core::shortcuts::Action;
 use serde::Serialize;
 use tauri::{AppHandle, Manager, RunEvent, State};
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_dialog::DialogExt;
 
 /// Settings and where they're saved.
 pub struct AppState {
@@ -79,6 +82,29 @@ fn perform(app: AppHandle, id: String) -> Result<(), String> {
     Ok(())
 }
 
+/// The folder screenshots are saved to, for Settings to show.
+#[tauri::command]
+fn save_folder(app: AppHandle, state: State<AppState>) -> String {
+    let prefs = state.prefs.lock().unwrap().clone();
+    capture::save_folder(&app, &prefs).display().to_string()
+}
+
+/// Lets the user pick the save folder and stores it. Returns the new folder, or None if they
+/// cancelled. Async so the folder dialog doesn't block the window.
+#[tauri::command]
+async fn choose_save_folder(app: AppHandle) -> Result<Option<String>, String> {
+    let state = app.state::<AppState>();
+    let current = capture::save_folder(&app, &state.prefs.lock().unwrap().clone());
+    let picked =
+        app.dialog().file().set_title("Save screenshots to").set_directory(&current).blocking_pick_folder();
+    let Some(path) = picked.and_then(|p| p.into_path().ok()) else { return Ok(None) };
+    let mut prefs = state.prefs.lock().unwrap().clone();
+    prefs.save_folder = Some(path.clone());
+    prefs.save(&state.prefs_path).map_err(|e| format!("Couldn't save settings: {e}"))?;
+    *state.prefs.lock().unwrap() = prefs;
+    Ok(Some(path.display().to_string()))
+}
+
 #[tauri::command]
 fn app_version(app: AppHandle) -> String {
     app.package_info().version.to_string()
@@ -96,13 +122,17 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| window::show_main(app, None)))
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
         .plugin(shortcuts::plugin())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             get_prefs,
             set_prefs,
             list_actions,
             perform,
             app_version,
-            take_pending
+            take_pending,
+            save_folder,
+            choose_save_folder
         ])
         .setup(|app| {
             let config_dir = app.path().app_config_dir()?;

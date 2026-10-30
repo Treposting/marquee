@@ -10,7 +10,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const ACTION_INFO = {
   allInOne: { icon: "i-grid", sub: "Select an area, then choose what to do" },
   captureArea: { icon: "i-area", sub: "Drag over any part of the screen", tile: "Area" },
-  captureWindow: { icon: "i-window", sub: "Click a window to capture it", tile: "Window" },
+  captureWindow: { icon: "i-window", sub: "The window in front", tile: "Window" },
   captureFullscreen: { icon: "i-display", sub: "The display under the pointer", tile: "Full Screen" },
   captureScrolling: { icon: "i-scroll", sub: "One long screenshot as you scroll", tile: "Scrolling" },
   captureTimed: { icon: "i-timer", sub: "Full screen after 5 seconds", tile: "Self-Timer" },
@@ -172,6 +172,25 @@ for (const tab of $$("[role=tab]")) {
   });
 }
 
+// Save folder
+
+async function showSaveFolder() {
+  $("#save-folder").textContent = await invoke("save_folder");
+}
+
+$("#choose-folder").addEventListener("click", async () => {
+  try {
+    const folder = await invoke("choose_save_folder");
+    if (!folder) return;
+    // Keep the page's copy in step, or the next save would put the old folder back.
+    prefs.saveFolder = folder;
+    $("#save-folder").textContent = folder;
+    showError(null);
+  } catch (e) {
+    showError(String(e));
+  }
+});
+
 // Shortcuts
 
 const MODIFIERS = { Control: "Ctrl", Alt: "Alt", Shift: "Shift", Meta: "Super" };
@@ -227,6 +246,7 @@ async function start() {
   prefs = await invoke("get_prefs");
   actions = await invoke("list_actions");
   bindPrefs();
+  await showSaveFolder();
   renderHome();
   renderShortcuts();
   await showComingSoon();

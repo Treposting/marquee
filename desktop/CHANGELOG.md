@@ -2,6 +2,13 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.2.0
+
+- **Screenshots.** Capture the full screen (the display under the pointer), the window in front, or the full screen after 5 seconds, from the tray, a shortcut or Home. The window capture skips Marquee itself, the taskbar and minimized windows.
+- **After capture**, as set in Settings: copy to the clipboard, save as a PNG named like `Marquee 2026-10-30 at 14.03.22.png`, and play a shutter sound. A notification says what happened. If both copy and save are off, the screenshot is copied so it isn't lost.
+- **Save folder**: `Pictures\Marquee` unless you choose another one in Settings → General.
+- **Fixed**: an empty "is on its way to Windows" message no longer shows every time the window opens.
+
 ## 0.1.1
 
 - **Faster, no more double cursor.** The Marquee window no longer makes the whole system sluggish or leaves a second cursor on screen. Its see-through background and blur were too heavy for some PCs, so the window now uses solid Windows colors.

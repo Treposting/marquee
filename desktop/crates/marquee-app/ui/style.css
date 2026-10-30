@@ -142,6 +142,8 @@ kbd {
   border-radius: 5px; background: var(--chip); border: 1px solid var(--glass-edge);
 }
 
+/* `hidden` must win over the display rules below. */
+[hidden] { display: none !important; }
 .notice { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 14px; }
 .notice > svg { color: var(--yellow-ink); }
 .notice div { flex: 1; }
@@ -179,6 +181,13 @@ kbd {
   min-height: 48px; padding: 8px 16px;
 }
 .row + .row { border-top: 1px solid var(--glass-edge); }
+.row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.row-sub { color: var(--text-2); font-size: 13px; overflow-wrap: anywhere; }
+.text-button {
+  flex: none; height: 32px; padding: 0 14px; border-radius: 6px;
+  border: 1px solid var(--glass-edge); background: var(--glass-hover); color: var(--text);
+}
+.text-button:hover { border-color: var(--text-2); }
 .row-note { margin: 0; padding: 12px 16px 4px; color: var(--text-2); font-size: 13px; }
 .hint { color: var(--text-2); margin: 18px 4px 0; }
 .error { margin-top: 14px; padding: 10px 14px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
