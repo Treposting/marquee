@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Marquee self-timer</title>
+  <style>
+    /* The self-timer: a small tile in the middle of the screen, counting down to the capture. */
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #1D1D1F; cursor: default; user-select: none; }
+    body { display: grid; place-items: center; font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; color: #FFCF1A; }
+    [role="timer"] { text-align: center; }
+    .count { font-size: 76px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+    .label { margin-bottom: 6px; font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, .7); text-align: center; }
+  </style>
+</head>
+<body>
+  <div role="timer" aria-live="polite">
+    <div class="label">Screenshot in</div>
+    <div class="count" id="count"></div>
+  </div>
+  <script src="countdown.js"></script>
+</body>
+</html>

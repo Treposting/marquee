@@ -16,11 +16,4 @@ canvas#frame { image-rendering: auto; }
   border-radius: 4px; background: rgba(255, 255, 255, .16);
 }
 
-#loupe { position: fixed; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-#loupe-canvas {
-  width: 132px; height: 132px; border-radius: 50%;
-  border: 3px solid #fff; box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
-  image-rendering: pixelated; background: #000;
-}
-#loupe-label { position: static; padding: 3px 8px; font-size: 12px; }
 [hidden] { display: none !important; }

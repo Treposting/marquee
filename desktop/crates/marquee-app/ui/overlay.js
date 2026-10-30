@@ -8,11 +8,7 @@ const YELLOW = "#FFCF1A";
 const frame = document.getElementById("frame");
 const ui = document.getElementById("ui");
 const hint = document.getElementById("hint");
-const loupe = document.getElementById("loupe");
-const loupeCanvas = document.getElementById("loupe-canvas");
-const loupeLabel = document.getElementById("loupe-label");
 const uiCtx = ui.getContext("2d");
-const loupeCtx = loupeCanvas.getContext("2d");
 
 let info = null;
 let mode = "area";
@@ -96,17 +92,6 @@ function draw() {
       uiCtx.strokeRect(r.x - 0.75, r.y - 0.75, r.w + 1.5, r.h + 1.5);
       pill(uiCtx, `${Math.round(r.w * s)} × ${Math.round(r.h * s)}`, r.x, r.y + r.h + 8);
     }
-    if (pointer) {
-      // Crosshair, drawn with a dark edge so it shows on any background.
-      for (const [color, width] of [["rgba(0,0,0,.55)", 3], ["rgba(255,255,255,.9)", 1]]) {
-        uiCtx.strokeStyle = color;
-        uiCtx.lineWidth = width;
-        uiCtx.beginPath();
-        uiCtx.moveTo(0, pointer.y + 0.5); uiCtx.lineTo(W, pointer.y + 0.5);
-        uiCtx.moveTo(pointer.x + 0.5, 0); uiCtx.lineTo(pointer.x + 0.5, H);
-        uiCtx.stroke();
-      }
-    }
   } else if (hover) {
     const x = hover.x / s, y = hover.y / s, w = hover.width / s, h = hover.height / s;
     uiCtx.clearRect(x, y, w, h);
@@ -117,41 +102,6 @@ function draw() {
     uiCtx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
     pill(uiCtx, `${hover.width} × ${hover.height}`, x + 8, y + 8);
   }
-  drawLoupe();
-}
-
-/** A magnified view of the pixels under the pointer, for exact edges. */
-function drawLoupe() {
-  if (mode !== "area" || !pointer) { loupe.hidden = true; return; }
-  const s = scale();
-  const fx = Math.floor(pointer.x * s), fy = Math.floor(pointer.y * s);
-  const n = 11; // frame pixels across
-  const cell = loupeCanvas.width / n;
-  loupeCtx.imageSmoothingEnabled = false;
-  loupeCtx.fillStyle = "#000";
-  loupeCtx.fillRect(0, 0, loupeCanvas.width, loupeCanvas.height);
-  loupeCtx.drawImage(frame, fx - (n >> 1), fy - (n >> 1), n, n, 0, 0, loupeCanvas.width, loupeCanvas.height);
-  loupeCtx.strokeStyle = "rgba(0, 0, 0, .18)";
-  loupeCtx.lineWidth = 1;
-  for (let i = 1; i < n; i++) {
-    loupeCtx.beginPath();
-    loupeCtx.moveTo(i * cell + 0.5, 0); loupeCtx.lineTo(i * cell + 0.5, loupeCanvas.height);
-    loupeCtx.moveTo(0, i * cell + 0.5); loupeCtx.lineTo(loupeCanvas.width, i * cell + 0.5);
-    loupeCtx.stroke();
-  }
-  loupeCtx.strokeStyle = YELLOW;
-  loupeCtx.lineWidth = 2;
-  loupeCtx.strokeRect((n >> 1) * cell, (n >> 1) * cell, cell, cell);
-  loupeLabel.textContent = `${fx}, ${fy}`;
-
-  // Beside the pointer, flipped near the right and bottom edges.
-  const size = 132, gap = 24;
-  let left = pointer.x + gap, top = pointer.y + gap;
-  if (left + size > window.innerWidth - 8) left = pointer.x - gap - size;
-  if (top + size + 30 > window.innerHeight - 8) top = pointer.y - gap - size - 30;
-  loupe.style.left = `${left}px`;
-  loupe.style.top = `${top}px`;
-  loupe.hidden = false;
 }
 
 function resize() {

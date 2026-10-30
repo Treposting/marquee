@@ -2,7 +2,7 @@
 
 A Rust port of Marquee: screenshots, screen recording, a screen ruler, a color picker and clipboard history, with the same behavior as the macOS app. It lives on the `windows-port` branch while it grows, and doesn't touch the macOS app.
 
-**Status:** phase 2. The tray app, global shortcuts, settings and the Marquee window are in place, and screenshots work: area (with a magnifier), window picker, full screen and self-timer, then copy, save and the shutter sound. The Quick Access thumbnail and the Library are next.
+**Status:** phase 2. The tray app, global shortcuts, settings and the Marquee window are in place, and screenshots work: area, window picker, full screen and self-timer (with a countdown), then copy, save and the shutter sound. The Quick Access thumbnail and the Library are next.
 
 **Downloads:** previews are GitHub pre-releases tagged `windows-vX.Y.Z`, with an NSIS installer (`…-setup.exe`) and an MSI. They're unsigned for now, so SmartScreen asks first (More info → Run anyway). Every push that touches `desktop/` also builds them as the `Marquee-Windows` artifact of the [Desktop (Windows)](../.github/workflows/desktop.yml) run.
 
@@ -47,7 +47,7 @@ Windows first, then Linux X11, then Wayland through portals.
 | Phase | What | Windows APIs / crates |
 |---|---|---|
 | **1 ✅** | Tray, menu, global shortcuts, settings, launch at login, window | Tauri 2, `tauri-plugin-global-shortcut`, `tauri-plugin-autostart` |
-| **2 (in progress)** | Screenshots ✅: area overlay on a frozen frame (magnifier, Space for windows), window picker, full screen, self-timer; copy, save and shutter sound ✅. Next: Quick Access thumbnail (20 s auto-hide, tuck to side); Library | `xcap`, `arboard`, `PlaySound`, notifications; an opaque full-screen overlay window showing the frozen frame |
+| **2 (in progress)** | Screenshots ✅: area overlay on a frozen frame (Space for windows), window picker, full screen, self-timer with countdown; copy, save and shutter sound ✅. Next: Quick Access thumbnail (20 s auto-hide, tuck to side); Library | `xcap`, `arboard`, `PlaySound`, notifications; an opaque full-screen overlay window showing the frozen frame |
 | 3 | Clipboard history, ⇧-style panel, paste into the previous app, ignore password managers | `AddClipboardFormatListener`, `arboard`, `SendInput`; skip `ExcludeClipboardContentFromMonitorProcessing` / `CanIncludeInClipboardHistory` |
 | 4 | Annotate, pin, color picker, Measure, copy text (OCR), scrolling capture | `tiny-skia`; Measure edge finder and scroll stitcher ported into `marquee-core`; `Windows.Media.Ocr` |
 | 5 | Recording with mic and desktop audio, camera bubble, GIF, video editor | Graphics Capture + Media Foundation H.264 (or `ffmpeg-next`), WASAPI loopback, `cpal`, `nokhwa`, `gifski` |

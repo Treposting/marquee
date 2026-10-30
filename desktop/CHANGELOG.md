@@ -2,6 +2,11 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.2.2
+
+- **Simpler Capture Area.** Area capture now shows only the dimmed screen and your selection with its size. The crosshair lines and the magnifier are gone; together they looked as if Measure and the color picker had started too.
+- **Self-timer countdown.** Capture Full Screen in 5 Seconds now shows a 5, 4, 3, 2, 1 countdown in the middle of the screen. It leaves before the screenshot, so it's never in it, and it doesn't take the keyboard away from the app you're capturing.
+
 ## 0.2.1
 
 - **Capture Area.** Drag over any part of the screen. The display freezes first, so you capture exactly what you saw. A size label, crosshair and magnifier help you hit the edges; Esc or a right-click cancels.

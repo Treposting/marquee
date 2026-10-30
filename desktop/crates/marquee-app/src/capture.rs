@@ -24,6 +24,8 @@ use xcap::{Monitor, Window};
 use crate::{sound, window, AppState};
 
 const OVERLAY: &str = "overlay";
+const COUNTDOWN: &str = "countdown";
+const TIMER_SECONDS: u32 = 5;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Target {
@@ -50,13 +52,12 @@ pub fn run(app: &AppHandle, target: Target) {
     let was_showing = window::hide_main(app);
     let app = app.clone();
     thread::spawn(move || {
-        let delay = match target {
-            Target::Timed => Duration::from_secs(5),
+        if target == Target::Timed {
+            countdown(&app, point, TIMER_SECONDS);
+        } else if was_showing {
             // Give our window time to leave the screen before it's captured.
-            _ if was_showing => Duration::from_millis(300),
-            _ => Duration::ZERO,
-        };
-        thread::sleep(delay);
+            thread::sleep(Duration::from_millis(300));
+        }
         match target {
             Target::FullScreen | Target::Timed => finish(
                 &app,
@@ -69,6 +70,41 @@ pub fn run(app: &AppHandle, target: Target) {
             }
         }
     });
+}
+
+/// Shows a small 5-4-3-2-1 countdown in the middle of the display that will be captured, and
+/// returns once it has run out and left the screen. It never takes the keyboard, so you can
+/// keep working in the app you're capturing.
+fn countdown(app: &AppHandle, point: Option<(i32, i32)>, seconds: u32) {
+    let shown = capture_monitor(point).ok().and_then(|monitor| {
+        let scale = monitor.scale_factor().unwrap_or(1.0) as f64;
+        let side = 150.0;
+        let (mx, my) = (monitor.x().unwrap_or(0) as f64, monitor.y().unwrap_or(0) as f64);
+        let (mw, mh) = (monitor.width().unwrap_or(0) as f64, monitor.height().unwrap_or(0) as f64);
+        let url = WebviewUrl::App(format!("countdown.html?s={seconds}").into());
+        let window = WebviewWindowBuilder::new(app, COUNTDOWN, url)
+            .title("Marquee self-timer")
+            .inner_size(side, side)
+            .decorations(false)
+            .resizable(false)
+            .always_on_top(true)
+            .skip_taskbar(true)
+            .focused(false)
+            .background_color(tauri::window::Color(29, 29, 31, 255))
+            .build()
+            .ok()?;
+        let _ = window.set_position(PhysicalPosition::new(
+            (mx + (mw - side * scale) / 2.0) as i32,
+            (my + (mh - side * scale) / 2.0) as i32,
+        ));
+        Some(window)
+    });
+    thread::sleep(Duration::from_secs(seconds as u64));
+    if let Some(window) = shown {
+        let _ = window.destroy();
+        // Let it leave the screen before the capture.
+        thread::sleep(Duration::from_millis(200));
+    }
 }
 
 /// Delivers a capture or reports why there isn't one, and frees the way for the next.
