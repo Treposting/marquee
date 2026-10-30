@@ -89,7 +89,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .nav-label { font-size: 12px; color: var(--text-2); padding: 16px 12px 6px; }
 .nav-spacer { flex: 1; }
-.version { font-size: 12px; color: var(--text-2); padding: 0 12px; }
+.version { display: flex; flex-direction: column; gap: 1px; font-size: 12px; color: var(--text-2); padding: 0 12px; }
+.version-sub { opacity: .75; }
 
 /* Pages */
 main {
@@ -119,23 +120,28 @@ h2 { font-size: 16px; font-weight: 600; margin: 0; }
 .hero-text p { margin: 4px 0 0; color: var(--text-2); }
 .hero-actions { display: flex; align-items: center; gap: 12px; }
 
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
 .tile {
-  display: flex; align-items: center; gap: 12px;
-  min-height: 62px; padding: 10px 12px;
-  text-align: left; border-radius: var(--radius-sm);
-  transition: background-color 150ms ease-out, transform 100ms ease-out;
+  display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+  padding: 14px; text-align: left; border-radius: var(--radius-sm); min-width: 0;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out, transform 100ms ease-out;
 }
-.tile:hover { background: var(--glass-hover); }
+.tile:hover { background: var(--glass-hover); border-color: color-mix(in srgb, var(--yellow) 55%, var(--glass-edge)); }
 .tile:active { transform: scale(0.98); }
+.tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .tile-icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; background: color-mix(in srgb, var(--yellow) 22%, transparent); color: var(--yellow-ink); flex: none; }
-.tile-icon.record { background: rgba(232, 17, 35, 0.12); color: #E81123; }
-.tile-text { flex: 1; min-width: 0; }
-.tile-title { font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.tile-sub { font-size: 12.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.soon { font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--chip); border-radius: 999px; padding: 1px 8px; }
+.tile-title { font-weight: 600; }
+.tile-sub { font-size: 12.5px; line-height: 1.35; color: var(--text-2); }
+.tile .keys kbd { font-size: 10.5px; min-width: 18px; padding: 1px 5px; }
 
-.keys { display: inline-flex; gap: 3px; }
+.coming { list-style: none; margin: 0; padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.coming li {
+  display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px 0 9px;
+  border-radius: 999px; background: var(--chip); color: var(--text-2); font-size: 13px;
+}
+.coming svg { width: 16px; height: 16px; }
+
+.keys { display: inline-flex; gap: 3px; flex: none; }
 kbd {
   font: 600 11.5px "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   min-width: 22px; padding: 2px 6px; text-align: center;
@@ -207,6 +213,7 @@ kbd {
 .empty-icon { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; color: var(--text-2); }
 .empty-icon svg { width: 34px; height: 34px; stroke-width: 1.3; }
 .empty p { color: var(--text-2); margin: 0; max-width: 420px; }
+.empty .button { margin-top: 8px; }
 
 /* Settings */
 .tabs { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; }

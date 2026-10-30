@@ -16,11 +16,10 @@
     <button class="nav-item" data-page="home" aria-current="page"><svg><use href="#i-home"/></svg>Home</button>
     <button class="nav-item" data-page="library"><svg><use href="#i-library"/></svg>Library</button>
     <button class="nav-item" data-page="clipboard"><svg><use href="#i-clipboard"/></svg>Clipboard</button>
-    <button class="nav-item" data-page="colors"><svg><use href="#i-colors"/></svg>Colors</button>
     <div class="nav-label">App</div>
     <button class="nav-item" data-page="settings"><svg><use href="#i-settings"/></svg>Settings</button>
     <div class="nav-spacer"></div>
-    <div class="version" id="version"></div>
+    <div class="version"><span id="version"></span><span class="version-sub">Windows preview</span></div>
   </nav>
 
   <main>
@@ -29,12 +28,12 @@
       <header class="page-header">
         <div>
           <h1 id="home-title">Marquee</h1>
-          <p>Capture, record, measure, and keep everything you copy.</p>
+          <p>Screenshots and everything you copy, one shortcut away.</p>
         </div>
       </header>
       <div class="notice glass" id="coming-soon" role="status" hidden>
         <svg><use href="#i-info"/></svg>
-        <div><strong id="coming-title"></strong> is on its way to Windows. Screenshots, Quick Access and the Library work now; clipboard history, All-in-One and the rest come in the next previews.</div>
+        <div><strong id="coming-title"></strong> is on its way to Windows. It comes in one of the next previews.</div>
         <button class="icon-button" id="coming-close" aria-label="Dismiss"><svg><use href="#i-close"/></svg></button>
       </div>
       <div class="hero glass">
@@ -51,12 +50,11 @@
       <div id="action-groups"></div>
     </section>
 
-    <!-- Placeholders until their phase lands -->
-    <section class="page" id="page-library" hidden>
+        <section class="page" id="page-library" hidden>
       <header class="page-header"><div><h1>Library</h1><p>Your last 300 screenshots, newest first.</p></div>
         <button class="text-button" id="library-clear" hidden>Clear library</button></header>
       <div class="library-grid" id="library-grid"></div>
-      <div class="empty" id="library-empty"><div class="empty-icon glass"><svg><use href="#i-library"/></svg></div><h2>No screenshots yet</h2><p>Screenshots you take show up here. Copy, save or open any of them again later.</p></div>
+      <div class="empty" id="library-empty"><div class="empty-icon glass"><svg><use href="#i-library"/></svg></div><h2>No screenshots yet</h2><p>Screenshots you take show up here. Copy, save or open any of them again later.</p><button class="button primary" data-action="captureArea">Capture an area</button></div>
     </section>
     <section class="page" id="page-clipboard" hidden>
       <header class="page-header"><div><h1>Clipboard</h1><p>Everything you copy, searchable. Open it anywhere with <span id="clip-keys"></span>.</p></div>
@@ -75,10 +73,6 @@
       <div class="notice glass" id="clip-paused" hidden><svg><use href="#i-info"/></svg><div>History is paused. Nothing you copy is being recorded.</div></div>
       <div class="clip-grid" id="clip-grid"></div>
       <div class="empty" id="clip-empty"><div class="empty-icon glass"><svg><use href="#i-clipboard"/></svg></div><h2 id="clip-empty-title">Nothing copied yet</h2><p id="clip-empty-text">Text, links, images and files you copy show up here. Password managers are never recorded.</p></div>
-    </section>
-    <section class="page" id="page-colors" hidden>
-      <header class="page-header"><div><h1>Colors</h1><p>Colors you pick from the screen.</p></div></header>
-      <div class="empty"><div class="empty-icon glass"><svg><use href="#i-colors"/></svg></div><h2>Coming with the color picker</h2><p>Pick any color on screen and copy it as HEX, RGB or HSL.</p></div>
     </section>
 
     <!-- Settings -->

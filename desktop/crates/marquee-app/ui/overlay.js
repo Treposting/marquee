@@ -191,6 +191,8 @@ function draw() {
 
 /** Under the selection (above it, or inside, when there's no room), or bottom center. */
 function placeToolbar() {
+  // The hint only helps before the first drag.
+  hint.hidden = !!sel || !!gesture;
   if (!aio) return;
   const hidden = mode !== "area" || !!gesture;
   toolbar.hidden = hidden;

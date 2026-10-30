@@ -2,6 +2,13 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## Unreleased
+
+- **Capture opens right away.** Area, Window and All-in-One used to take a couple of seconds to show the selection. Marquee now prepares the capture screen, Quick Access and the clipboard panel when it starts, so they appear as soon as you press the shortcut or click.
+- **Settings has a gear icon** in the sidebar and the All-in-One toolbar.
+- **A cleaner Home.** The tools that work today are larger cards with their shortcuts, and features still on their way to Windows are listed together under "Coming to Windows". The unfinished Colors page is gone until the color picker arrives.
+- The capture hint at the top of the screen disappears once you start selecting, and an empty Library has a button to take your first screenshot.
+
 ## 0.4.1
 
 - **Quiet start at sign-in.** With Settings → Launch at login on, Marquee now starts in the tray when you sign in to Windows, instead of opening its window every time. Opening Marquee yourself still shows the window.

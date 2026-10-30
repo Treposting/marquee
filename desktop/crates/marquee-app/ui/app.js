@@ -9,9 +9,9 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 const ACTION_INFO = {
   allInOne: { icon: "i-grid", sub: "Select an area, then choose what to do" },
-  captureArea: { icon: "i-area", sub: "Drag over any part of the screen", tile: "Area" },
-  captureWindow: { icon: "i-window", sub: "Click a window to capture it", tile: "Window" },
-  captureFullscreen: { icon: "i-display", sub: "The display under the pointer", tile: "Full Screen" },
+  captureArea: { icon: "i-area", sub: "Drag over part of the screen", tile: "Area" },
+  captureWindow: { icon: "i-window", sub: "Click any window", tile: "Window" },
+  captureFullscreen: { icon: "i-display", sub: "The screen under the pointer", tile: "Full Screen" },
   captureScrolling: { icon: "i-scroll", sub: "One long screenshot as you scroll", tile: "Scrolling" },
   captureTimed: { icon: "i-timer", sub: "Full screen after 5 seconds", tile: "Self-Timer" },
   captureText: { icon: "i-text", sub: "Select text anywhere and copy it", tile: "Copy Text" },
@@ -77,21 +77,33 @@ function renderHome() {
   const groups = $("#action-groups");
   groups.replaceChildren();
   for (const category of Object.keys(CATEGORY_TITLES)) {
-    const items = actions.filter((a) => a.category === category && a.id !== "allInOne");
+    const items = actions.filter((a) => a.category === category && a.id !== "allInOne" && a.available);
     if (!items.length) continue;
     const grid = el("div", { class: "tiles" });
     for (const action of items) {
       const info = ACTION_INFO[action.id] ?? {};
       grid.append(
-        el("button", { class: "tile glass", title: info.sub ?? "", onclick: () => perform(action.id) },
-          el("span", { class: `tile-icon${info.record ? " record" : ""}` }, icon(info.icon ?? "i-grid")),
-          el("span", { class: "tile-text" },
-            el("span", { class: "tile-title" }, info.tile ?? action.title, action.available ? null : el("span", { class: "soon" }, "Soon")),
-            el("span", { class: "tile-sub" }, info.sub ?? "")),
-          keyCaps(action.shortcut)),
+        el("button", { class: "tile glass", onclick: () => perform(action.id) },
+          el("span", { class: "tile-top" },
+            el("span", { class: "tile-icon" }, icon(info.icon ?? "i-grid")),
+            action.shortcut ? keyCaps(action.shortcut) : null),
+          el("span", { class: "tile-title" }, info.tile ?? action.title),
+          el("span", { class: "tile-sub" }, info.sub ?? "")),
       );
     }
     groups.append(el("h3", { class: "section-title" }, CATEGORY_TITLES[category]), grid);
+  }
+
+  // Features still being ported sit together in one quiet row instead of a wall of "Soon" tiles.
+  const later = actions.filter((a) => !a.available);
+  if (later.length) {
+    groups.append(
+      el("h3", { class: "section-title" }, "Coming to Windows"),
+      el("ul", { class: "coming glass" }, ...later.map((action) => {
+        const info = ACTION_INFO[action.id] ?? {};
+        return el("li", { title: info.sub ?? "" }, icon(info.icon ?? "i-grid"), info.tile ?? action.title);
+      })),
+    );
   }
 }
 
@@ -347,7 +359,7 @@ function renderShortcuts() {
 // Start
 
 async function start() {
-  $("#version").textContent = `Version ${await invoke("app_version")} · early Windows build`;
+  $("#version").textContent = `Marquee ${await invoke("app_version")}`;
   prefs = await invoke("get_prefs");
   actions = await invoke("list_actions");
   bindPrefs();
