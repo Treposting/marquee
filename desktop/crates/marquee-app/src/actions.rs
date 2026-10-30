@@ -9,11 +9,15 @@ use crate::window;
 
 /// Whether the action works yet on this platform.
 pub fn is_available(action: Action) -> bool {
-    matches!(action, Action::CaptureFullscreen | Action::CaptureWindow | Action::CaptureTimed)
+    matches!(
+        action,
+        Action::CaptureArea | Action::CaptureWindow | Action::CaptureFullscreen | Action::CaptureTimed
+    )
 }
 
 pub fn perform(app: &AppHandle, action: Action) {
     match action {
+        Action::CaptureArea => capture::run(app, Target::Area),
         Action::CaptureFullscreen => capture::run(app, Target::FullScreen),
         Action::CaptureWindow => capture::run(app, Target::Window),
         Action::CaptureTimed => capture::run(app, Target::Timed),

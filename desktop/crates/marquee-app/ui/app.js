@@ -10,7 +10,7 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const ACTION_INFO = {
   allInOne: { icon: "i-grid", sub: "Select an area, then choose what to do" },
   captureArea: { icon: "i-area", sub: "Drag over any part of the screen", tile: "Area" },
-  captureWindow: { icon: "i-window", sub: "The window in front", tile: "Window" },
+  captureWindow: { icon: "i-window", sub: "Click a window to capture it", tile: "Window" },
   captureFullscreen: { icon: "i-display", sub: "The display under the pointer", tile: "Full Screen" },
   captureScrolling: { icon: "i-scroll", sub: "One long screenshot as you scroll", tile: "Scrolling" },
   captureTimed: { icon: "i-timer", sub: "Full screen after 5 seconds", tile: "Self-Timer" },

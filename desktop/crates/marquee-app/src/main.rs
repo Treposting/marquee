@@ -132,13 +132,18 @@ fn main() {
             app_version,
             take_pending,
             save_folder,
-            choose_save_folder
+            choose_save_folder,
+            capture::overlay_info,
+            capture::overlay_frame,
+            capture::overlay_ready,
+            capture::overlay_finish
         ])
         .setup(|app| {
             let config_dir = app.path().app_config_dir()?;
             let prefs_path = config_dir.join("settings.json");
             let prefs = Preferences::load(&prefs_path);
             app.manage(AppState { prefs: Mutex::new(prefs), prefs_path });
+            app.manage(capture::Session::default());
             tray::install(app.handle())?;
             if let Err(message) = shortcuts::register_all(app.handle()) {
                 eprintln!("Marquee: {message}");

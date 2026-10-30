@@ -20,6 +20,16 @@ pub fn unique_path(dir: &Path, at: NaiveDateTime) -> PathBuf {
     path
 }
 
+/// A selection from the overlay, clamped to an image of `width` × `height` pixels. None when
+/// nothing is left (a click without a drag, or a selection off the edge).
+pub fn clamp_rect(x: i64, y: i64, w: i64, h: i64, width: u32, height: u32) -> Option<(u32, u32, u32, u32)> {
+    let (left, top) = (x.max(0), y.max(0));
+    let right = (x + w).min(width as i64);
+    let bottom = (y + h).min(height as i64);
+    (right - left >= 2 && bottom - top >= 2)
+        .then(|| (left as u32, top as u32, (right - left) as u32, (bottom - top) as u32))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -27,6 +37,15 @@ mod tests {
 
     fn at() -> NaiveDateTime {
         NaiveDate::from_ymd_opt(2026, 10, 30).unwrap().and_hms_opt(14, 3, 22).unwrap()
+    }
+
+    #[test]
+    fn rects_are_clamped_to_the_image() {
+        assert_eq!(clamp_rect(10, 20, 100, 50, 1920, 1080), Some((10, 20, 100, 50)));
+        assert_eq!(clamp_rect(-5, -5, 20, 20, 1920, 1080), Some((0, 0, 15, 15)));
+        assert_eq!(clamp_rect(1900, 1070, 100, 100, 1920, 1080), Some((1900, 1070, 20, 10)));
+        assert_eq!(clamp_rect(10, 10, 1, 40, 1920, 1080), None);
+        assert_eq!(clamp_rect(2000, 10, 50, 50, 1920, 1080), None);
     }
 
     #[test]

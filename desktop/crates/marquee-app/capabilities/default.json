@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "What the Marquee window may call",
-  "windows": ["main"],
+  "description": "What the Marquee window and the capture overlay may call",
+  "windows": ["main", "overlay"],
   "permissions": ["core:default"]
 }

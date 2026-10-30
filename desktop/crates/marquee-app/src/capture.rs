@@ -1,33 +1,44 @@
-//! Screenshots: the full screen, the front window and the self-timer. What happens after a
-//! capture follows Settings → After capture: copy it, save it, play the shutter sound. Area
-//! selection, a window picker and the Quick Access thumbnail come next (desktop/README.md).
+//! Screenshots: an area, a window, the full screen and the self-timer. What happens after a
+//! capture follows Settings → After capture: copy it, save it, play the shutter sound. The
+//! Quick Access thumbnail comes next (desktop/README.md).
+//!
+//! Area and window captures freeze the display under the pointer first, then show that frame
+//! in an opaque, full-screen overlay window (ui/overlay.html) to select from. What you select
+//! is exactly what was on screen, and the overlay needs no transparency.
 
 use std::borrow::Cow;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 
 use arboard::{Clipboard, ImageData};
 use marquee_core::prefs::Preferences;
-use tauri::{AppHandle, Manager};
+use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Manager, PhysicalPosition, PhysicalSize, State, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_notification::NotificationExt;
-use xcap::image::RgbaImage;
+use xcap::image::{imageops, RgbaImage};
 use xcap::{Monitor, Window};
 
 use crate::{sound, window, AppState};
 
-#[derive(Debug, Clone, Copy)]
+const OVERLAY: &str = "overlay";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Target {
+    /// Drag over part of the display under the pointer (Space switches to picking a window).
+    Area,
+    /// Click a window to capture it (Space switches to dragging an area).
+    Window,
     /// The display under the pointer.
     FullScreen,
-    /// The window in front (not Marquee's own, the taskbar or a minimized one).
-    Window,
     /// The full screen after 5 seconds.
     Timed,
 }
 
-/// Ignores a second request while a capture is under way (a held-down shortcut, a double click).
+/// Ignores a second request while a capture is under way (a held-down shortcut, a double click,
+/// a shortcut pressed while the overlay is up).
 static BUSY: AtomicBool = AtomicBool::new(false);
 
 pub fn run(app: &AppHandle, target: Target) {
@@ -46,56 +57,234 @@ pub fn run(app: &AppHandle, target: Target) {
             _ => Duration::ZERO,
         };
         thread::sleep(delay);
-        let result = match target {
-            Target::FullScreen | Target::Timed => capture_screen(point),
-            Target::Window => capture_window(),
-        };
-        match result {
-            Ok(image) => {
-                if let Err(message) = deliver(&app, &image) {
-                    notify(&app, "Couldn't finish the screenshot", &message);
+        match target {
+            Target::FullScreen | Target::Timed => finish(
+                &app,
+                capture_monitor(point).and_then(|m| m.capture_image().map_err(|e| e.to_string())),
+            ),
+            Target::Area | Target::Window => {
+                if let Err(message) = open_overlay(&app, point, target) {
+                    finish(&app, Err(message));
                 }
             }
-            Err(message) => notify(&app, "Couldn't take the screenshot", &message),
         }
-        BUSY.store(false, Ordering::SeqCst);
     });
 }
 
-fn capture_screen(point: Option<(i32, i32)>) -> Result<RgbaImage, String> {
-    let monitor = match point.and_then(|(x, y)| Monitor::from_point(x, y).ok()) {
-        Some(monitor) => monitor,
-        None => {
-            let monitors = Monitor::all().map_err(|e| e.to_string())?;
-            let primary = monitors.iter().position(|m| m.is_primary().unwrap_or(false)).unwrap_or(0);
-            monitors.into_iter().nth(primary).ok_or("No display was found.")?
+/// Delivers a capture or reports why there isn't one, and frees the way for the next.
+fn finish(app: &AppHandle, result: Result<RgbaImage, String>) {
+    match result {
+        Ok(image) => {
+            if let Err(message) = deliver(app, &image) {
+                notify(app, "Couldn't finish the screenshot", &message);
+            }
         }
-    };
-    monitor.capture_image().map_err(|e| e.to_string())
+        Err(message) => notify(app, "Couldn't take the screenshot", &message),
+    }
+    BUSY.store(false, Ordering::SeqCst);
 }
 
-fn capture_window() -> Result<RgbaImage, String> {
+fn capture_monitor(point: Option<(i32, i32)>) -> Result<Monitor, String> {
+    if let Some(monitor) = point.and_then(|(x, y)| Monitor::from_point(x, y).ok()) {
+        return Ok(monitor);
+    }
+    let monitors = Monitor::all().map_err(|e| e.to_string())?;
+    let primary = monitors.iter().position(|m| m.is_primary().unwrap_or(false)).unwrap_or(0);
+    monitors.into_iter().nth(primary).ok_or_else(|| "No display was found.".to_string())
+}
+
+// MARK: Overlay
+
+/// A window the overlay can highlight, in the frozen frame's pixels.
+#[derive(Debug, Clone, Serialize)]
+pub struct WindowRect {
+    id: u32,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+}
+
+/// The frozen display while the overlay is open.
+pub struct Frozen {
+    image: RgbaImage,
+    windows: Vec<WindowRect>,
+    mode: Target,
+}
+
+#[derive(Default)]
+pub struct Session(Mutex<Option<Frozen>>);
+
+/// What the overlay page needs before it draws.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OverlayInfo {
+    width: u32,
+    height: u32,
+    /// "area" or "window": what the overlay starts in.
+    mode: &'static str,
+    windows: Vec<WindowRect>,
+}
+
+/// The overlay's answer.
+#[derive(Debug, Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum Selection {
+    /// A rectangle in the frozen frame's pixels.
+    Area {
+        x: i64,
+        y: i64,
+        width: i64,
+        height: i64,
+    },
+    Window {
+        id: u32,
+    },
+    Cancel,
+}
+
+fn open_overlay(app: &AppHandle, point: Option<(i32, i32)>, mode: Target) -> Result<(), String> {
+    let monitor = capture_monitor(point)?;
+    let image = monitor.capture_image().map_err(|e| e.to_string())?;
+    let origin = (monitor.x().unwrap_or(0), monitor.y().unwrap_or(0));
+    let windows = visible_windows(origin, image.width(), image.height());
+    if app.try_state::<Session>().is_none() {
+        app.manage(Session::default());
+    }
+    *app.state::<Session>().0.lock().unwrap() = Some(Frozen { image, windows, mode });
+
+    if let Some(old) = app.get_webview_window(OVERLAY) {
+        let _ = old.destroy();
+    }
+    let (width, height) = (monitor.width().unwrap_or(1280), monitor.height().unwrap_or(800));
+    let overlay = WebviewWindowBuilder::new(app, OVERLAY, WebviewUrl::App("overlay.html".into()))
+        .title("Marquee capture")
+        .decorations(false)
+        .resizable(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .shadow(false)
+        .visible(false)
+        .build()
+        .map_err(|e| format!("Couldn't open the capture overlay: {e}"))?;
+    let _ = overlay.set_position(PhysicalPosition::new(origin.0, origin.1));
+    let _ = overlay.set_size(PhysicalSize::new(width, height));
+    // If the overlay goes away without answering (Alt+F4), end the session.
+    let handle = app.clone();
+    overlay.on_window_event(move |event| {
+        if let tauri::WindowEvent::Destroyed = event {
+            if let Some(session) = handle.try_state::<Session>() {
+                if session.0.lock().unwrap().take().is_some() {
+                    BUSY.store(false, Ordering::SeqCst);
+                }
+            }
+        }
+    });
+    Ok(())
+}
+
+/// Normal windows on the frozen display, front to back, in the frame's pixels.
+fn visible_windows(origin: (i32, i32), width: u32, height: u32) -> Vec<WindowRect> {
     let own = std::process::id();
-    let windows = Window::all().map_err(|e| e.to_string())?;
-    // Front to back. The focused window wins; from the tray menu that's the taskbar, which
-    // has no title, so the topmost real window is used instead.
-    let usable: Vec<&Window> = windows
+    let Ok(windows) = Window::all() else { return Vec::new() };
+    windows
         .iter()
         .filter(|w| {
             !w.is_minimized().unwrap_or(true)
                 && w.pid().map(|pid| pid != own).unwrap_or(false)
                 && w.title().map(|t| !t.trim().is_empty()).unwrap_or(false)
-                && w.width().unwrap_or(0) >= 40
-                && w.height().unwrap_or(0) >= 40
         })
-        .collect();
-    let window = usable
-        .iter()
-        .find(|w| w.is_focused().unwrap_or(false))
-        .or_else(|| usable.first())
-        .ok_or("There's no window to capture. Open one and try again.")?;
+        .filter_map(|w| {
+            let rect = WindowRect {
+                id: w.id().ok()?,
+                x: w.x().ok()? - origin.0,
+                y: w.y().ok()? - origin.1,
+                width: w.width().ok()?,
+                height: w.height().ok()?,
+            };
+            let on_screen = rect.x < width as i32
+                && rect.y < height as i32
+                && rect.x + rect.width as i32 > 0
+                && rect.y + rect.height as i32 > 0;
+            (on_screen && rect.width >= 40 && rect.height >= 40).then_some(rect)
+        })
+        .collect()
+}
+
+#[tauri::command]
+pub fn overlay_info(session: State<Session>) -> Option<OverlayInfo> {
+    let frozen = session.0.lock().unwrap();
+    let frozen = frozen.as_ref()?;
+    Some(OverlayInfo {
+        width: frozen.image.width(),
+        height: frozen.image.height(),
+        mode: if frozen.mode == Target::Window { "window" } else { "area" },
+        windows: frozen.windows.clone(),
+    })
+}
+
+/// The frozen frame as raw RGBA bytes, sent without JSON encoding.
+#[tauri::command]
+pub fn overlay_frame(session: State<Session>) -> tauri::ipc::Response {
+    let frozen = session.0.lock().unwrap();
+    let bytes = frozen.as_ref().map(|f| f.image.as_raw().clone()).unwrap_or_default();
+    tauri::ipc::Response::new(bytes)
+}
+
+/// The page has drawn the frame: show the overlay and give it the keyboard. Fullscreen is set
+/// only now (on the display it was placed on, so it also covers the taskbar): doing it while
+/// hidden can show an empty window early.
+#[tauri::command]
+pub fn overlay_ready(app: AppHandle) {
+    if let Some(overlay) = app.get_webview_window(OVERLAY) {
+        let _ = overlay.set_fullscreen(true);
+        let _ = overlay.show();
+        let _ = overlay.set_focus();
+    }
+}
+
+#[tauri::command]
+pub fn overlay_finish(app: AppHandle, selection: Selection) {
+    let frozen = app.try_state::<Session>().and_then(|s| s.0.lock().unwrap().take());
+    if let Some(overlay) = app.get_webview_window(OVERLAY) {
+        let _ = overlay.destroy();
+    }
+    let Some(frozen) = frozen else { return };
+    thread::spawn(move || {
+        let result = match selection {
+            Selection::Cancel => {
+                BUSY.store(false, Ordering::SeqCst);
+                return;
+            }
+            Selection::Area { x, y, width, height } => crop(&frozen, x, y, width, height),
+            Selection::Window { id } => {
+                // Let the overlay leave the screen, then capture the window itself, which leaves
+                // out anything overlapping it. Fall back to the frozen frame.
+                thread::sleep(Duration::from_millis(120));
+                capture_window_by_id(id).or_else(|_| {
+                    let rect = frozen.windows.iter().find(|w| w.id == id).ok_or("That window is gone.")?;
+                    crop(&frozen, rect.x as i64, rect.y as i64, rect.width as i64, rect.height as i64)
+                })
+            }
+        };
+        finish(&app, result);
+    });
+}
+
+fn crop(frozen: &Frozen, x: i64, y: i64, width: i64, height: i64) -> Result<RgbaImage, String> {
+    let (w, h) = (frozen.image.width(), frozen.image.height());
+    let (x, y, width, height) = marquee_core::capture::clamp_rect(x, y, width, height, w, h)
+        .ok_or("The selection was too small. Drag to select an area.")?;
+    Ok(imageops::crop_imm(&frozen.image, x, y, width, height).to_image())
+}
+
+fn capture_window_by_id(id: u32) -> Result<RgbaImage, String> {
+    let windows = Window::all().map_err(|e| e.to_string())?;
+    let window = windows.iter().find(|w| w.id().ok() == Some(id)).ok_or("That window is gone.")?;
     window.capture_image().map_err(|e| e.to_string())
 }
+
+// MARK: After capture
 
 /// Copies and/or saves a new screenshot, plays the shutter and says what happened.
 fn deliver(app: &AppHandle, image: &RgbaImage) -> Result<(), String> {

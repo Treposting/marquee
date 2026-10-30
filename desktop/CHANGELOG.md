@@ -2,6 +2,11 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.2.1
+
+- **Capture Area.** Drag over any part of the screen. The display freezes first, so you capture exactly what you saw. A size label, crosshair and magnifier help you hit the edges; Esc or a right-click cancels.
+- **Pick a window.** Capture Window now lets you click the window you want; windows light up as you hover. In either capture, press Space to switch between dragging an area and picking a window.
+
 ## 0.2.0
 
 - **Screenshots.** Capture the full screen (the display under the pointer), the window in front, or the full screen after 5 seconds, from the tray, a shortcut or Home. The window capture skips Marquee itself, the taskbar and minimized windows.

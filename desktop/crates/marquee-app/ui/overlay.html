@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Marquee capture</title>
+  <link rel="stylesheet" href="overlay.css">
+</head>
+<body>
+  <!-- The frozen display, then the dim mask, selection and crosshair drawn over it. -->
+  <canvas id="frame"></canvas>
+  <canvas id="ui"></canvas>
+  <div id="hint" class="pill" role="status"></div>
+  <div id="loupe" hidden><canvas id="loupe-canvas" width="132" height="132"></canvas><span id="loupe-label" class="pill"></span></div>
+  <script src="overlay.js"></script>
+</body>
+</html>
