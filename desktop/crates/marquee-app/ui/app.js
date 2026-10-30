@@ -141,6 +141,7 @@ async function save() {
   renderHome();
   renderShortcuts();
   renderClipboard();
+  renderColors();
 }
 
 function bindPrefs() {
@@ -368,6 +369,41 @@ $("#clip-clear").addEventListener("click", () => {
   invoke("clip_clear").catch((e) => alert(String(e)));
 });
 
+// Colors
+
+async function renderColors() {
+  const colors = await invoke("colors_list");
+  for (const b of $$("[data-color-format]")) b.setAttribute("aria-checked", String(b.dataset.colorFormat === prefs.colorFormat));
+  $("#color-grid").replaceChildren(...colors.map((c) => {
+    const node = el("div", { class: "color", role: "button", tabindex: "0", title: `Copy ${c.text}`, "aria-label": `${c.hex}. Copy as ${c.text}` },
+      el("span", { class: "swatch", style: `--c:${c.hex}` }),
+      el("span", { class: "values" },
+        el("span", { class: "hex" }, c.hex),
+        el("span", { class: "sub" }, `RGB ${c.rgb}`),
+        el("span", { class: "sub" }, `HSL ${c.hsl}`)),
+      el("span", { class: "remove", role: "button", tabindex: "0", title: "Remove", "aria-label": `Remove ${c.hex}`, onclick: (e) => {
+        e.stopPropagation();
+        invoke("color_delete", { hex: c.hex });
+      } }, icon("i-close")));
+    const copy = () => invoke("color_copy", { hex: c.hex }).then((text) => shotStatus(node, `Copied ${text}`)).catch((e) => shotStatus(node, String(e)));
+    node.addEventListener("click", copy);
+    node.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); copy(); }
+      else if (e.key === "Delete") invoke("color_delete", { hex: c.hex });
+    });
+    return node;
+  }));
+  $("#colors-empty").hidden = colors.length > 0;
+  $("#colors-clear").hidden = colors.length === 0;
+}
+
+for (const b of $$("[data-color-format]")) {
+  b.addEventListener("click", () => { prefs.colorFormat = b.dataset.colorFormat; save(); });
+}
+$("#colors-clear").addEventListener("click", () => {
+  if (confirm("Clear all picked colors?")) invoke("colors_clear");
+});
+
 // Save folder
 
 async function showSaveFolder() {
@@ -532,6 +568,8 @@ async function start() {
   await renderClipboard();
   listen("clipboard-changed", renderClipboard);
   // Rust changed a setting itself (e.g. "Ignore this app" from the panel).
+  await renderColors();
+  listen("colors-changed", renderColors);
   await refreshUpdate();
   listen("update-changed", refreshUpdate);
   listen("update-progress", (e) => ($("#update-bar").style.width = `${e.payload}%`));

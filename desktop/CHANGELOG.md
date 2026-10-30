@@ -2,6 +2,11 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.4.6
+
+- **Color picker.** Pick any color on screen: a magnifier follows the pointer and shows the exact pixel and its value. Click (or press Enter) to copy it; the arrow keys move one pixel at a time (Shift for 10) and Esc cancels. Start it with a shortcut you set in Settings → Shortcuts, from the tray menu or Home, or press **C** (Color) in All-in-One.
+- **Colors page.** Your last 48 colors, newest first, with their HEX, RGB and HSL values. Choose whether colors are copied as HEX (`#FFCF1A`), RGB (`rgb(255, 207, 26)`) or HSL (`hsl(47, 100%, 55%)`); click a color to copy it again, or remove it.
+
 ## 0.4.5
 
 - **Measure.** A screen ruler for checking sizes and spacing. Set a shortcut for it in Settings → Shortcuts, or start it from the tray menu or Home. The screen freezes and:

@@ -34,7 +34,7 @@ pub fn show_main<R: Runtime>(app: &AppHandle<R>, pending: Option<Action>) {
     }
 }
 
-/// Shows the window on one of its pages ("home", "library", "clipboard", "settings", "update").
+/// Shows the window on one of its pages ("home", "library", "clipboard", "colors", "settings", "update").
 pub fn show_page<R: Runtime>(app: &AppHandle<R>, page: &'static str) {
     app.manage(PendingPage::default());
     *app.state::<PendingPage>().0.lock().unwrap() = Some(page);

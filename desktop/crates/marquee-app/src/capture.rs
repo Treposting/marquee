@@ -23,7 +23,7 @@ use tauri_plugin_notification::NotificationExt;
 use xcap::image::{imageops, RgbaImage};
 use xcap::{Monitor, Window};
 
-use crate::{annotate, library, pin, quick_access, sound, window, AppState};
+use crate::{annotate, colors, library, pin, quick_access, sound, window, AppState};
 
 const OVERLAY: &str = "overlay";
 const COUNTDOWN: &str = "countdown";
@@ -44,6 +44,8 @@ pub enum Target {
     Timed,
     /// Measure: distances to edges, element sizes and guides over the frozen display.
     Measure,
+    /// The color picker: a magnifier over the frozen display; clicking copies the color.
+    Color,
 }
 
 /// Ignores a second request while a capture is under way (a held-down shortcut, a double click,
@@ -71,7 +73,7 @@ pub fn run(app: &AppHandle, target: Target) {
                 capture_monitor(point).and_then(|m| m.capture_image().map_err(|e| e.to_string())),
                 point,
             ),
-            Target::Area | Target::Window | Target::AllInOne | Target::Measure => {
+            Target::Area | Target::Window | Target::AllInOne | Target::Measure | Target::Color => {
                 if let Err(message) = open_overlay(&app, point, target) {
                     finish(&app, Err(message), point);
                 }
@@ -299,6 +301,7 @@ pub fn overlay_info(session: State<Session>) -> Option<OverlayInfo> {
             Target::Window => "window",
             Target::AllInOne => "aio",
             Target::Measure => "measure",
+            Target::Color => "color",
             _ => "area",
         },
     })
@@ -420,6 +423,22 @@ pub async fn overlay_capture(app: AppHandle, request: tauri::ipc::Request<'_>) -
     }
     let point = frozen.and_then(|f| f.point);
     thread::spawn(move || finish(&app, Ok(image), point));
+    Ok(())
+}
+
+/// The color picker's choice, as "#RRGGBB": ends the session, keeps the color and copies it.
+#[tauri::command]
+pub fn overlay_pick_color(app: AppHandle, hex: String) -> Result<(), String> {
+    let color = marquee_core::colors::Rgb::parse_hex(&hex).ok_or("That isn't a color.")?;
+    app.try_state::<Session>().and_then(|s| s.0.lock().unwrap().take());
+    if let Some(overlay) = app.get_webview_window(OVERLAY) {
+        let _ = overlay.hide();
+    }
+    BUSY.store(false, Ordering::SeqCst);
+    match colors::picked(&app, color) {
+        Ok(text) => notify(&app, &format!("Copied {text}"), "Your colors are on the Colors page in Marquee."),
+        Err(message) => notify(&app, "Couldn't copy the color", &message),
+    }
     Ok(())
 }
 

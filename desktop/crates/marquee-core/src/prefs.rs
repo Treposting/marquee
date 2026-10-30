@@ -39,6 +39,8 @@ pub struct Preferences {
     pub record_countdown_seconds: u32,
     // Measure
     pub measure_tolerance: u32,
+    // Color picker
+    pub color_format: crate::colors::ColorFormat,
     /// Action id → accelerator. Missing actions use their default; an empty string means none.
     pub shortcuts: BTreeMap<String, String>,
 }
@@ -66,6 +68,7 @@ impl Default for Preferences {
             record_microphone: false,
             record_countdown_seconds: 3,
             measure_tolerance: 12,
+            color_format: crate::colors::ColorFormat::Hex,
             shortcuts: BTreeMap::new(),
         }
     }

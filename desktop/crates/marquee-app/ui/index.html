@@ -16,6 +16,7 @@
     <button class="nav-item" data-page="home" aria-current="page"><svg><use href="#i-home"/></svg>Home</button>
     <button class="nav-item" data-page="library"><svg><use href="#i-library"/></svg>Library</button>
     <button class="nav-item" data-page="clipboard"><svg><use href="#i-clipboard"/></svg>Clipboard</button>
+    <button class="nav-item" data-page="colors"><svg><use href="#i-colors"/></svg>Colors</button>
     <div class="nav-label">App</div>
     <button class="nav-item" data-page="settings"><svg><use href="#i-settings"/></svg>Settings</button>
     <div class="nav-spacer"></div>
@@ -41,7 +42,7 @@
         <div class="hero-icon"><svg><use href="#i-grid"/></svg></div>
         <div class="hero-text">
           <h2>All-in-One</h2>
-          <p>Select an area, a window or the full screen, then take a screenshot, copy it, annotate it or pin it.</p>
+          <p>Select an area, a window or the full screen, then take a screenshot, copy, annotate or pin it, or pick a color.</p>
         </div>
         <div class="hero-actions">
           <button class="button primary" data-action="allInOne">Start All-in-One</button>
@@ -74,6 +75,27 @@
       <div class="notice glass" id="clip-paused" hidden><svg><use href="#i-info"/></svg><div>History is paused. Nothing you copy is being recorded.</div></div>
       <div class="clip-grid" id="clip-grid"></div>
       <div class="empty" id="clip-empty"><div class="empty-icon glass"><svg><use href="#i-clipboard"/></svg></div><h2 id="clip-empty-title">Nothing copied yet</h2><p id="clip-empty-text">Text, links, images and files you copy show up here. Password managers are never recorded.</p></div>
+    </section>
+
+    <!-- Colors -->
+    <section class="page" id="page-colors" hidden aria-labelledby="colors-title">
+      <header class="page-header">
+        <div><h1 id="colors-title">Colors</h1><p>Colors you pick from the screen, newest first. Click one to copy it.</p></div>
+        <div class="header-actions">
+          <button class="text-button" id="colors-clear" hidden>Clear</button>
+          <button class="button primary" data-action="pickColor">Pick a color</button>
+        </div>
+      </header>
+      <div class="color-toolbar">
+        <span class="color-toolbar-label" id="format-label">Copy as</span>
+        <div class="clip-filters" role="radiogroup" aria-labelledby="format-label">
+          <button role="radio" data-color-format="hex">HEX</button>
+          <button role="radio" data-color-format="rgb">RGB</button>
+          <button role="radio" data-color-format="hsl">HSL</button>
+        </div>
+      </div>
+      <div class="color-grid" id="color-grid"></div>
+      <div class="empty" id="colors-empty"><div class="empty-icon glass"><svg><use href="#i-eyedropper"/></svg></div><h2>No colors yet</h2><p>Pick any color on screen and Marquee copies it, in the format you choose above. Set a shortcut for Pick Color in Settings, or use Color in All-in-One.</p><button class="button primary" data-action="pickColor">Pick a color</button></div>
     </section>
 
     <!-- Update -->

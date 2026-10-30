@@ -8,6 +8,7 @@ mod actions;
 mod annotate;
 mod capture;
 mod clipboard;
+mod colors;
 mod library;
 mod pin;
 mod platform;
@@ -161,6 +162,11 @@ fn main() {
             capture::overlay_finish,
             capture::overlay_capture,
             capture::overlay_copy_text,
+            capture::overlay_pick_color,
+            colors::colors_list,
+            colors::color_copy,
+            colors::color_delete,
+            colors::colors_clear,
             library::library_list,
             library::library_copy,
             library::library_save,
@@ -219,6 +225,7 @@ fn main() {
             app.on_menu_event(|app, event| pin::menu_event(app, &event));
             library::init(app.handle())?;
             clipboard::init(app.handle())?;
+            colors::init(app.handle())?;
             updater::init(app.handle());
             tray::install(app.handle())?;
             // Load the windows that appear on a shortcut now, so they open instantly later.

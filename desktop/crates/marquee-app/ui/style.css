@@ -199,6 +199,27 @@ kbd {
 .clip-actions button[aria-pressed="true"] { background: var(--yellow); color: var(--ink); }
 .clip-actions svg { width: 15px; height: 15px; }
 
+/* Colors */
+.color-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.color-toolbar-label { color: var(--text-2); }
+.color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding-bottom: 28px; }
+.color {
+  position: relative; display: flex; flex-direction: column; padding: 0; overflow: hidden; text-align: left;
+  border: 0; border-radius: var(--radius-sm); background: var(--glass); box-shadow: 0 0 0 1px var(--glass-edge);
+  transition: transform 100ms ease-out;
+}
+.color:active { transform: scale(0.98); }
+.color .swatch { height: 76px; background: var(--c); box-shadow: inset 0 -1px 0 var(--glass-edge); }
+.color .values { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 2px; }
+.color .hex { font: 600 13.5px "Cascadia Mono", Consolas, monospace; }
+.color .sub { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.color .remove {
+  position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+  background: rgba(20, 20, 22, .7); color: #fff; opacity: 0; transition: opacity 120ms ease-out;
+}
+.color .remove svg { width: 14px; height: 14px; }
+.color:hover .remove, .color:focus-within .remove { opacity: 1; }
+
 /* Library */
 .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding-bottom: 28px; }
 .shot { position: relative; border-radius: var(--radius-sm); overflow: hidden; background: var(--glass); box-shadow: 0 0 0 1px var(--glass-edge); }

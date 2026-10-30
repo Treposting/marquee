@@ -4,6 +4,7 @@
 //   aio    All-in-One: a toolbar from the start, and a selection you can redraw, move, resize
 //          and nudge before choosing what to do; with no selection, actions use the full screen
 //   measure  Measure takes over the page (measure.js)
+//   color    the color picker takes over the page (color.js); All-in-One's Color switches to it
 // Choices are reported to Rust in the frame's pixels.
 "use strict";
 
@@ -28,6 +29,7 @@ let sel = null; // the selection { x, y, w, h } in CSS pixels; null means the fu
 let gesture = null; // { kind: "new" | "move" | handle name, start, original }
 let hover = null; // window under the pointer, in frame pixels
 let finished = false;
+let frameBytes = null; // the frame's RGBA, kept for the color picker
 let queued = false;
 
 /** Frame pixels per CSS pixel. */
@@ -58,6 +60,7 @@ const ACTIONS = {
   copy: () => finish(area("copy")),
   pin: () => finish(area("pin")),
   annotate: () => finish(area("annotate")),
+  color: () => startColorPicker(),
   fullscreen: () => { sel = null; finish(area()); },
   window: () => setMode("window"),
   settings: () => finish({ kind: "settings" }),
@@ -157,7 +160,7 @@ function pill(ctx, text, x, y) {
 }
 
 function draw() {
-  if (Measure.active) return;
+  if (Measure.active || ColorPick.active) return;
   const W = window.innerWidth, H = window.innerHeight;
   uiCtx.clearRect(0, 0, W, H);
   uiCtx.fillStyle = "rgba(0, 0, 0, .38)";
@@ -196,7 +199,7 @@ function draw() {
 
 /** Under the selection (above it, or inside, when there's no room), or bottom center. */
 function placeToolbar() {
-  if (Measure.active) return;
+  if (Measure.active || ColorPick.active) return;
   // The hint only helps before the first drag.
   hint.hidden = !!sel || !!gesture;
   if (!aio) return;
@@ -234,7 +237,7 @@ function resize() {
 window.addEventListener("resize", resize);
 
 window.addEventListener("mousemove", (e) => {
-  if (Measure.active) return;
+  if (Measure.active || ColorPick.active) return;
   pointer = { x: e.clientX, y: e.clientY };
   if (gesture) {
     const clamped = { x: Math.min(Math.max(0, pointer.x), window.innerWidth), y: Math.min(Math.max(0, pointer.y), window.innerHeight) };
@@ -249,7 +252,7 @@ window.addEventListener("mousemove", (e) => {
 });
 
 window.addEventListener("mousedown", (e) => {
-  if (Measure.active) return;
+  if (Measure.active || ColorPick.active) return;
   if (e.target.closest?.("#toolbar")) return;
   if (e.button === 2) return cancel();
   if (e.button !== 0 || mode !== "area") return;
@@ -262,7 +265,7 @@ window.addEventListener("mousedown", (e) => {
 });
 
 window.addEventListener("mouseup", (e) => {
-  if (Measure.active) return;
+  if (Measure.active || ColorPick.active) return;
   if (e.button !== 0) return;
   pointer = { x: e.clientX, y: e.clientY };
   if (mode === "window") {
@@ -285,7 +288,7 @@ window.addEventListener("mouseup", (e) => {
 window.addEventListener("contextmenu", (e) => e.preventDefault());
 
 window.addEventListener("keydown", (e) => {
-  if (Measure.active) return;
+  if (Measure.active || ColorPick.active) return;
   const key = e.key;
   if (key === "Escape") { e.preventDefault(); return cancel(); }
   if (key === " ") { e.preventDefault(); return setMode(mode === "area" ? "window" : "area"); }
@@ -296,6 +299,7 @@ window.addEventListener("keydown", (e) => {
   else if (!e.ctrlKey && key.toLowerCase() === "w") { e.preventDefault(); ACTIONS.window(); }
   else if (!e.ctrlKey && key.toLowerCase() === "p") { e.preventDefault(); ACTIONS.pin(); }
   else if (!e.ctrlKey && key.toLowerCase() === "a") { e.preventDefault(); ACTIONS.annotate(); }
+  else if (!e.ctrlKey && key.toLowerCase() === "c") { e.preventDefault(); ACTIONS.color(); }
   else if (key === "Delete" || key === "Backspace") { e.preventDefault(); sel = null; schedule(); }
   else if (key.startsWith("Arrow") && sel) {
     e.preventDefault();
@@ -309,6 +313,14 @@ window.addEventListener("keydown", (e) => {
 
 for (const button of toolbar.querySelectorAll("[data-action]")) {
   button.addEventListener("click", () => ACTIONS[button.dataset.action]());
+}
+
+/** Hands the frozen frame to the color picker (color.js), from Rust or All-in-One's Color. */
+function startColorPicker() {
+  toolbar.hidden = true;
+  hint.hidden = true;
+  uiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  ColorPick.start({ ui, uiContext: uiCtx, hintElement: hint, bytes: frameBytes, width: info.width, height: info.height, at: pointer });
 }
 
 /** Starts a capture session. The window stays loaded between captures (Rust only hides it),
@@ -325,11 +337,18 @@ async function start() {
   windowRects = [];
   document.body.style.cursor = "";
   Measure.stop();
+  ColorPick.stop();
   const bytes = await invoke("overlay_frame");
+  frameBytes = bytes;
   frame.width = info.width;
   frame.height = info.height;
   frame.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(bytes), info.width, info.height), 0, 0);
   resize();
+  if (info.mode === "color") {
+    startColorPicker();
+    await invoke("overlay_ready");
+    return;
+  }
   if (info.mode === "measure") {
     toolbar.hidden = true;
     Measure.start({ frame, ui, uiContext: uiCtx, hintElement: hint, bytes, width: info.width, height: info.height });

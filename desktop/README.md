@@ -49,7 +49,7 @@ Windows first, then Linux X11, then Wayland through portals.
 | **1 ✅** | Tray, menu, global shortcuts, settings, launch at login, window | Tauri 2, `tauri-plugin-global-shortcut`, `tauri-plugin-autostart` |
 | **2 ✅** | Screenshots: area overlay on a frozen frame (Space for windows), window picker, full screen, self-timer with countdown; copy, save, shutter sound; Quick Access thumbnails (auto-hide, tuck to the edge); Library of the last 300 | `xcap`, `arboard`, `PlaySound`, notifications; opaque overlay windows; Tauri's asset protocol for thumbnails |
 | **3 ✅** | Clipboard history ✅: text, links, images, files with the source app; the Ctrl+Alt+Shift+V panel that pastes into the previous app; the Clipboard page; skips private copies (password managers), ignored apps and paused history | `arboard`, `GetClipboardSequenceNumber`, the clipboard formats Windows' history honors, `SendInput` |
-| 4 | Annotate ✅, pin ✅, Measure ✅, color picker, copy text (OCR), scrolling capture | `tiny-skia`; Measure edge finder and scroll stitcher ported into `marquee-core`; `Windows.Media.Ocr` |
+| 4 | Annotate ✅, pin ✅, Measure ✅, color picker ✅, copy text (OCR), scrolling capture | `tiny-skia`; Measure edge finder and scroll stitcher ported into `marquee-core`; `Windows.Media.Ocr` |
 | 5 | Recording with mic and desktop audio, camera bubble, GIF, video editor | Graphics Capture + Media Foundation H.264 (or `ffmpeg-next`), WASAPI loopback, `cpal`, `nokhwa`, `gifski` |
 | 6 | Updater, code signing, release workflow, site | Tauri updater, Authenticode (Azure Trusted Signing) |
 

@@ -5,6 +5,7 @@
 pub mod age;
 pub mod capture;
 pub mod clip;
+pub mod colors;
 pub mod history;
 pub mod library;
 pub mod linkmeta;
