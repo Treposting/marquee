@@ -124,9 +124,19 @@
           <label class="row"><span>Paste into the app you were using</span><input type="checkbox" class="switch" data-pref="autoPaste"></label>
           <label class="row"><span>Show previews for copied links</span><input type="checkbox" class="switch" data-pref="linkPreviews"></label>
         </div>
+        <h3 class="group-title">Categories</h3>
+        <div class="group glass">
+          <p class="row-note">Group items you want to keep, like addresses or snippets. Items in a category are never removed when history fills up. Right-click any item to put it in one.</p>
+          <p class="row-note" id="categories-empty">No categories yet.</p>
+          <div id="category-list"></div>
+          <form class="row add-row" id="category-form">
+            <input type="text" id="category-input" placeholder="New category name" aria-label="New category name" spellcheck="false">
+            <button class="button" type="submit">Add</button>
+          </form>
+        </div>
         <h3 class="group-title">Ignored apps</h3>
         <div class="group glass">
-          <p class="row-note">Copies made in these apps are never stored. Password managers are on the list from the start.</p>
+          <p class="row-note">Copies made in these apps are never stored. Password managers are on the list from the start. You can also right-click an item and choose Ignore.</p>
           <ul class="chips" id="ignored-apps"></ul>
           <form class="row add-row" id="ignore-form">
             <input type="text" id="ignore-input" placeholder="App file name, like KeePass.exe" aria-label="App to ignore" spellcheck="false">
@@ -166,6 +176,7 @@
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4.5l2 2H19a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M5.5 15.5h-.5A1.5 1.5 0 0 1 3.5 14V5A1.5 1.5 0 0 1 5 3.5h9A1.5 1.5 0 0 1 15.5 5v.5"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3" class="fill"/><circle cx="12" cy="12" r="1.3" class="fill"/><circle cx="18" cy="12" r="1.3" class="fill"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/></symbol>
   </svg>
 

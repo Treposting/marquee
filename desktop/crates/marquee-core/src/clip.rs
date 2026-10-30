@@ -52,6 +52,12 @@ pub struct ClipItem {
     /// The user's category, if any. Items in a category are never trimmed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub category_id: Option<Uuid>,
+    /// The page title for link items, when link previews are on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub link_title: Option<String>,
+    /// A thumbnail in the store's images folder: a link's preview image, or a copied image file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preview_name: Option<String>,
 }
 
 impl ClipItem {
@@ -68,6 +74,8 @@ impl ClipItem {
             date: Utc::now(),
             pinned: false,
             category_id: None,
+            link_title: None,
+            preview_name: None,
         }
     }
 
@@ -79,7 +87,7 @@ impl ClipItem {
     /// Text that search matches against.
     pub fn searchable_text(&self) -> String {
         let files = self.file_paths.as_ref().map(|p| p.join(" "));
-        [self.text.clone(), files, self.source_app_name.clone()]
+        [self.text.clone(), self.link_title.clone(), files, self.source_app_name.clone()]
             .into_iter()
             .flatten()
             .collect::<Vec<_>>()

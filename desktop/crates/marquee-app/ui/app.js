@@ -242,11 +242,48 @@ $("#library-clear").addEventListener("click", () => {
 // Clipboard
 
 let clipFilter = "all";
+let categories = [];
+
+/** Category chips after the built-in filters, in the page's filter row. */
+function renderCategoryChips() {
+  const bar = $(".clip-filters");
+  $$(".category", bar).forEach((b) => b.remove());
+  if (clipFilter.startsWith("category:") && !categories.some((c) => `category:${c.id}` === clipFilter)) clipFilter = "all";
+  for (const c of categories) {
+    const b = el("button", { role: "radio", class: "category", "data-clip-filter": `category:${c.id}` }, c.name);
+    b.style.setProperty("--tint", ClipCards.TINTS[c.tint]);
+    bar.append(b);
+  }
+  for (const b of $$("[data-clip-filter]")) b.setAttribute("aria-checked", String(b.dataset.clipFilter === clipFilter));
+}
+
+function clipMenu(event, item, card) {
+  const act = (command, done) => invoke(command, { id: item.id })
+    .then(() => done && shotStatus(card, done))
+    .catch((e) => shotStatus(card, String(e)));
+  const tail = [];
+  if (item.sourceAppId) {
+    tail.push({ label: `Ignore ${item.sourceAppName ?? item.sourceAppId}`, run: () => act("clip_ignore_app") });
+  }
+  tail.push({ label: "Delete", danger: true, run: () => act("clip_delete") });
+  ClipCards.menu(event, item, {
+    invoke,
+    categories,
+    actions: [
+      { label: "Copy", run: () => act("clip_copy", "Copied") },
+      { label: item.pinned ? "Unpin" : "Pin", run: () => act("clip_pin") },
+    ],
+    tail,
+  });
+}
 
 async function renderClipboard() {
+  categories = await invoke("clip_categories");
+  renderCategoryChips();
+  renderCategories();
   const items = await invoke("clip_list", { filter: clipFilter, query: $("#clip-search").value });
   $("#clip-grid").replaceChildren(...items.map((item) => {
-    const card = ClipCards.render(item, { convertFileSrc });
+    const card = ClipCards.render(item, { convertFileSrc, categories });
     card.tabIndex = 0;
     const act = (command, done) => invoke(command, { id: item.id })
       .then(() => done && shotStatus(card, done))
@@ -254,8 +291,17 @@ async function renderClipboard() {
     card.append(el("div", { class: "clip-actions" },
       el("button", { title: "Copy", "aria-label": "Copy", onclick: () => act("clip_copy", "Copied") }, icon("i-copy")),
       el("button", { title: item.pinned ? "Unpin" : "Pin", "aria-label": item.pinned ? "Unpin" : "Pin", "aria-pressed": String(item.pinned), onclick: () => act("clip_pin") }, icon("i-pin")),
-      el("button", { title: "Delete", "aria-label": "Delete", onclick: () => act("clip_delete") }, icon("i-trash"))));
+      el("button", { title: "More", "aria-label": "More", onclick: (e) => clipMenu(e, item, card) }, icon("i-more"))));
     card.addEventListener("dblclick", () => act("clip_copy", "Copied"));
+    card.addEventListener("contextmenu", (e) => clipMenu(e, item, card));
+    card.addEventListener("keydown", (e) => {
+      if (e.key === "Delete") act("clip_delete");
+      else if (e.key === "Enter") act("clip_copy", "Copied");
+      else if (e.key === "ContextMenu" || (e.shiftKey && e.key === "F10")) {
+        const r = card.getBoundingClientRect();
+        clipMenu({ preventDefault() {}, clientX: r.left + 12, clientY: r.top + 40 }, item, card);
+      }
+    });
     return card;
   }));
   const filtered = clipFilter !== "all" || $("#clip-search").value;
@@ -270,14 +316,45 @@ async function renderClipboard() {
   $("#clip-keys").replaceChildren(history?.shortcut ? keyCaps(history.shortcut) : "a shortcut you set in Settings");
 }
 
-$("#clip-search").addEventListener("input", renderClipboard);
-for (const button of $$("[data-clip-filter]")) {
-  button.addEventListener("click", () => {
-    clipFilter = button.dataset.clipFilter;
-    for (const b of $$("[data-clip-filter]")) b.setAttribute("aria-checked", String(b === button));
-    renderClipboard();
-  });
+/** Settings → Clipboard → Categories: rename, recolor or delete each one. */
+function renderCategories() {
+  const list = $("#category-list");
+  if (list.contains(document.activeElement)) return; // Don't rebuild under the user's typing.
+  $("#categories-empty").hidden = categories.length > 0;
+  list.replaceChildren(...categories.map((c) => {
+    const update = (changes) => invoke("clip_category_update", { id: c.id, name: c.name, tint: c.tint, ...changes }).catch(showError);
+    const name = el("input", { type: "text", value: c.name, "aria-label": "Category name", spellcheck: "false" });
+    name.addEventListener("change", () => update({ name: name.value }));
+    name.addEventListener("keydown", (e) => { if (e.key === "Enter") name.blur(); });
+    const dots = el("div", { class: "tint-dots", role: "radiogroup", "aria-label": `Color for ${c.name}` },
+      ...Object.entries(ClipCards.TINTS).map(([tint, color]) => {
+        const dot = el("button", { role: "radio", "aria-checked": String(tint === c.tint), "aria-label": tint, title: tint, onclick: () => update({ tint }) });
+        dot.style.setProperty("--tint", color);
+        return dot;
+      }));
+    return el("div", { class: "row category-row" }, name, dots,
+      el("button", { class: "icon-button", title: "Delete category", "aria-label": `Delete ${c.name}`, onclick: () => {
+        if (confirm(`Delete "${c.name}"? Its items stay in your history.`)) invoke("clip_category_delete", { id: c.id }).catch(showError);
+      } }, icon("i-trash")));
+  }));
 }
+
+$("#category-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = $("#category-input").value.trim();
+  if (!name) return;
+  const tints = Object.keys(ClipCards.TINTS);
+  invoke("clip_category_add", { name, tint: tints[categories.length % tints.length], item: null }).catch(showError);
+  $("#category-input").value = "";
+});
+
+$("#clip-search").addEventListener("input", renderClipboard);
+$(".clip-filters").addEventListener("click", (e) => {
+  const button = e.target.closest("[data-clip-filter]");
+  if (!button) return;
+  clipFilter = button.dataset.clipFilter;
+  renderClipboard();
+});
 $("#clip-pause").addEventListener("click", async () => {
   prefs.monitorPaused = !prefs.monitorPaused;
   await save();
@@ -368,6 +445,8 @@ async function start() {
   listen("library-changed", renderLibrary);
   await renderClipboard();
   listen("clipboard-changed", renderClipboard);
+  // Rust changed a setting itself (e.g. "Ignore this app" from the panel).
+  listen("prefs-changed", async () => { prefs = await invoke("get_prefs"); bindPrefs(); });
   renderHome();
   renderShortcuts();
   await showComingSoon();

@@ -156,6 +156,7 @@ impl History {
                 true
             } else {
                 removed.extend(item.image_name.clone());
+                removed.extend(item.preview_name.clone());
                 false
             }
         });
@@ -195,6 +196,26 @@ impl History {
         }
     }
 
+    /// Sets the preview found for the item with `content_hash`. Returns files to delete: the
+    /// item's old preview, or the new one if the item has left history meanwhile.
+    pub fn set_preview(
+        &mut self,
+        content_hash: &str,
+        link_title: Option<String>,
+        preview_name: Option<String>,
+    ) -> Removed {
+        let Some(item) = self.items.iter_mut().find(|i| i.content_hash == content_hash) else {
+            return preview_name.into_iter().collect();
+        };
+        if link_title.is_some() {
+            item.link_title = link_title;
+        }
+        match preview_name {
+            Some(name) => item.preview_name.replace(name).into_iter().collect(),
+            None => Vec::new(),
+        }
+    }
+
     pub fn set_category(&mut self, category: Option<Uuid>, item: Uuid) {
         if let Some(i) = self.items.iter_mut().find(|i| i.id == item) {
             i.category_id = category;
@@ -203,7 +224,7 @@ impl History {
 }
 
 fn image_names(items: Vec<ClipItem>) -> Removed {
-    items.into_iter().filter_map(|i| i.image_name).collect()
+    items.into_iter().flat_map(|i| [i.image_name, i.preview_name]).flatten().collect()
 }
 
 fn clean_name(name: &str) -> String {
@@ -314,6 +335,19 @@ mod tests {
         assert_eq!(h.clear(true), ["1.png"]);
         assert_eq!(h.items.len(), 1);
         assert_eq!(h.clear(false), ["2.png"]);
+    }
+
+    #[test]
+    fn previews_are_set_and_cleaned_up() {
+        let mut h = History::default();
+        h.add_text("https://example.com", None, 10);
+        let hash = h.items[0].content_hash.clone();
+        assert!(h.set_preview(&hash, Some("Example".into()), Some("p1.png".into())).is_empty());
+        assert_eq!(h.set_preview(&hash, None, Some("p2.png".into())), ["p1.png"]);
+        assert_eq!(h.items[0].link_title.as_deref(), Some("Example"));
+        assert_eq!(h.matching(ClipFilter::All, "exam").len(), 1);
+        assert_eq!(h.set_preview("gone", None, Some("p3.png".into())), ["p3.png"]);
+        assert_eq!(h.clear(false), ["p2.png"]);
     }
 
     #[test]

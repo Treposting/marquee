@@ -9,6 +9,7 @@ mod capture;
 mod clipboard;
 mod library;
 mod platform;
+mod previews;
 mod quick_access;
 mod shortcuts;
 mod sound;
@@ -172,6 +173,12 @@ fn main() {
             clipboard::clip_pin,
             clipboard::clip_delete,
             clipboard::clip_clear,
+            clipboard::clip_ignore_app,
+            clipboard::clip_categories,
+            clipboard::clip_category_add,
+            clipboard::clip_category_update,
+            clipboard::clip_category_delete,
+            clipboard::clip_set_category,
             clipboard::clip_close_panel
         ])
         .setup(|app| {

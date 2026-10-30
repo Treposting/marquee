@@ -7,6 +7,7 @@ pub mod capture;
 pub mod clip;
 pub mod history;
 pub mod library;
+pub mod linkmeta;
 pub mod prefs;
 pub mod shortcuts;
 pub mod sound;

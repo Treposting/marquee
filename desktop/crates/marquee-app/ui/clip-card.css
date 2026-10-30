@@ -12,6 +12,11 @@
   display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px;
   background: var(--kind); color: #fff; font-size: 12px; font-weight: 600;
 }
+.clip-category {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 50%; padding: 1px 7px 1px 5px; border-radius: 999px;
+  background: rgba(255,255,255,.92); color: #1D1D1F; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.clip-category::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--tint); }
 .clip-pin { padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.25); font-size: 11px; }
 .clip-index { margin-left: auto; padding: 1px 6px; border-radius: 5px; background: rgba(255,255,255,.22); font-size: 11px; font-variant-numeric: tabular-nums; }
 .clip-body { flex: 1; min-height: 0; padding: 10px; overflow: hidden; font-size: 12.5px; line-height: 1.45; }
@@ -21,6 +26,60 @@
 .clip-body.clip-picture { padding: 0; background: #00000010; }
 .clip-body.clip-picture img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .clip-filename { font-weight: 600; overflow-wrap: anywhere; }
+.clip-captioned { position: relative; }
+.clip-captioned img { object-fit: cover !important; }
+.clip-captioned .clip-names {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 10px 6px;
+  background: linear-gradient(transparent, rgba(0,0,0,.65)); color: #fff;
+}
+.clip-captioned .clip-filename { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.clip-captioned .clip-more { color: rgba(255,255,255,.85); }
+.clip-rich-link { display: flex; flex-direction: column; gap: 2px; padding: 0 0 8px; }
+.clip-rich-link > :not(.clip-link-image) { padding: 0 10px; }
+.clip-link-image { flex: 1; min-height: 0; margin-bottom: 6px; background: #00000010; }
+.clip-link-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.clip-link-title { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.clip-rich-link .clip-link-title { -webkit-line-clamp: 1; }
+.kind-link .clip-host { color: var(--text-2, #5C5C66); font-weight: 400; font-size: 12px; }
+.kind-link .clip-link-title + .clip-host { margin-bottom: 4px; }
+.clip-color { display: flex; flex-direction: column; gap: 8px; }
+.clip-swatch {
+  flex: 1; min-height: 40px; border-radius: 8px; background: var(--swatch);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.1);
+}
+.clip-color .clip-text { font: 600 13px ui-monospace, "Cascadia Mono", Consolas, monospace; -webkit-line-clamp: 1; }
+
+/* Right-click menu */
+.clip-menu {
+  position: fixed; z-index: 10; min-width: 210px; max-height: calc(100vh - 8px); overflow-y: auto; padding: 5px;
+  border-radius: 10px; background: var(--card, #fff); color: var(--text, #1B1B1F);
+  box-shadow: 0 0 0 1px var(--edge, rgba(0,0,0,.1)), 0 10px 30px rgba(0,0,0,.22);
+  font-size: 13px; animation: menu-in 90ms ease-out;
+}
+@keyframes menu-in { from { opacity: 0; transform: scale(.98); } }
+.clip-menu button {
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 28px; padding: 0 10px;
+  border: 0; border-radius: 6px; background: transparent; text-align: left; font: inherit; color: inherit; cursor: default;
+}
+.clip-menu button:hover, .clip-menu button:focus-visible { background: var(--chip, rgba(0,0,0,.06)); outline: none; }
+.clip-menu button.danger { color: #C42B1C; }
+.clip-menu .label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.clip-menu .keys { color: var(--text-2, #5C5C66); font-size: 11.5px; }
+.clip-menu hr { border: 0; border-top: 1px solid var(--edge, rgba(0,0,0,.08)); margin: 5px 4px; }
+.clip-menu .heading { padding: 4px 10px 2px; font-size: 11.5px; font-weight: 600; color: var(--text-2, #5C5C66); }
+.clip-menu .category-chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 4px 2px; max-width: 260px; }
+.clip-menu .category-chips button {
+  width: auto; height: 24px; padding: 0 9px; gap: 6px; border-radius: 999px; background: var(--chip, rgba(0,0,0,.06)); font-size: 12px;
+}
+.clip-menu .category-chips button[style]::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--tint); }
+.clip-menu .category-chips button[aria-checked="true"] { background: var(--yellow, #FFCF1A); color: #1D1D1F; font-weight: 600; }
+.clip-menu .new-category { padding: 4px 4px 2px; }
+.clip-menu .new-category input {
+  width: 100%; height: 28px; padding: 0 8px; border-radius: 6px; font: inherit; color: inherit;
+  border: 1px solid var(--edge, rgba(0,0,0,.1)); background: transparent;
+}
+@media (prefers-color-scheme: dark) { .clip-menu button.danger { color: #FF99A4; } }
+@media (prefers-reduced-motion: reduce) { .clip-menu { animation: none; } }
 .clip-more { color: var(--text-2, #5C5C66); margin-top: 4px; }
 .clip footer {
   display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px 8px;

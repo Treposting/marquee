@@ -7,6 +7,10 @@ Early previews of the Windows app. The Release Windows workflow copies a version
 - **Capture opens right away.** Area, Window and All-in-One used to take a couple of seconds to show the selection. Marquee now prepares the capture screen, Quick Access and the clipboard panel when it starts, so they appear as soon as you press the shortcut or click.
 - **Settings has a gear icon** in the sidebar and the All-in-One toolbar.
 - **A cleaner Home.** The tools that work today are larger cards with their shortcuts, and features still on their way to Windows are listed together under "Coming to Windows". The unfinished Colors page is gone until the color picker arrives.
+- **Categories for clipboard items.** Right-click any item in the clipboard panel or on the Clipboard page to put it in a category, or type a name to make a new one. Categories appear as filters next to Pinned, and items in one are never removed when history fills up. Rename, recolor or delete them in Settings → Clipboard.
+- **Link previews.** Copied links show the page's title and picture, with Settings → Clipboard → Show previews for copied links on. Marquee only asks public websites, never addresses on your own computer or network.
+- **Picture previews for copied image files**, and a color swatch for copied colors like `#FFCF1A` or `rgb(0 120 255)`.
+- **Ignore an app from its item.** Right-click an item and choose Ignore to stop recording that app and delete everything copied from it.
 - The capture hint at the top of the screen disappears once you start selecting, and an empty Library has a button to take your first screenshot.
 
 ## 0.4.1

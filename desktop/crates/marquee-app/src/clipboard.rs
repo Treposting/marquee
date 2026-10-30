@@ -9,7 +9,7 @@ use std::thread;
 use std::time::Duration;
 
 use arboard::{Clipboard, ImageData};
-use marquee_core::clip::{ClipFilter, ClipItem, ClipKind};
+use marquee_core::clip::{Category, ClipFilter, ClipItem, ClipKind, Tint};
 use marquee_core::history::{self, History};
 use serde::Serialize;
 use tauri::{
@@ -18,7 +18,7 @@ use tauri::{
 use uuid::Uuid;
 use xcap::image::RgbaImage;
 
-use crate::{platform, AppState};
+use crate::{platform, previews, AppState};
 
 const PANEL: &str = "clipboard-panel";
 /// The panel's height in logical pixels; it spans the width of the display.
@@ -42,6 +42,8 @@ pub struct ClipInfo {
     item: ClipItem,
     /// Full path of the image file, for image items.
     image_path: Option<String>,
+    /// Full path of the preview thumbnail, for links and image files that have one.
+    preview_path: Option<String>,
 }
 
 impl ClipState {
@@ -49,8 +51,16 @@ impl ClipState {
         self.dir.join("history.json")
     }
 
-    fn images_dir(&self) -> PathBuf {
+    pub fn images_dir(&self) -> PathBuf {
         self.dir.join("images")
+    }
+
+    /// Stores a preview found in the background (see `previews`).
+    pub fn set_preview(&self, content_hash: &str, link_title: Option<String>, preview: Option<String>) {
+        let mut history = self.history.lock().unwrap();
+        let removed = history.set_preview(content_hash, link_title, preview);
+        self.delete_images(&removed);
+        self.save(&history);
     }
 
     fn save(&self, history: &History) {
@@ -123,9 +133,21 @@ fn record(app: &AppHandle) -> bool {
         .map(|p| p.display().to_string())
         .collect();
     let removed = if !files.is_empty() {
-        state.history.lock().unwrap().add_files(&files, source.as_ref(), limit)
+        let hash = history::hash(files.join("\n").as_bytes());
+        let is_new = !state.history.lock().unwrap().contains(&hash);
+        let removed = state.history.lock().unwrap().add_files(&files, source.as_ref(), limit);
+        if is_new {
+            previews::file(app, hash, files[0].clone());
+        }
+        removed
     } else if let Some(text) = clipboard.get_text().ok().filter(|t| !t.trim().is_empty()) {
-        state.history.lock().unwrap().add_text(&text, source.as_ref(), limit)
+        let hash = history::hash(text.as_bytes());
+        let is_new = !state.history.lock().unwrap().contains(&hash);
+        let removed = state.history.lock().unwrap().add_text(&text, source.as_ref(), limit);
+        if is_new && prefs.link_previews && history::is_link(text.trim()) {
+            previews::link(app, hash, text.trim().to_string());
+        }
+        removed
     } else if let Ok(image) = clipboard.get_image() {
         let hash = history::hash(&image.bytes);
         if state.history.lock().unwrap().contains(&hash) {
@@ -194,7 +216,10 @@ pub fn clip_list(state: State<ClipState>, filter: String, query: String) -> Vec<
         "images" => ClipFilter::Images,
         "files" => ClipFilter::Files,
         "pinned" => ClipFilter::Pinned,
-        _ => ClipFilter::All,
+        other => match other.strip_prefix("category:").and_then(|id| Uuid::parse_str(id).ok()) {
+            Some(id) => ClipFilter::Category(id),
+            None => ClipFilter::All,
+        },
     };
     let images = state.images_dir();
     let history = state.history.lock().unwrap();
@@ -204,6 +229,7 @@ pub fn clip_list(state: State<ClipState>, filter: String, query: String) -> Vec<
         .map(|item| ClipInfo {
             item: item.clone(),
             image_path: item.image_name.as_ref().map(|n| images.join(n).display().to_string()),
+            preview_path: item.preview_name.as_ref().map(|n| images.join(n).display().to_string()),
         })
         .collect()
 }
@@ -257,6 +283,90 @@ pub fn clip_clear(app: AppHandle, state: State<ClipState>) {
     let removed = history.clear(true);
     state.delete_images(&removed);
     changed(&app, &state, &history);
+}
+
+/// Stops recording copies from the app an item came from, and deletes everything from it.
+#[tauri::command]
+pub fn clip_ignore_app(app: AppHandle, state: State<ClipState>, id: String) -> Result<(), String> {
+    let mut history = state.history.lock().unwrap();
+    let item = history.get(parse_id(&id)?).ok_or("That item is gone.")?;
+    let app_id = item.source_app_id.clone().ok_or("Marquee doesn't know which app that came from.")?;
+    {
+        let app_state = app.state::<AppState>();
+        let mut prefs = app_state.prefs.lock().unwrap();
+        if !prefs.is_ignored(&app_id) {
+            prefs.ignored_apps.push(app_id.clone());
+            prefs.save(&app_state.prefs_path).map_err(|e| format!("Couldn't save settings: {e}"))?;
+        }
+    }
+    let removed = history.remove_from_app(&app_id);
+    state.delete_images(&removed);
+    changed(&app, &state, &history);
+    let _ = app.emit("prefs-changed", ());
+    Ok(())
+}
+
+// MARK: Categories
+
+#[tauri::command]
+pub fn clip_categories(state: State<ClipState>) -> Vec<Category> {
+    state.history.lock().unwrap().categories.clone()
+}
+
+/// Makes a category and, with `item`, puts that item in it.
+#[tauri::command]
+pub fn clip_category_add(
+    app: AppHandle,
+    state: State<ClipState>,
+    name: String,
+    tint: Tint,
+    item: Option<String>,
+) -> Result<Category, String> {
+    let mut history = state.history.lock().unwrap();
+    let category = history.add_category(&name, tint).clone();
+    if let Some(item) = item {
+        history.set_category(Some(category.id), parse_id(&item)?);
+    }
+    changed(&app, &state, &history);
+    Ok(category)
+}
+
+#[tauri::command]
+pub fn clip_category_update(
+    app: AppHandle,
+    state: State<ClipState>,
+    id: String,
+    name: String,
+    tint: Tint,
+) -> Result<(), String> {
+    let mut history = state.history.lock().unwrap();
+    history.update_category(parse_id(&id)?, &name, tint);
+    changed(&app, &state, &history);
+    Ok(())
+}
+
+/// Deletes a category; its items stay in history.
+#[tauri::command]
+pub fn clip_category_delete(app: AppHandle, state: State<ClipState>, id: String) -> Result<(), String> {
+    let mut history = state.history.lock().unwrap();
+    history.delete_category(parse_id(&id)?);
+    changed(&app, &state, &history);
+    Ok(())
+}
+
+/// Puts an item in a category, or takes it out with `category` null.
+#[tauri::command]
+pub fn clip_set_category(
+    app: AppHandle,
+    state: State<ClipState>,
+    id: String,
+    category: Option<String>,
+) -> Result<(), String> {
+    let mut history = state.history.lock().unwrap();
+    let category = category.as_deref().map(parse_id).transpose()?;
+    history.set_category(category, parse_id(&id)?);
+    changed(&app, &state, &history);
+    Ok(())
 }
 
 #[tauri::command]
