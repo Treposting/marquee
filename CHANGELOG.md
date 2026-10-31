@@ -4,6 +4,9 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+### Added
+- **Open links found by Copy Text.** When the text you capture contains a web address or an email address, a small glass panel appears instead of the usual "Copied" message: the text is still copied, and **Open Link** (Return) opens it in your browser, or **New Email** for an address. Several links get a list with an Open button for each. **Close** or Esc dismisses it; it also closes when you click elsewhere or leave it for 15 seconds.
+
 ## 0.5.19 — 2026-10-26
 
 ### Added

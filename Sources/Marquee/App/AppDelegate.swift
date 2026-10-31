@@ -263,7 +263,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             pb.clearContents()
             pb.setString(text, forType: .string)
             Sounds.play(.copy)
-            Toast.show("Copied text (\(text.count) characters)")
+            let links = LinkFinder.links(in: text)
+            if links.isEmpty {
+                Toast.show("Copied text (\(text.count) characters)")
+            } else {
+                LinkPrompt.show(links: links, characters: text.count)
+            }
         }
     }
 
