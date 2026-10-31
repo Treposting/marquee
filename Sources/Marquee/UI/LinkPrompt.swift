@@ -135,11 +135,12 @@ private struct LinkPromptView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
+            // Monochrome, so the tinted Open button stays the one colored element.
             Image(systemName: "link")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.secondary)
                 .frame(width: 32, height: 32)
-                .background(Circle().fill(Color.accentColor.gradient))
+                .background(Circle().fill(Color.primary.opacity(0.08)))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(model.links.count == 1 ? "Open this link?" : "Open a link?")
@@ -155,7 +156,7 @@ private struct LinkPromptView: View {
                 Image(systemName: "xmark")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.secondary)
-                    .frame(width: 24, height: 24)
+                    .frame(width: 28, height: 28)
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
@@ -177,9 +178,11 @@ private struct LinkPromptView: View {
                 .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.06)))
             HStack(spacing: 10) {
                 Spacer()
+                // Only the main action is glass; a second glass button on the glass panel would
+                // blur the hierarchy.
                 Button("Close") { LinkPrompt.close() }
                     .keyboardShortcut(.cancelAction)
-                    .glassButtonStyle()
+                    .buttonStyle(.bordered)
                     .controlSize(.large)
                 Button(url.scheme?.lowercased() == "mailto" ? "New Email" : "Open Link") { LinkPrompt.open(url) }
                     .keyboardShortcut(.defaultAction)
@@ -204,8 +207,7 @@ private struct LinkPromptView: View {
                         .truncationMode(.middle)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Button("Open") { LinkPrompt.open(url) }
-                        .glassButtonStyle(prominent: index == 0)
-                        .modifier(DefaultActionIf(index == 0))
+                        .modifier(OpenButtonStyle(primary: index == 0))
                         .accessibilityLabel("Open \(LinkFinder.displayText(url))")
                 }
                 .padding(.leading, 10)
@@ -217,7 +219,7 @@ private struct LinkPromptView: View {
                 Spacer()
                 Button("Close") { LinkPrompt.close() }
                     .keyboardShortcut(.cancelAction)
-                    .glassButtonStyle()
+                    .buttonStyle(.bordered)
             }
             .padding(.top, 4)
         }
@@ -231,12 +233,16 @@ private struct LinkRow: Identifiable {
     var id: String { url.absoluteString }
 }
 
-/// Return opens the first link in the list.
-private struct DefaultActionIf: ViewModifier {
-    let enabled: Bool
-    init(_ enabled: Bool) { self.enabled = enabled }
+/// The first link's Open is the tinted glass default (Return); the rest are standard buttons,
+/// so there's one primary action rather than a column of them.
+private struct OpenButtonStyle: ViewModifier {
+    let primary: Bool
 
     func body(content: Content) -> some View {
-        if enabled { content.keyboardShortcut(.defaultAction) } else { content }
+        if primary {
+            content.glassButtonStyle(prominent: true).keyboardShortcut(.defaultAction)
+        } else {
+            content.buttonStyle(.bordered)
+        }
     }
 }
