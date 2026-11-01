@@ -4,6 +4,8 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+## 0.5.21 — 2026-11-01
+
 ### Added
 - **Copy Text reads QR codes.** Select a QR code (or a barcode) with Copy Text, or Copy Text in All-in-One, and its contents are copied along with any text around it. A link or email address in a QR code gets the same Open Link prompt as printed links, with a QR code symbol so you know where it came from.
 

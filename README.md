@@ -37,6 +37,10 @@ A free, open-source menu-bar app for macOS that takes screenshots and screen rec
 
 ## What's new
 
+**0.5.21**
+- **Copy Text reads QR codes**: their contents are copied, and links or email addresses in them get the Open Link prompt.
+- **A calmer window**: Liquid Glass stays on the floating controls, while cards and tiles use quiet solid surfaces, following Apple's design guidelines; plus larger small buttons and better Reduce Motion and Increase Contrast support.
+
 **0.5.20**
 - **Open links found by Copy Text**: when the text you capture has a web or email address, a glass panel offers to open it (Return) or close it (Esc). The text is copied either way.
 
@@ -167,7 +171,7 @@ Press <kbd>⌥</kbd><kbd>⇧</kbd><kbd>⌘</kbd><kbd>A</kbd> and the toolbar app
 - **Area, window or full screen.** Uses the native macOS crosshair, so Space switches to window mode and Esc cancels.
 - **Scrolling capture** <sup>macOS 14+</sup>. Select the part that scrolls, then scroll down (or press **Auto-scroll**) and press **Done**: Marquee stitches one long screenshot. Fixed headers and bottom bars appear once. Start it from All-in-One (Screenshot → Scrolling, or press S), the menu, Home, or a shortcut you set. Auto-scroll needs the Accessibility permission.
 - **Self-timer.** Captures the full screen after 5 seconds.
-- **Copy text (OCR).** Select part of the screen and the text in it goes to your clipboard. It uses Apple's Vision framework on your Mac. If the text contains a link or an email address, Marquee offers to open it.
+- **Copy text (OCR).** Select part of the screen and the text in it goes to your clipboard. It uses Apple's Vision framework on your Mac. It also reads QR codes and barcodes. If the text or a code contains a link or an email address, Marquee offers to open it.
 - **Quick Access overlay.** A thumbnail appears after each capture. Hover it for actions in its corners (close, pin, save, annotate) and Copy in the middle, or drag it straight into Slack, Mail or Finder. Tuck it to the screen's edge with the tab on its side, and it hides itself after 20 seconds if you don't use it.
 - **Annotate.** Add arrows, rectangles, ellipses, freehand pen, highlights, text and numbered steps. Redact anything sensitive by pixelating, blurring or covering it; redactions stay movable. Select (V) moves any shape. One-key tools: V, A, R, O, P, H, T, N, X.
 - **Pin to screen.** Keep a screenshot floating above every window.

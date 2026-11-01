@@ -1,11 +1,11 @@
 # Tasks
 
-Status as of v0.5.20 (2026-10-31). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
+Status as of v0.5.21 (2026-11-01). Project context and conventions are in [CLAUDE.md](CLAUDE.md); release history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Done
 
 **Capture**
-- [x] Area, window, full screen, timed (5 s) and OCR capture through `/usr/sbin/screencapture`; links and email addresses in OCR text get an Open Link prompt
+- [x] Area, window, full screen, timed (5 s) and OCR capture through `/usr/sbin/screencapture`; Copy Text also reads QR codes and barcodes; links and email addresses get an Open Link prompt
 - [x] Scrolling capture (macOS 14+): select, scroll or Auto-scroll, stitched by row fingerprints; fixed headers/footers once
 - [x] Quick Access overlay: thumbnail sized to the capture; hover shows close/pin/save/annotate (GIF/edit for recordings) in the corners and Copy in the middle; drag out
 - [x] Annotation editor: arrows, shapes, pen, highlight, text, numbered steps, pixelate
@@ -33,7 +33,7 @@ Status as of v0.5.20 (2026-10-31). Project context and conventions are in [CLAUD
 
 **App**
 - [x] Marquee window: Home, Library, Clipboard, Colors, Permissions, Settings, QuitX (More apps); shows in the Dock while open
-- [x] Liquid Glass design across the app (shared page header, glass controls, matching cards; `UI/PageStyle.swift`) with fallbacks before macOS 26
+- [x] Liquid Glass on the functional layer only (page header controls, toolbars, HUDs, panels, toasts); content cards, tiles and clipboard cards use `contentSurface` (`UI/Glass.swift`), per Apple's HIG (reviewed with the apple-design skill's references in 0.5.21)
 - [x] Onboarding (welcome, permissions, record shortcuts, launch at login)
 - [x] Menu-bar menu with a choice of 24 icons or your own image; standard main menu (Edit commands work in text fields)
 - [x] Shortcuts grouped by category; only All-in-One and Clipboard History have defaults
@@ -53,6 +53,7 @@ Status as of v0.5.20 (2026-10-31). Project context and conventions are in [CLAUD
 
 Each release adds a "What's new" entry to README.md, a dated CHANGELOG section, and a line here.
 
+- **0.5.21:** Copy Text reads QR codes and barcodes; HIG design pass (glass only on floating controls, content surfaces, color budget, 20 pt targets, Reduce Motion, Increase Contrast, VoiceOver labels)
 - **0.5.20:** Copy Text offers to open links and email addresses it finds (glass prompt: Return opens, Esc closes)
 - **0.5.19:** Marquee for Windows preview: Home card and one-time notification; website Windows links (Windows previews ship as `windows-vX.Y.Z` pre-releases from the `windows-port` branch)
 - **0.5.18:** fixes #10 (washed-out recordings: sRGB + Rec. 709 tags); Annotate min width; Quick Access 20 s auto-hide and tuck to side; clipboard paste moves to top; copy/paste sounds for other apps, single sound, choosable; glass cards and Settings tab bar; QuitX promo card and sidebar page
@@ -74,6 +75,8 @@ Each release adds a "What's new" entry to README.md, a dated CHANGELOG section, 
 
 Built and passing CI, but not yet tried by hand:
 
+- [ ] Copy Text on a QR code (a link, an email, Wi-Fi text) and on text with a QR code beside it
+- [ ] The window's new content surfaces in light and dark mode, with Increase Contrast, and on macOS 13–15
 - [ ] Copy Text link prompt: one link (Return opens, Esc closes), several links, an email address, closing on an outside click and after 15 s, Reduce Motion
 - [ ] All-in-One: no crash when dragging; ⌘C copies the area; F/W/S/⇧F/⇧W; the remembered target and the inline target picker (back with ‹ or Esc)
 - [ ] Recording a window with WindowPicker (highlight follows the pointer; multi-display)
