@@ -1,8 +1,8 @@
 import SwiftUI
 
 // Shared look for the pages of the Marquee window, following the macOS 26/27 design:
-// content stays calm (soft cards with matching corners), and the controls in each page
-// header sit together on Liquid Glass. Glass comes from UI/Glass.swift, so older systems
+// content stays calm (quiet cards with matching corners, no glass), and the controls in each
+// page header sit together on Liquid Glass. Glass comes from UI/Glass.swift, so older systems
 // get the material fallbacks.
 
 /// Spacing and corner sizes shared by every page.
@@ -115,11 +115,11 @@ struct GlassMenuButton<Content: View>: View {
 }
 
 extension View {
-    /// A content card on Liquid Glass with the shared corner radius, lightly tinted if asked.
+    /// A content card with the shared corner radius, lightly tinted if asked.
     func pageCard(tint: Color? = nil, padding: CGFloat = 16) -> some View {
         self
             .padding(padding)
-            .glassSurface(Page.card, tint: tint?.opacity(0.16))
+            .contentSurface(Page.card, tint: tint?.opacity(0.10))
     }
 
     /// Standard section title inside a page ("Recent", "Capture", …).
@@ -144,7 +144,7 @@ struct PageEmptyState<Action: View>: View {
                 .font(.system(size: 34, weight: .light))
                 .foregroundStyle(.secondary)
                 .frame(width: 76, height: 76)
-                .glassSurface(Circle())
+                .contentSurface(Circle())
             Text(title).font(.system(size: 15, weight: .semibold))
             Text(message)
                 .foregroundStyle(.secondary)

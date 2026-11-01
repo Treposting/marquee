@@ -20,14 +20,20 @@ struct ShortcutRecorder: View {
             }
             .glassButtonStyle(prominent: isRecording)
             .help("Click and press a new shortcut. Esc cancels, ⌫ clears.")
+            .accessibilityLabel("Shortcut for \(action.title)")
+            .accessibilityValue(label)
 
             Button {
                 ShortcutStore.reset(action)
             } label: {
                 Image(systemName: "arrow.counterclockwise")
+                    // At least the 20 pt macOS minimum target (HIG: Accessibility).
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
             .help("Restore default")
+            .accessibilityLabel("Restore the default shortcut for \(action.title)")
             .disabled(combo == action.defaultCombo)
         }
         .onAppear { combo = ShortcutStore.combo(for: action) }

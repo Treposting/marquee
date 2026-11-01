@@ -23,6 +23,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
 
 @MainActor
 struct SettingsView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var tab: SettingsTab = .capture
 
     var body: some View {
@@ -64,7 +65,9 @@ struct SettingsView: View {
                 ForEach(SettingsTab.allCases) { item in
                     let selected = tab == item
                     Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { tab = item }
+                        withAnimation(reduceMotion ? .easeOut(duration: 0.12) : .spring(response: 0.3, dampingFraction: 0.85)) {
+                            tab = item
+                        }
                     } label: {
                         Label(item.rawValue, systemImage: item.symbol)
                             .labelStyle(TabLabelStyle(showsTitle: titles))

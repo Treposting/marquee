@@ -4,6 +4,16 @@ All notable changes to Marquee. Versions follow [semantic versioning](https://se
 
 ## Unreleased
 
+### Added
+- **Copy Text reads QR codes.** Select a QR code (or a barcode) with Copy Text, or Copy Text in All-in-One, and its contents are copied along with any text around it. A link or email address in a QR code gets the same Open Link prompt as printed links, with a QR code symbol so you know where it came from.
+
+### Changed
+- **A calmer Marquee window, following Apple's design guidelines.** Liquid Glass is now kept for what floats above content (page header controls, toolbars, Quick Access, the clipboard panel, toasts), and the cards, Home tiles, Library captures and clipboard cards themselves use quiet solid surfaces, so the glass controls stand out and content reads more clearly. Card edges get stronger with Increase Contrast.
+- Home shows at most two highlighted buttons at a time: the QuitX suggestion now uses a standard button.
+- Small buttons are easier to hit: the video editor's remove buttons, the shortcut reset button and the Quick Access side tab all meet the macOS minimum size.
+- With Reduce Motion on, Settings switches tabs without a spring, and color swatches and Quick Access buttons no longer grow on hover.
+- VoiceOver names each shortcut recorder after its action, and the reset button after the shortcut it restores.
+
 ## 0.5.20 — 2026-10-31
 
 ### Added

@@ -645,6 +645,8 @@ private struct CutChips: View {
                             .font(.system(size: 11.5, weight: .medium))
                         Button { model.edit.restore(cut) } label: {
                             Image(systemName: "xmark").font(.system(size: 9, weight: .bold))
+                                .frame(width: 20, height: 20)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(.secondary)
@@ -737,6 +739,8 @@ private struct LayersPanel: View {
             Spacer(minLength: 4)
             Button { model.deleteText(overlay.id) } label: {
                 Image(systemName: "xmark").font(.system(size: 9, weight: .bold))
+                    .frame(width: 20, height: 20)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)

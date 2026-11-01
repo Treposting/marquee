@@ -112,9 +112,9 @@ private struct LibraryTile: View {
             .frame(height: 18)
             .padding(.horizontal, 2)
         }
-        // The thumbnail and its date share one glass card; its corners match the tile's.
+        // The thumbnail and its date share one card; its corners match the tile's.
         .padding(8)
-        .glassSurface(Page.card, tint: hovering ? Color.primary.opacity(0.06) : nil, interactive: true)
+        .contentSurface(Page.card, highlight: hovering ? 0.04 : 0)
         .animation(.easeOut(duration: 0.15), value: hovering)
         .contentShape(Page.card)
         .onHover { hovering = $0 }

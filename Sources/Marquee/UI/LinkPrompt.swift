@@ -11,9 +11,9 @@ enum LinkPrompt {
     private static var resignObserver: NSObjectProtocol?
     private static let lifetime: TimeInterval = 15
 
-    static func show(links: [URL], characters: Int) {
+    static func show(links: [URL], summary: String, fromCode: Bool) {
         close(animated: false)
-        let model = LinkPromptModel(links: links, characters: characters)
+        let model = LinkPromptModel(links: links, summary: summary, fromCode: fromCode)
         let host = NSHostingView(rootView: LinkPromptView(model: model))
         // Measure first: with sizingOptions emptied, a borderless panel would be zero-sized.
         let size = host.fittingSize
@@ -49,8 +49,8 @@ enum LinkPrompt {
             Task { @MainActor in close() }
         }
 
-        let title = links.count == 1 ? "Text copied. Found a link: \(LinkFinder.displayText(links[0]))"
-            : "Text copied. Found \(links.count) links."
+        let title = links.count == 1 ? "\(summary). Found a link: \(LinkFinder.displayText(links[0]))"
+            : "\(summary). Found \(links.count) links."
         NSAccessibility.post(
             element: NSApp as Any,
             notification: .announcementRequested,
@@ -90,13 +90,17 @@ enum LinkPrompt {
 @MainActor
 final class LinkPromptModel: ObservableObject {
     let links: [URL]
-    let characters: Int
+    /// What was copied, e.g. "Copied QR code".
+    let summary: String
+    /// The links came (at least partly) from a QR code or barcode.
+    let fromCode: Bool
     @Published var leaving = false
     var hovering = false
 
-    init(links: [URL], characters: Int) {
+    init(links: [URL], summary: String, fromCode: Bool) {
         self.links = links
-        self.characters = characters
+        self.summary = summary
+        self.fromCode = fromCode
     }
 }
 
@@ -136,7 +140,7 @@ private struct LinkPromptView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
             // Monochrome, so the tinted Open button stays the one colored element.
-            Image(systemName: "link")
+            Image(systemName: model.fromCode ? "qrcode" : "link")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 32, height: 32)
@@ -145,7 +149,7 @@ private struct LinkPromptView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(model.links.count == 1 ? "Open this link?" : "Open a link?")
                     .font(.headline)
-                Text("Text copied (\(model.characters) characters)")
+                Text(model.summary)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

@@ -241,8 +241,9 @@ struct ClipCard: View {
         }
         .frame(width: 230, height: 236)
         .clipShape(RoundedRectangle(cornerRadius: Self.corner, style: .continuous))
-        .glassSurface(RoundedRectangle(cornerRadius: Self.corner, style: .continuous))
-        // Only the selected card gets a ring; the glass has its own edge.
+        // An opaque card: it sits on the panel's glass, and glass doesn't stack on glass.
+        .contentSurface(RoundedRectangle(cornerRadius: Self.corner, style: .continuous), solid: true)
+        // Only the selected card gets a ring.
         .overlay {
             if selected {
                 RoundedRectangle(cornerRadius: Self.corner, style: .continuous)

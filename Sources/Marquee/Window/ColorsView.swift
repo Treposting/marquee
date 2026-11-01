@@ -114,6 +114,7 @@ private struct LatestColorCard: View {
 
 private struct Swatch: View {
     let color: PickedColor
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hovering = false
 
     var body: some View {
@@ -125,7 +126,7 @@ private struct Swatch: View {
                     .fill(Color(nsColor: color.nsColor))
                     .frame(height: 64)
                     .overlay(Page.tile.strokeBorder(Color.primary.opacity(hovering ? 0.3 : 0.1), lineWidth: hovering ? 2 : 1))
-                    .scaleEffect(hovering ? 1.03 : 1)
+                    .scaleEffect(hovering && !reduceMotion ? 1.03 : 1)
                     .animation(.easeOut(duration: 0.15), value: hovering)
                 Text(color.hex)
                     .font(.system(size: 11, design: .monospaced))

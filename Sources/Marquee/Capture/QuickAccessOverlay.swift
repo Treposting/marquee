@@ -350,6 +350,8 @@ private struct SideToggle: View {
                 .frame(width: 18, height: 46)
                 .hudSurface(cornerRadius: 9)
                 .offset(x: hovering ? -2 : 0)
+                // The tab stays slim; the click target meets the 20 pt minimum (HIG: Accessibility).
+                .padding(.horizontal, 2)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -366,6 +368,7 @@ private struct CornerButton: View {
     let symbol: String
     let help: String
     let action: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hovering = false
 
     var body: some View {
@@ -375,7 +378,7 @@ private struct CornerButton: View {
                 .foregroundStyle(.white)
                 .frame(width: 30, height: 30)
                 .hudSurface(cornerRadius: 15)
-                .scaleEffect(hovering ? 1.08 : 1)
+                .scaleEffect(hovering && !reduceMotion ? 1.08 : 1)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)

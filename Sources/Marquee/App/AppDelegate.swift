@@ -252,22 +252,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Copy Text: copies the text and any QR code contents, then offers to open the links in
+    /// them (or just says what was copied).
     private func recognizeText(at url: URL) {
-        TextRecognizer.recognize(imageAt: url) { text in
+        TextRecognizer.recognize(imageAt: url) { content in
             try? FileManager.default.removeItem(at: url)
-            guard !text.isEmpty else {
-                Toast.show("No text found")
+            guard !content.isEmpty else {
+                Toast.show(content.summary)
                 return
             }
             let pb = NSPasteboard.general
             pb.clearContents()
-            pb.setString(text, forType: .string)
+            pb.setString(content.clipboardText, forType: .string)
             Sounds.play(.copy)
-            let links = LinkFinder.links(in: text)
+            let links = content.links
             if links.isEmpty {
-                Toast.show("Copied text (\(text.count) characters)")
+                Toast.show(content.summary)
             } else {
-                LinkPrompt.show(links: links, characters: text.count)
+                LinkPrompt.show(links: links, summary: content.summary, fromCode: !content.codes.isEmpty)
             }
         }
     }

@@ -233,7 +233,7 @@ private struct AllInOneCard: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
-        .glassSurface(shape, tint: Color.accentColor.opacity(0.16))
+        .contentSurface(shape, tint: Color.accentColor.opacity(0.10))
         .accessibilityElement(children: .contain)
     }
 }
@@ -295,7 +295,7 @@ private struct LatestCaptureCard: View {
         }
         .padding(14)
         .frame(maxHeight: .infinity, alignment: .top)
-        .glassSurface(shape)
+        .contentSurface(shape)
     }
 }
 
@@ -346,10 +346,10 @@ private struct TileButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let shape = Page.tile
-        let tint = configuration.isPressed ? 0.12 : (hovering ? 0.06 : 0)
+        let highlight = configuration.isPressed ? 0.09 : (hovering ? 0.04 : 0)
         configuration.label
             .contentShape(shape)
-            .glassSurface(shape, tint: tint > 0 ? Color.primary.opacity(tint) : nil, interactive: true)
+            .contentSurface(shape, highlight: highlight)
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
             .onHover { hovering = $0 }
             .animation(.easeOut(duration: 0.15), value: hovering)

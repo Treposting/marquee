@@ -67,19 +67,18 @@ struct QuitXPromo: View {
                 } label: {
                     Label("Get QuitX", systemImage: "arrow.up.right")
                         .labelStyle(TrailingIconLabelStyle())
-                        // Dark text on amber reads far better than white (contrast about 11:1).
-                        .foregroundStyle(Color.black.opacity(0.85))
                         .padding(.horizontal, 4)
                 }
-                .glassButtonStyle(prominent: true)
-                .tint(Self.amber)
+                // A standard button: a promotion shouldn't compete with Home's own primary
+                // action for the one tinted button on the page (HIG: Buttons, Branding).
+                .buttonStyle(.bordered)
                 .controlSize(.large)
                 .help("Open quitx.kiron.dev")
             }
             .padding(.vertical, 16)
             .padding(.leading, 16)
             .padding(.trailing, dismissible ? 40 : 16)
-            .glassSurface(Page.card, tint: Self.amber.opacity(hovering ? 0.16 : 0.1))
+            .contentSurface(Page.card, tint: Self.amber.opacity(hovering ? 0.14 : 0.09))
             .overlay(alignment: .topTrailing) {
                 if dismissible { dismissButton }
             }
