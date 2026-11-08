@@ -43,5 +43,6 @@ canvas#frame { image-rendering: auto; }
 #toolbar .size { min-width: 92px; text-align: center; color: var(--muted); font: 600 12px/1 "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 /* Narrow or highly scaled displays: shortcut hints go first, then the size readout. */
 @media (max-width: 1150px) { #toolbar button:not(.primary) kbd { display: none; } }
+@media (max-width: 1300px) { #toolbar button:not(.primary):not(.round) .label { display: none; } }
 @media (max-width: 900px) { #toolbar kbd, #toolbar .size, #toolbar .divider { display: none; } }
 [hidden] { display: none !important; }

@@ -10,6 +10,7 @@ pub mod history;
 pub mod library;
 pub mod linkmeta;
 pub mod prefs;
+pub mod recognized;
 pub mod shortcuts;
 pub mod sound;
 pub mod update;

@@ -2,6 +2,12 @@
 
 Early previews of the Windows app. The Release Windows workflow copies a version's section into its pre-release notes.
 
+## 0.4.7
+
+- **Copy Text.** Drag over any text on screen and Marquee copies it, using Windows' own text recognition (the same as the Snipping Tool's). It reads **QR codes** too: their contents are copied along with any text around them. Start it with a shortcut you set in Settings → Shortcuts, from the tray menu or Home, or press **T** in All-in-One. Space switches to picking a window.
+- **Open links you copy.** When the text or a QR code holds a web address or an email address, a small prompt appears near the bottom of the screen: **Open Link** (Enter) opens it in your browser, or **New Email** for an address; several links get a list. **Close** or Esc dismisses it, and it also closes when you click elsewhere or after 15 seconds.
+- The All-in-One toolbar shows its other buttons as icons on narrow or highly scaled screens, so it always fits, and Color has an eyedropper icon.
+
 ## 0.4.6
 
 - **Color picker.** Pick any color on screen: a magnifier follows the pointer and shows the exact pixel and its value. Click (or press Enter) to copy it; the arrow keys move one pixel at a time (Shift for 10) and Esc cancels. Start it with a shortcut you set in Settings → Shortcuts, from the tray menu or Home, or press **C** (Color) in All-in-One.

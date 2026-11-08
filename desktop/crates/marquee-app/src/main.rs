@@ -10,6 +10,8 @@ mod capture;
 mod clipboard;
 mod colors;
 mod library;
+mod link_prompt;
+mod ocr;
 mod pin;
 mod platform;
 mod previews;
@@ -201,6 +203,10 @@ fn main() {
             pin::pin_zoom,
             pin::pin_menu,
             pin::library_pin,
+            link_prompt::link_prompt_info,
+            link_prompt::link_prompt_layout,
+            link_prompt::link_prompt_open,
+            link_prompt::link_prompt_close,
             updater::update_status,
             updater::update_check,
             updater::update_install,
@@ -222,6 +228,7 @@ fn main() {
             app.manage(capture::Session::default());
             app.manage(quick_access::QuickAccess::default());
             app.manage(pin::Pins::default());
+            app.manage(link_prompt::LinkPromptState::default());
             app.on_menu_event(|app, event| pin::menu_event(app, &event));
             library::init(app.handle())?;
             clipboard::init(app.handle())?;
@@ -232,6 +239,7 @@ fn main() {
             capture::prewarm(app.handle());
             quick_access::prewarm(app.handle());
             clipboard::prewarm(app.handle());
+            link_prompt::prewarm(app.handle());
             if let Err(message) = shortcuts::register_all(app.handle()) {
                 eprintln!("Marquee: {message}");
             }

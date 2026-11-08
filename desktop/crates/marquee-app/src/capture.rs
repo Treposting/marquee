@@ -23,7 +23,7 @@ use tauri_plugin_notification::NotificationExt;
 use xcap::image::{imageops, RgbaImage};
 use xcap::{Monitor, Window};
 
-use crate::{annotate, colors, library, pin, quick_access, sound, window, AppState};
+use crate::{annotate, colors, library, link_prompt, ocr, pin, quick_access, sound, window, AppState};
 
 const OVERLAY: &str = "overlay";
 const COUNTDOWN: &str = "countdown";
@@ -46,6 +46,8 @@ pub enum Target {
     Measure,
     /// The color picker: a magnifier over the frozen display; clicking copies the color.
     Color,
+    /// Copy Text: drag over text or a QR code (Space picks a window); its text is copied.
+    Text,
 }
 
 /// Ignores a second request while a capture is under way (a held-down shortcut, a double click,
@@ -73,7 +75,12 @@ pub fn run(app: &AppHandle, target: Target) {
                 capture_monitor(point).and_then(|m| m.capture_image().map_err(|e| e.to_string())),
                 point,
             ),
-            Target::Area | Target::Window | Target::AllInOne | Target::Measure | Target::Color => {
+            Target::Area
+            | Target::Window
+            | Target::AllInOne
+            | Target::Measure
+            | Target::Color
+            | Target::Text => {
                 if let Err(message) = open_overlay(&app, point, target) {
                     finish(&app, Err(message), point);
                 }
@@ -196,6 +203,9 @@ pub enum Selection {
         pin: bool,
         #[serde(default)]
         annotate: bool,
+        /// All-in-One's Copy Text: read the text and QR codes in it.
+        #[serde(default)]
+        text: bool,
     },
     Window {
         id: u32,
@@ -302,6 +312,7 @@ pub fn overlay_info(session: State<Session>) -> Option<OverlayInfo> {
             Target::AllInOne => "aio",
             Target::Measure => "measure",
             Target::Color => "color",
+            Target::Text => "text",
             _ => "area",
         },
     })
@@ -394,6 +405,11 @@ pub fn overlay_finish(app: AppHandle, selection: Selection) {
                 BUSY.store(false, Ordering::SeqCst);
                 return;
             }
+            Selection::Area { x, y, width, height, text: true, .. } => {
+                copy_text(&app, crop(&frozen, x, y, width, height));
+                BUSY.store(false, Ordering::SeqCst);
+                return;
+            }
             Selection::Area { x, y, width, height, .. } => crop(&frozen, x, y, width, height),
             Selection::Window { id } => {
                 // Let the overlay leave the screen, then capture the window itself, which leaves
@@ -406,8 +422,36 @@ pub fn overlay_finish(app: AppHandle, selection: Selection) {
                 })
             }
         };
-        finish(&app, result, frozen.point);
+        if frozen.mode == Target::Text {
+            copy_text(&app, result);
+            BUSY.store(false, Ordering::SeqCst);
+        } else {
+            finish(&app, result, frozen.point);
+        }
     });
+}
+
+/// Copy Text: copies the text and QR code contents of a capture, then offers to open the
+/// links in them, or says what was copied.
+fn copy_text(app: &AppHandle, image: Result<RgbaImage, String>) {
+    let content = match image.and_then(|image| ocr::recognize(&image)) {
+        Ok(content) => content,
+        Err(message) => return notify(app, "Couldn't read the text", &message),
+    };
+    if content.is_empty() {
+        return notify(app, &content.summary(), "Select a larger area, or zoom in on small text first.");
+    }
+    let text = content.clipboard_text();
+    if let Err(e) = Clipboard::new().and_then(|mut c| c.set_text(text.clone())) {
+        return notify(app, "Couldn't copy the text", &e.to_string());
+    }
+    let links = content.links();
+    if links.is_empty() {
+        let preview: String = text.chars().take(120).collect();
+        notify(app, &content.summary(), &preview);
+    } else {
+        link_prompt::show(app, links, content.summary(), !content.codes.is_empty());
+    }
 }
 
 /// Measure's Ctrl+S: the screen with the measurements drawn on it, as a PNG request body.

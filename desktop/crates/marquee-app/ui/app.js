@@ -14,7 +14,7 @@ const ACTION_INFO = {
   captureFullscreen: { icon: "i-display", sub: "The screen under the pointer", tile: "Full Screen" },
   captureScrolling: { icon: "i-scroll", sub: "One long screenshot as you scroll", tile: "Scrolling" },
   captureTimed: { icon: "i-timer", sub: "Full screen after 5 seconds", tile: "Self-Timer" },
-  captureText: { icon: "i-text", sub: "Select text anywhere and copy it", tile: "Copy Text" },
+  captureText: { icon: "i-text", sub: "Text or a QR code, copied", tile: "Copy Text" },
   recordArea: { icon: "i-record", sub: "Video of an area, with audio", record: true },
   recordScreen: { icon: "i-video", sub: "Video of the whole display", record: true },
   measure: { icon: "i-ruler", sub: "Distances and sizes on screen" },

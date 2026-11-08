@@ -5,6 +5,7 @@
 //          and nudge before choosing what to do; with no selection, actions use the full screen
 //   measure  Measure takes over the page (measure.js)
 //   color    the color picker takes over the page (color.js); All-in-One's Color switches to it
+//   text     Copy Text: like area, and Rust reads the text and QR codes in what you select
 // Choices are reported to Rust in the frame's pixels.
 "use strict";
 
@@ -23,6 +24,7 @@ const uiCtx = ui.getContext("2d");
 let info = null;
 let windowRects = []; // arrives just after the overlay shows
 let aio = false;
+let textMode = false; // Copy Text
 let mode = "area";
 let pointer = null; // CSS pixels
 let sel = null; // the selection { x, y, w, h } in CSS pixels; null means the full screen
@@ -44,12 +46,12 @@ function finish(selection) {
 const cancel = () => finish({ kind: "cancel" });
 
 /** The selection (or the full screen) in frame pixels, for an action. `then` is "copy",
- * "pin" or "annotate" for All-in-One's buttons of those names. */
+ * "pin", "annotate" or "text" for All-in-One's buttons of those names. */
 function area(then = null) {
   const s = scale();
   const r = sel ?? { x: 0, y: 0, w: window.innerWidth, h: window.innerHeight };
   return {
-    kind: "area", copy: then === "copy", pin: then === "pin", annotate: then === "annotate",
+    kind: "area", copy: then === "copy", pin: then === "pin", annotate: then === "annotate", text: then === "text",
     x: Math.round(r.x * s), y: Math.round(r.y * s),
     width: Math.round(r.w * s), height: Math.round(r.h * s),
   };
@@ -60,6 +62,7 @@ const ACTIONS = {
   copy: () => finish(area("copy")),
   pin: () => finish(area("pin")),
   annotate: () => finish(area("annotate")),
+  text: () => finish(area("text")),
   color: () => startColorPicker(),
   fullscreen: () => { sel = null; finish(area()); },
   window: () => setMode("window"),
@@ -77,6 +80,8 @@ function setMode(next) {
       : "Click a window · <kbd>Space</kbd> drag an area · <kbd>Esc</kbd> cancel";
   } else if (aio) {
     hint.innerHTML = "Drag to select an area, or choose an action for the full screen";
+  } else if (textMode) {
+    hint.innerHTML = "Drag over text or a QR code to copy it · <kbd>Space</kbd> pick a window · <kbd>Esc</kbd> cancel";
   } else {
     hint.innerHTML = "Drag to select an area · <kbd>Space</kbd> pick a window · <kbd>Esc</kbd> cancel";
   }
@@ -300,6 +305,7 @@ window.addEventListener("keydown", (e) => {
   else if (!e.ctrlKey && key.toLowerCase() === "p") { e.preventDefault(); ACTIONS.pin(); }
   else if (!e.ctrlKey && key.toLowerCase() === "a") { e.preventDefault(); ACTIONS.annotate(); }
   else if (!e.ctrlKey && key.toLowerCase() === "c") { e.preventDefault(); ACTIONS.color(); }
+  else if (!e.ctrlKey && key.toLowerCase() === "t") { e.preventDefault(); ACTIONS.text(); }
   else if (key === "Delete" || key === "Backspace") { e.preventDefault(); sel = null; schedule(); }
   else if (key.startsWith("Arrow") && sel) {
     e.preventDefault();
@@ -329,6 +335,7 @@ async function start() {
   info = await invoke("overlay_info");
   if (!info) return;
   aio = info.mode === "aio";
+  textMode = info.mode === "text";
   finished = false;
   sel = null;
   gesture = null;

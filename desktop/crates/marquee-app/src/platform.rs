@@ -157,3 +157,35 @@ pub fn paste_into(window: isize) {
 
 #[cfg(not(windows))]
 pub fn paste_into(_window: isize) {}
+
+/// Opens a web or email link in the default browser or mail app.
+#[cfg(windows)]
+pub fn open_url(url: &str) -> Result<(), String> {
+    use windows_sys::Win32::UI::Shell::ShellExecuteW;
+    use windows_sys::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+
+    let wide = |s: &str| s.encode_utf16().chain([0]).collect::<Vec<u16>>();
+    let (verb, target) = (wide("open"), wide(url));
+    // SAFETY: both strings are NUL-terminated UTF-16 that outlive the call.
+    let result = unsafe {
+        ShellExecuteW(
+            std::ptr::null_mut(),
+            verb.as_ptr(),
+            target.as_ptr(),
+            std::ptr::null(),
+            std::ptr::null(),
+            SW_SHOWNORMAL,
+        )
+    };
+    // Values above 32 mean success.
+    if result as isize > 32 {
+        Ok(())
+    } else {
+        Err("Windows couldn't open the link.".into())
+    }
+}
+
+#[cfg(not(windows))]
+pub fn open_url(url: &str) -> Result<(), String> {
+    std::process::Command::new("xdg-open").arg(url).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
