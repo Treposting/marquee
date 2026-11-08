@@ -53,11 +53,18 @@ jobs:
           key: tauri-bundler-tools-v1
 
       # Unsigned for now: Windows SmartScreen warns until there's a code-signing certificate.
-      # One retry if a tool download fails; the compiled app is reused.
+      # GitHub's release downloads (NSIS, WiX) sometimes answer 504 for a while: try up to five
+      # times with growing waits. Tools already downloaded and the compiled app are reused.
       - name: Installers
         working-directory: desktop/crates/marquee-app
         shell: bash
-        run: cargo tauri build || { sleep 20; cargo tauri build; }
+        run: |
+          for attempt in 1 2 3 4 5; do
+            cargo tauri build && exit 0
+            echo "Bundling failed (attempt $attempt of 5); trying again in $((attempt * 30)) seconds"
+            sleep $((attempt * 30))
+          done
+          exit 1
 
       - uses: actions/upload-artifact@v4
         with:
