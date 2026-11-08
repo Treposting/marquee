@@ -68,7 +68,7 @@ fn text(image: &RgbaImage) -> Result<String, String> {
     let scaled = scaled_for_ocr(image, max);
     let (w, h) = scaled.dimensions();
     let mut bgra = scaled.into_raw();
-    for pixel in bgra.chunks_exact_mut(4) {
+    for pixel in bgra.as_chunks_mut::<4>().0 {
         pixel.swap(0, 2);
     }
     let buffer = CryptographicBuffer::CreateFromByteArray(&bgra).map_err(failed)?;
