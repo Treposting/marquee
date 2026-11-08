@@ -76,9 +76,18 @@ jobs:
         with:
           tool: tauri-cli@2
 
+      # The bundler downloads NSIS and WiX from GitHub releases the first time; keep them, so a
+      # slow or failing download there doesn't fail the build.
+      - uses: actions/cache@v4
+        with:
+          path: ~/AppData/Local/tauri
+          key: tauri-bundler-tools-v1
+
+      # One retry if a tool download fails; the compiled app is reused.
       - name: Build installers
         working-directory: desktop/crates/marquee-app
-        run: cargo tauri build
+        shell: bash
+        run: cargo tauri build || { sleep 20; cargo tauri build; }
 
       - name: Collect files
         run: |
